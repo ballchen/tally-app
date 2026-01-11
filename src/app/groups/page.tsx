@@ -36,19 +36,36 @@ export default function GroupsPage() {
 
   return (
     <div className="container mx-auto p-4 max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">My Groups</h1>
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
-                <LogOut className="h-5 w-5 text-muted-foreground" />
-            </Button>
+      {/* Header / Navbar */}
+      <header className="flex items-center justify-between py-2">
+        {/* Left: App Title */}
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
+            <span className="text-white font-bold text-lg">T</span>
+          </div>
+          <h1 className="text-xl font-semibold">Tally</h1>
         </div>
+        
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1">
+          <PushNotificationManager />
+          <ProfileSettingsDialog />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleLogout} 
+            title="Logout"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
 
-        <div className="flex items-center gap-2">
-            <PushNotificationManager />
-            <ProfileSettingsDialog />
-            <CreateGroupDialog />
-        </div>
+      {/* Section Title + Create Button */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-medium text-muted-foreground">My Groups</h2>
+        <CreateGroupDialog />
       </div>
 
       {/* Groups List */}

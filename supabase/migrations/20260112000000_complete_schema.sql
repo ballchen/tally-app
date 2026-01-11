@@ -307,3 +307,13 @@ begin
   return v_group_id;
 end;
 $$;
+
+-- ====================
+-- 4. REALTIME
+-- ====================
+
+-- Enable Supabase Realtime for specific tables
+ALTER PUBLICATION supabase_realtime ADD TABLE group_members;
+ALTER PUBLICATION supabase_realtime ADD TABLE expenses;
+ALTER PUBLICATION supabase_realtime ADD TABLE expense_splits;
+
