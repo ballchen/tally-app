@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -46,7 +47,6 @@ export function LoginForm() {
   const supabase = createClient()
   const { setUser } = useAuthStore()
   const [isLoading, setIsLoading] = React.useState(false)
-  const [message, setMessage] = React.useState<string | null>(null)
   const [tab, setTab] = React.useState<"login" | "register">("login")
 
   // Login Form
@@ -63,7 +63,6 @@ export function LoginForm() {
 
   async function onSignIn(values: z.infer<typeof loginSchema>) {
     setIsLoading(true)
-    setMessage(null)
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email: values.email,
@@ -71,13 +70,16 @@ export function LoginForm() {
     })
 
     if (error) {
-      setMessage(error.message)
+      toast.error("Login failed", {
+        description: error.message
+      })
       setIsLoading(false)
       return
     }
 
     if (data.user) {
       setUser(data.user)
+      toast.success("Welcome back!")
       router.push(next || "/")
     }
     setIsLoading(false)
@@ -85,9 +87,9 @@ export function LoginForm() {
 
   async function onSignUp(values: z.infer<typeof signupSchema>) {
     setIsLoading(true)
-    setMessage(null)
 
-    const { data, error } = await supabase.auth.signUp({
+    // Step 1: Sign up
+    const { data: signupData, error: signupError } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
@@ -97,17 +99,37 @@ export function LoginForm() {
       }
     })
 
-    if (error) {
-      setMessage(error.message)
+    if (signupError) {
+      toast.error("Signup failed", {
+        description: signupError.message
+      })
       setIsLoading(false)
       return
     }
 
-    if (data.user) {
-      setMessage("Account created! You can now sign in.")
-      setTab("login")
-      loginForm.setValue("email", values.email)
-      loginForm.setValue("password", values.password) // Optional: pre-fill password? Maybe unsafe but convenient.
+    if (signupData.user) {
+      // Step 2: Auto-login after signup
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      })
+
+      if (loginError) {
+        // If auto-login fails, show success but ask to login manually
+        toast.success("Account created!", {
+          description: "Please sign in to continue"
+        })
+        setTab("login")
+        loginForm.setValue("email", values.email)
+        setIsLoading(false)
+        return
+      }
+
+      if (loginData.user) {
+        setUser(loginData.user)
+        toast.success(`Welcome, ${values.name}!`)
+        router.push(next || "/")
+      }
     }
     setIsLoading(false)
   }
@@ -151,8 +173,7 @@ export function LoginForm() {
                                     <FormMessage />
                                 </FormItem>
                             )}
-                        />
-                         {message && <p className="text-sm text-red-500 font-medium">{message}</p>}
+                         />
                          <Button type="submit" className="w-full" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Sign In
@@ -197,7 +218,6 @@ export function LoginForm() {
                                 </FormItem>
                             )}
                         />
-                         {message && <p className="text-sm text-red-500 font-medium">{message}</p>}
                          <Button type="submit" className="w-full" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Create Account

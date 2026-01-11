@@ -7,17 +7,42 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Loader2, Plus, ArrowLeft, Copy } from "lucide-react"
+import { Loader2, Plus, ArrowLeft, Copy, ArrowRight, Trash2, History as HistoryIcon } from "lucide-react"
 import { format } from "date-fns"
 import { AddExpenseDrawer } from "@/components/expenses/add-expense-drawer"
 import { InviteMemberDialog } from "@/components/groups/invite-member-dialog"
+import { useBalances } from "@/hooks/use-balances"
+import { SettleUpDialog } from "@/components/settlement/settle-up-dialog"
+import { useGranularSettle } from "@/hooks/use-granular-settle"
+import { useUndoSettlement } from "@/hooks/use-undo-settlement"
+import { useRealtimeSync } from "@/hooks/use-realtime-sync"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function GroupDetailsPage() {
   const params = useParams()
   const router = useRouter()
   const groupId = params.groupId as string
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
+  
+  // Enable realtime sync for this group
+  useRealtimeSync(groupId)
   const { data, isLoading, error } = useGroupDetails(groupId)
+
+  const [view, setView] = useState<"current" | "history">("current")
+  const { debts } = useBalances(data?.expenses || [], data?.members || [], data?.group?.base_currency || "TWD")
+  const { mutate: settle, isPending: isSettling } = useGranularSettle()
+  const { mutate: undoSettlement, isPending: isUndoing } = useUndoSettlement()
 
   if (isLoading) {
     return (
@@ -38,9 +63,22 @@ export default function GroupDetailsPage() {
 
   const { group, members, expenses } = data
 
+
+
+  const filteredExpenses = expenses?.filter(e => {
+    if (e.type === 'repayment') {
+        return view === 'history' 
+    }
+    // Check if fully settled (all splits have a settlement_id)
+    const isFullySettled = e.expense_splits?.length > 0 && e.expense_splits.every((s: any) => s.settlement_id)
+    
+    if (view === 'current') return !isFullySettled
+    return isFullySettled
+  })
+
   const copyInviteCode = () => {
     navigator.clipboard.writeText(group.invite_code)
-    // TODO: Add toast notification
+    toast.success("Invite code copied!")
   }
 
   return (
@@ -65,35 +103,181 @@ export default function GroupDetailsPage() {
       <div className="flex gap-4 overflow-x-auto pb-2">
         {members?.map((member) => (
           <div key={member.user_id} className="flex flex-col items-center gap-1 min-w-[60px]">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={member.profiles?.avatar_url || ""} />
-              <AvatarFallback>{member.profiles?.display_name?.[0] || "?"}</AvatarFallback>
-            </Avatar>
-            <span className="text-xs truncate max-w-[60px]">
-              {member.profiles?.display_name || "Unknown"}
-            </span>
+             <Avatar className="h-10 w-10">
+               <AvatarImage src={member.profiles?.avatar_url || ""} />
+               <AvatarFallback>{member.profiles?.display_name?.[0] || "?"}</AvatarFallback>
+             </Avatar>
+             <span className="text-xs truncate max-w-[60px]">
+               {member.profiles?.display_name || "Unknown"}
+             </span>
           </div>
         ))}
          <InviteMemberDialog inviteCode={group.invite_code} groupName={group.name} />
       </div>
 
+      {/* Settlement & Balances */}
+      {debts.length > 0 && (
+        <Card className="bg-muted/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium text-muted-foreground uppercase tracking-wider text-xs">Outstanding Balances</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             {debts.map((debt, i) => {
+                 // Helper to find member profile safely
+                 const fromUser = members?.find(m => m.user_id === debt.from)?.profiles
+                 const toUser = members?.find(m => m.user_id === debt.to)?.profiles
+                 
+                 return (
+                     <div key={i} className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                             <div className="flex items-center">
+                                <Avatar className="h-8 w-8 border-2 border-background z-0">
+                                    <AvatarImage src={fromUser?.avatar_url || ""} />
+                                    <AvatarFallback>{fromUser?.display_name?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <ArrowRight className="h-4 w-4 -ml-1 -mr-1 text-muted-foreground z-10 bg-background rounded-full" />
+                                <Avatar className="h-8 w-8 border-2 border-background z-0">
+                                    <AvatarImage src={toUser?.avatar_url || ""} />
+                                    <AvatarFallback>{toUser?.display_name?.[0]}</AvatarFallback>
+                                </Avatar>
+                             </div>
+                             <div className="flex flex-col">
+                                 <span className="text-sm font-medium leading-none">
+                                     {fromUser?.display_name}
+                                 </span>
+                                 <span className="text-xs text-muted-foreground">
+                                     owes {toUser?.display_name}
+                                 </span>
+                             </div>
+                         </div>
+                         <div className="flex items-center gap-3">
+                             <div className="font-bold text-right">
+                                 <div className="text-xs text-muted-foreground">{group.base_currency}</div>
+                                 {debt.amount.toFixed(0)}
+                             </div>
+                             <Button 
+                                size="sm" 
+                                variant="secondary" 
+                                className="h-8 text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
+                                disabled={isSettling}
+                                onClick={() => settle({
+                                    groupId,
+                                    debtorId: debt.from,
+                                    creditorId: debt.to,
+                                    amount: debt.amount,
+                                    currency: group.base_currency
+                                })}
+                             >
+                                Settle
+                             </Button>
+                         </div>
+                     </div>
+                 )
+             })}
+             
+             <div className="pt-2">
+                <SettleUpDialog 
+                    groupId={groupId} 
+                    debts={debts} 
+                    members={members || []} 
+                    currency={group.base_currency} 
+                />
+             </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Expenses List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Expenses</h2>
+            <div className="flex bg-muted rounded-lg p-1">
+                <button 
+                    className={`px-3 py-1 text-sm rounded-md transition-all ${view === "current" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+                    onClick={() => setView("current")}
+                >
+                    Current
+                </button>
+                <button 
+                    className={`px-3 py-1 text-sm rounded-md transition-all ${view === "history" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+                    onClick={() => setView("history")}
+                >
+                    History
+                </button>
+            </div>
         </div>
+
+        {/* Settlements History List */}
+        {view === "history" && data?.settlements && data.settlements.length > 0 && (
+            <div className="space-y-3">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">Recent Settlements</h3>
+                {data.settlements.map((settlement: any) => (
+                    <Card key={settlement.id} className="bg-muted/10 border-dashed">
+                        <CardContent className="p-3 flex items-center justify-between">
+                             <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <HistoryIcon className="h-4 w-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="text-sm font-medium">Settled by {settlement.creator?.display_name || "Unknown"}</div>
+                                    <div className="text-xs text-muted-foreground">{format(new Date(settlement.created_at), "MMM d, yyyy HH:mm")}</div>
+                                </div>
+                             </div>
+                             
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isUndoing}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Undo Settlement?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will reactivate the expenses associated with this settlement and remove the repayment record.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => undoSettlement(settlement.id)} className="bg-destructive hover:bg-destructive/90">Confirm Undo</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                             </AlertDialog>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        )}
         
-        {expenses?.length === 0 ? (
-           <Card className="p-8 text-center text-muted-foreground">
-             No expenses yet. Tap + to add one.
+        {filteredExpenses?.length === 0 && (!data?.settlements || data.settlements.length === 0) ? (
+           <Card className="p-12 text-center border-dashed">
+             <div className="flex flex-col items-center gap-3 text-muted-foreground">
+               <div className="text-4xl">
+                 {view === "current" ? "✨" : "📜"}
+               </div>
+               <div className="space-y-1">
+                 <h3 className="font-semibold text-foreground">
+                   {view === "current" ? "All settled up!" : "No history yet"}
+                 </h3>
+                 <p className="text-sm">
+                   {view === "current" 
+                     ? "Add an expense to get started" 
+                     : "Past settlements will appear here"}
+                 </p>
+               </div>
+             </div>
            </Card>
         ) : (
-          expenses?.map((expense) => (
-            <Card 
-                key={expense.id} 
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setSelectedExpenseId(expense.id)}
-            >
+          filteredExpenses?.map((expense) => {
+            const isFullySettled = expense.expense_splits?.length > 0 && expense.expense_splits.every((s: any) => s.settlement_id)
+            const isEditable = !isFullySettled && expense.type !== 'repayment'
+            return (
+              <Card 
+                  key={expense.id} 
+                  className={`transition-colors ${
+                      isEditable ? "cursor-pointer hover:bg-muted/50" : "opacity-80"
+                  } ${expense.type === 'repayment' ? "bg-muted/20 border-l-4 border-l-primary/50" : ""}`}
+                  onClick={() => isEditable && setSelectedExpenseId(expense.id)}
+              >
               <CardContent className="px-4 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="text-center min-w-[3rem] shrink-0">
@@ -103,7 +287,7 @@ export default function GroupDetailsPage() {
                     <div className="flex flex-col gap-0.5">
                         <div className="font-medium leading-none">{expense.description || "Expense"}</div>
                         <div className="text-xs text-muted-foreground">
-                            paid by {expense.payer?.display_name}
+                            {expense.type === 'repayment' ? 'Settlement' : `paid by ${expense.payer?.display_name}`}
                         </div>
                     </div>
                 </div>
@@ -111,22 +295,25 @@ export default function GroupDetailsPage() {
                     <div className="font-bold">
                         {expense.currency} {expense.amount}
                     </div>
-                    <div className="flex items-center -space-x-1.5 pt-1">
-                        {(!expense.expense_splits || expense.expense_splits.length === 0) ? (
-                            <span className="text-[10px] text-muted-foreground/50">Details not loaded</span>
-                        ) : (
-                            expense.expense_splits.map((split: any) => (
-                                <Avatar key={split.user_id} className="h-5 w-5 border-2 border-background">
-                                    <AvatarImage src={split.profiles?.avatar_url || ""} />
-                                    <AvatarFallback className="text-[8px]">{split.profiles?.display_name?.[0] || "?"}</AvatarFallback>
-                                </Avatar>
-                            ))
-                        )}
-                    </div>
+                    {expense.type !== 'repayment' && (
+                        <div className="flex items-center -space-x-1.5 pt-1">
+                            {(!expense.expense_splits || expense.expense_splits.length === 0) ? (
+                                <span className="text-[10px] text-muted-foreground/50">Details not loaded</span>
+                            ) : (
+                                expense.expense_splits.map((split: any) => (
+                                    <Avatar key={split.user_id} className="h-5 w-5 border-2 border-background">
+                                        <AvatarImage src={split.profiles?.avatar_url || ""} />
+                                        <AvatarFallback className="text-[8px]">{split.profiles?.display_name?.[0] || "?"}</AvatarFallback>
+                                    </Avatar>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
               </CardContent>
             </Card>
-          ))
+            )
+          })
         )}
       </div>
 

@@ -21,8 +21,9 @@ export default function Home() {
 
   // Just show a spinner while deciding where to go
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className="flex h-screen items-center justify-center flex-col gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground text-sm">Loading Tally...</p>
     </div>
   )
 }

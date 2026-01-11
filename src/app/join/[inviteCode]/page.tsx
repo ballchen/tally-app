@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Users } from "lucide-react"
+import { toast } from "sonner"
 
 export default function JoinGroupPage() {
   const params = useParams()
@@ -58,6 +59,7 @@ export default function JoinGroupPage() {
         .single()
         
       if (member) {
+          toast.info("You're already a member!")
           router.push(`/groups/${group.id}`)
           return
       }
@@ -71,10 +73,12 @@ export default function JoinGroupPage() {
         })
 
       if (joinError) {
-          console.error(joinError)
-          setError("Failed to join group.")
+          toast.error("Failed to join group", {
+            description: joinError.message
+          })
           setJoining(false)
       } else {
+          toast.success(`Joined ${group.name}!`)
           router.push(`/groups/${group.id}`)
       }
   }

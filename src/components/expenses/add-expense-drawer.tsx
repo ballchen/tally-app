@@ -31,6 +31,7 @@ import { useExpense } from "@/hooks/use-expense"
 import { useUpdateExpense } from "@/hooks/use-update-expense"
 import { useDeleteExpense } from "@/hooks/use-delete-expense"
 import { Loader2, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 // ... imports
 
@@ -79,7 +80,15 @@ export function AddExpenseDrawer({ groupId, currency, members, expenseId, open: 
   const handleDelete = () => {
     if (!expenseId) return
     deleteExpense.mutate(expenseId, {
-        onSuccess: () => setIsOpen(false)
+        onSuccess: () => {
+            toast.success("Expense deleted")
+            setIsOpen(false)
+        },
+        onError: (error) => {
+            toast.error("Failed to delete expense", {
+                description: error.message
+            })
+        }
     })
   }
 
@@ -138,11 +147,49 @@ export function AddExpenseDrawer({ groupId, currency, members, expenseId, open: 
             expenseId,
             ...commonData
         }, {
-            onSuccess: () => setIsOpen(false)
+            onSuccess: () => {
+                toast.success("Expense updated")
+                setIsOpen(false)
+            },
+            onError: (error) => {
+                toast.error("Failed to update expense", {
+                    description: error.message
+                })
+            }
         })
     } else {
         addExpense.mutate(commonData, {
-            onSuccess: () => setIsOpen(false)
+            onSuccess: () => {
+                toast.success("Expense added")
+                setIsOpen(false)
+                
+                // Trigger Push Notification (Fire and forget)
+                if (user) {
+                    const targetUserIds = members
+                        .filter(m => m.user_id !== user.id)
+                        .map(m => m.user_id)
+                    
+                    if (targetUserIds.length > 0) {
+                        const payerName = members.find(m => m.user_id === user.id)?.profiles?.display_name || "Someone"
+                        
+                        fetch("/api/push/send", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                userIds: targetUserIds,
+                                title: "New Expense Added",
+                                body: `${payerName} added: ${form.description || 'Expense'} (${selectedCurrency} ${amount})`,
+                                url: `/groups/${groupId}`
+                            })
+                        }).catch(err => console.error("Push failed", err))
+                    }
+                }
+            },
+            onError: (error) => {
+                toast.error("Failed to add expense", {
+                    description: error.message
+                })
+            }
         })
     }
   }

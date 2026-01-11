@@ -70,3 +70,47 @@ create table expense_splits (
   user_id uuid references profiles not null, -- The debtor
   owed_amount numeric(12, 4) not null        -- Calculated share in Original Currency
 );
+```
+
+## 4. PWA Push Notifications
+**Goal:** Notify users when:
+1. They are added to a group.
+2. A new expense is added to a group they are in.
+3. Settlement is requested/completed.
+
+### 4.1. Architecture
+- **VAPID Keys:** Standard Web Push protocol.
+- **Service Worker:** Extend default `next-pwa` SW with a custom script (`public/push-sw.js`) containing the `push` event listener.
+- **Database:** Wrapper table for subscriptions.
+- **Trigger:** Next.js API Routes / Server Actions triggered by application logic.
+
+### 4.2. Database Schema
+```sql
+-- 6. Push Subscriptions
+create table push_subscriptions (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles not null,
+  endpoint text unique not null,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+-- Index for fast lookup by user
+create index idx_push_user on push_subscriptions(user_id);
+```
+
+### 4.3. API Routes
+- `POST /api/push/subscribe`: UPSERT subscription for the current user.
+- `POST /api/push/send` (Internal/Protected): Send notification to specific `userIds`.
+
+### 4.4. Frontend Flow
+1. User clicks "Enable Notifications" (Profile or Group page).
+2. App requests permission (`Notification.requestPermission`).
+3. If granted, App registers subscription (`sw.pushManager.subscribe`).
+4. App sends subscription JSON to `/api/push/subscribe`.
+
+### 4.5. Service Worker (`push-sw.js`)
+Handles:
+- `push` event: Show notification.
+- `notificationclick` event: Focus window or open specific URL (e.g., `/groups/[id]`).

@@ -28,31 +28,24 @@ export function useCreateGroup() {
   return useMutation({
     mutationFn: async ({ name, baseCurrency }: { name: string; baseCurrency: string }) => {
       const inviteCode = nanoid(8)
-      const { data: group, error: groupError } = await supabase
-        .from("groups")
-        .insert({
-          name,
-          base_currency: baseCurrency,
-          invite_code: inviteCode
-        })
-        .select()
+
+      // Use RPC to create group (bypasses RLS with security definer)
+      const { data: groupId, error } = await supabase.rpc('create_group', {
+        p_name: name,
+        p_base_currency: baseCurrency,
+        p_invite_code: inviteCode
+      })
+
+      if (error) throw error
+
+      // Fetch the created group to return it
+      const { data: group, error: fetchError } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('id', groupId)
         .single()
 
-      if (groupError) throw groupError
-
-      // Automatically add creator as member
-      const { data: user } = await supabase.auth.getUser()
-      if (user.user) {
-        const { error: memberError } = await supabase
-          .from("group_members")
-          .insert({
-            group_id: group.id,
-            user_id: user.user.id
-          })
-
-        if (memberError) throw memberError
-      }
-
+      if (fetchError) throw fetchError
       return group
     },
     onSuccess: () => {

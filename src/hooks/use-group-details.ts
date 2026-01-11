@@ -40,8 +40,13 @@ export function useGroupDetails(groupId: string) {
             display_name,
             avatar_url
           ),
+
+          type,
+
           expense_splits (
             user_id,
+            owed_amount,
+            settlement_id,
             profiles:user_id (
                display_name,
                avatar_url
@@ -53,10 +58,26 @@ export function useGroupDetails(groupId: string) {
 
       if (expensesError) throw expensesError
 
+      // 4. Fetch Settlements
+      const { data: settlements, error: settlementsError } = await supabase
+        .from("settlements")
+        .select(`
+            *,
+            creator:created_by (
+                display_name,
+                avatar_url
+            )
+        `)
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: false })
+
+      if (settlementsError) throw settlementsError
+
       return {
         group,
         members,
-        expenses
+        expenses,
+        settlements
       }
     },
     enabled: !!groupId
