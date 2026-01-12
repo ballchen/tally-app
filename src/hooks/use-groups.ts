@@ -9,11 +9,13 @@ export function useGroups(filter: GroupFilter = "active") {
 
   return useQuery({
     queryKey: ["groups", filter],
+    placeholderData: (previousData) => previousData, // Keep previous data while loading
     queryFn: async () => {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
+      // First, get groups where user is a member
       let query = supabase
         .from("groups")
         .select(`
@@ -36,15 +38,37 @@ export function useGroups(filter: GroupFilter = "active") {
 
       if (error) throw error
 
-      // Apply hidden filter in JS
-      if (filter === "active") {
-        return data?.filter(g =>
-          !g.group_members?.some((m: any) => m.user_id === user.id && m.hidden_at)
-        ) || []
-      } else if (filter === "hidden") {
-        return data?.filter(g =>
-          g.group_members?.some((m: any) => m.user_id === user.id && m.hidden_at)
-        ) || []
+      // Fetch all members for each group to get member count
+      const groupIds = data?.map(g => g.id) || []
+      
+      if (groupIds.length > 0) {
+        const { data: allMembers } = await supabase
+          .from("group_members")
+          .select(`
+            group_id,
+            user_id,
+            profiles(id, display_name, avatar_url)
+          `)
+          .in("group_id", groupIds)
+        
+        // Attach all members to each group
+        const enrichedData = data?.map(group => ({
+          ...group,
+          all_members: allMembers?.filter(m => m.group_id === group.id) || []
+        }))
+
+        // Apply hidden filter in JS
+        if (filter === "active") {
+          return enrichedData?.filter(g =>
+            !g.group_members?.some((m: any) => m.user_id === user.id && m.hidden_at)
+          ) || []
+        } else if (filter === "hidden") {
+          return enrichedData?.filter(g =>
+            g.group_members?.some((m: any) => m.user_id === user.id && m.hidden_at)
+          ) || []
+        }
+
+        return enrichedData || []
       }
 
       return data || []

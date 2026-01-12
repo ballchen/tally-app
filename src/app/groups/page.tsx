@@ -7,6 +7,7 @@ import { CreateGroupDialog } from "@/components/groups/create-group-dialog"
 import { ProfileSettingsDialog } from "@/components/profile/profile-settings-dialog"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2, LogOut, Users, Archive, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -19,6 +20,7 @@ export default function GroupsPage() {
   const { user } = useAuthStore()
   const [filter, setFilter] = useState<GroupFilter>("active")
   const { data: groups, isLoading } = useGroups(filter)
+  const { data: allGroups } = useGroups("all") // Fetch all groups to check counts
   const supabase = createClient()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -26,6 +28,12 @@ export default function GroupsPage() {
 
   // Enable realtime sync for groups list
   useRealtimeGroups()
+
+  // Calculate counts for each filter
+  const archivedCount = allGroups?.filter(g => !!g.archived_at).length || 0
+  const hiddenCount = allGroups?.filter(g => 
+    g.group_members?.some((m: any) => m.hidden_at)
+  ).length || 0
 
   const handleLogout = async () => {
       await supabase.auth.signOut()
@@ -78,7 +86,7 @@ export default function GroupsPage() {
       {/* Section Title + Create Button */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium text-muted-foreground">My Groups</h2>
-        <CreateGroupDialog />
+        {filter === "active" && <CreateGroupDialog />}
       </div>
 
       {/* Filter Tabs */}
@@ -89,20 +97,26 @@ export default function GroupsPage() {
         >
           Active
         </button>
-        <button
-          className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "archived" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-          onClick={() => setFilter("archived")}
-        >
-          <Archive className="h-3.5 w-3.5" />
-          Archived
-        </button>
-        <button
-          className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "hidden" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-          onClick={() => setFilter("hidden")}
-        >
-          <EyeOff className="h-3.5 w-3.5" />
-          Hidden
-        </button>
+        {archivedCount > 0 && (
+          <button
+            className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "archived" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+            onClick={() => setFilter("archived")}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archived
+            <span className="ml-1 text-xs opacity-60">({archivedCount})</span>
+          </button>
+        )}
+        {hiddenCount > 0 && (
+          <button
+            className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "hidden" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+            onClick={() => setFilter("hidden")}
+          >
+            <EyeOff className="h-3.5 w-3.5" />
+            Hidden
+            <span className="ml-1 text-xs opacity-60">({hiddenCount})</span>
+          </button>
+        )}
       </div>
 
       {/* Groups List */}
@@ -111,21 +125,32 @@ export default function GroupsPage() {
           <Card className="p-12 text-center border-dashed">
             <div className="flex flex-col items-center gap-4 text-muted-foreground">
               <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-                <Users className="h-10 w-10" />
+                {filter === "active" && <Users className="h-10 w-10" />}
+                {filter === "archived" && <Archive className="h-10 w-10" />}
+                {filter === "hidden" && <EyeOff className="h-10 w-10" />}
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-foreground">No groups yet</h3>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {filter === "active" && "No groups yet"}
+                  {filter === "archived" && "No archived groups"}
+                  {filter === "hidden" && "No hidden groups"}
+                </h3>
                 <p className="text-sm max-w-sm">
-                  Create your first group to start splitting bills with friends!
+                  {filter === "active" && "Create your first group to start splitting bills with friends!"}
+                  {filter === "archived" && "Archived groups will appear here"}
+                  {filter === "hidden" && "Hidden groups will appear here"}
                 </p>
               </div>
-              <CreateGroupDialog />
+              {filter === "active" && <CreateGroupDialog />}
             </div>
           </Card>
         ) : (
           groups?.map((group) => {
             const isArchived = !!group.archived_at
             const isHidden = group.group_members?.some((m: any) => m.hidden_at)
+            const allMembers = (group as any).all_members || []
+            const memberCount = allMembers.length
+            const displayMembers = allMembers.slice(0, 3) // Show max 3 avatars
 
             return (
               <Card
@@ -149,8 +174,8 @@ export default function GroupsPage() {
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   </div>
                 )}
-                <CardHeader>
-                  <div className="flex items-center gap-2">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2 mb-2">
                     <CardTitle className="flex-1">{group.name}</CardTitle>
                     {isArchived && (
                       <Badge variant="secondary" className="text-xs">
@@ -165,9 +190,41 @@ export default function GroupsPage() {
                       </Badge>
                     )}
                   </div>
-                  <CardDescription>
-                    Base Currency: {group.base_currency}
-                  </CardDescription>
+                  
+                  {/* Members Row */}
+                  <div className="flex items-center justify-between gap-3 pt-2">
+                    {/* Member Avatars */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center -space-x-2">
+                        {displayMembers.map((member: any, idx: number) => (
+                          <Avatar 
+                            key={member.user_id || idx} 
+                            className="h-7 w-7 border-2 border-background ring-1 ring-muted"
+                          >
+                            <AvatarImage src={member.profiles?.avatar_url} />
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                              {member.profiles?.display_name?.[0]?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {memberCount > 3 && (
+                          <div className="h-7 w-7 rounded-full border-2 border-background bg-muted flex items-center justify-center ring-1 ring-muted">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              +{memberCount - 3}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {memberCount} {memberCount === 1 ? "member" : "members"}
+                      </span>
+                    </div>
+                    
+                    {/* Currency Badge */}
+                    <Badge variant="outline" className="text-xs font-mono">
+                      {group.base_currency}
+                    </Badge>
+                  </div>
                 </CardHeader>
               </Card>
             )
