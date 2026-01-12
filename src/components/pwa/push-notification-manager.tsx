@@ -14,7 +14,22 @@ export function PushNotificationManager() {
   const { isSupported, subscription, isSubscribing, permission, subscribe } = usePushNotifications()
 
   if (!isSupported) {
-    return null
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a href="/diagnostics">
+              <Button variant="ghost" size="icon" className="text-muted-foreground">
+                <BellOff className="h-5 w-5" />
+              </Button>
+            </a>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Push not supported - Click for help</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
   }
 
   if (permission === "denied") {
@@ -22,12 +37,14 @@ export function PushNotificationManager() {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" disabled className="text-destructive">
-              <BellOff className="h-5 w-5" />
-            </Button>
+            <a href="/diagnostics">
+              <Button variant="ghost" size="icon" className="text-destructive">
+                <BellOff className="h-5 w-5" />
+              </Button>
+            </a>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Notifications blocked</p>
+            <p>Notifications blocked - Click for help</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

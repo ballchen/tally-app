@@ -126,10 +126,8 @@ export default function GroupDetailsPage() {
     toast.success("Invite code copied!");
   };
 
-  // Calculate opacity for elements based on scroll
+  // Calculate when to show sticky title
   const coverHeight = 160; // h-40 = 160px
-  const membersOpacity = Math.max(0, 1 - scrollY / 100);
-  const settlementsOpacity = Math.max(0, 1 - scrollY / 200);
   const showStickyTitle = scrollY > coverHeight;
 
   return (
@@ -222,11 +220,8 @@ export default function GroupDetailsPage() {
             />
           </div>
 
-          {/* Members Scroll - Fades out */}
-          <div
-            className="flex gap-4 overflow-x-auto pb-2 transition-opacity duration-200"
-            style={{ opacity: membersOpacity }}
-          >
+          {/* Members Scroll */}
+          <div className="flex gap-4 overflow-x-auto pb-2">
             {members?.map((member) => (
               <div
                 key={member.user_id}
@@ -249,100 +244,92 @@ export default function GroupDetailsPage() {
             />
           </div>
 
-          {/* Settlement & Balances - Fades out */}
+          {/* Settlement & Balances */}
           {debts.length > 0 && (
-            <div
-              className="transition-opacity duration-200"
-              style={{ opacity: settlementsOpacity }}
-            >
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Outstanding Balances
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {debts.map((debt, i) => {
-                    // Helper to find member profile safely
-                    const fromUser = members?.find(
-                      (m) => m.user_id === debt.from
-                    )?.profiles;
-                    const toUser = members?.find(
-                      (m) => m.user_id === debt.to
-                    )?.profiles;
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Outstanding Balances
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {debts.map((debt, i) => {
+                  // Helper to find member profile safely
+                  const fromUser = members?.find(
+                    (m) => m.user_id === debt.from
+                  )?.profiles;
+                  const toUser = members?.find(
+                    (m) => m.user_id === debt.to
+                  )?.profiles;
 
-                    return (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 border-2 border-background z-0">
-                              <AvatarImage src={fromUser?.avatar_url || ""} />
-                              <AvatarFallback>
-                                {fromUser?.display_name?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <ArrowRight className="h-4 w-4 -ml-1 -mr-1 text-muted-foreground z-10 bg-background rounded-full" />
-                            <Avatar className="h-8 w-8 border-2 border-background z-0">
-                              <AvatarImage src={toUser?.avatar_url || ""} />
-                              <AvatarFallback>
-                                {toUser?.display_name?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium leading-none">
-                              {fromUser?.display_name}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              owes {toUser?.display_name}
-                            </span>
-                          </div>
+                  return (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center">
+                          <Avatar className="h-8 w-8 border-2 border-background z-0">
+                            <AvatarImage src={fromUser?.avatar_url || ""} />
+                            <AvatarFallback>
+                              {fromUser?.display_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <ArrowRight className="h-4 w-4 -ml-1 -mr-1 text-muted-foreground z-10 bg-background rounded-full" />
+                          <Avatar className="h-8 w-8 border-2 border-background z-0">
+                            <AvatarImage src={toUser?.avatar_url || ""} />
+                            <AvatarFallback>
+                              {toUser?.display_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="font-bold text-right">
-                            <div className="text-xs text-muted-foreground">
-                              {group.base_currency}
-                            </div>
-                            {debt.amount.toFixed(0)}
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-8 text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
-                            disabled={isSettling || isArchived}
-                            onClick={() =>
-                              settle({
-                                groupId,
-                                debtorId: debt.from,
-                                creditorId: debt.to,
-                                amount: debt.amount,
-                                currency: group.base_currency,
-                              })
-                            }
-                          >
-                            Settle
-                          </Button>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium leading-none">
+                            {fromUser?.display_name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            owes {toUser?.display_name}
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-
-                  {!isArchived && (
-                    <div className="pt-2">
-                      <SettleUpDialog
-                        groupId={groupId}
-                        debts={debts}
-                        members={members || []}
-                        currency={group.base_currency}
-                      />
+                      <div className="flex items-center gap-3">
+                        <div className="font-bold text-right">
+                          <div className="text-xs text-muted-foreground">
+                            {group.base_currency}
+                          </div>
+                          {debt.amount.toFixed(0)}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
+                          disabled={isSettling || isArchived}
+                          onClick={() =>
+                            settle({
+                              groupId,
+                              debtorId: debt.from,
+                              creditorId: debt.to,
+                              amount: debt.amount,
+                              currency: group.base_currency,
+                            })
+                          }
+                        >
+                          Settle
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                  );
+                })}
+
+                {!isArchived && (
+                  <div className="pt-2">
+                    <SettleUpDialog
+                      groupId={groupId}
+                      debts={debts}
+                      members={members || []}
+                      currency={group.base_currency}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Expenses List - Always visible */}
