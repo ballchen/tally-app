@@ -1,11 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import { useAuthStore } from "@/store/useAuthStore"
-import { useGroups } from "@/hooks/use-groups"
+import { useGroups, type GroupFilter } from "@/hooks/use-groups"
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog"
 import { ProfileSettingsDialog } from "@/components/profile/profile-settings-dialog"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Loader2, LogOut, Users } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, LogOut, Users, Archive, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,10 +16,11 @@ import { useRealtimeGroups } from "@/hooks/use-realtime-sync"
 
 export default function GroupsPage() {
   const { user } = useAuthStore()
-  const { data: groups, isLoading } = useGroups()
+  const [filter, setFilter] = useState<GroupFilter>("active")
+  const { data: groups, isLoading } = useGroups(filter)
   const supabase = createClient()
   const router = useRouter()
-  
+
   // Enable realtime sync for groups list
   useRealtimeGroups()
 
@@ -68,6 +71,30 @@ export default function GroupsPage() {
         <CreateGroupDialog />
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex bg-muted rounded-lg p-1 w-fit">
+        <button
+          className={`px-3 py-1.5 text-sm rounded-md transition-all ${filter === "active" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          onClick={() => setFilter("active")}
+        >
+          Active
+        </button>
+        <button
+          className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "archived" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          onClick={() => setFilter("archived")}
+        >
+          <Archive className="h-3.5 w-3.5" />
+          Archived
+        </button>
+        <button
+          className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "hidden" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          onClick={() => setFilter("hidden")}
+        >
+          <EyeOff className="h-3.5 w-3.5" />
+          Hidden
+        </button>
+      </div>
+
       {/* Groups List */}
       <div className="grid grid-cols-1 gap-4">
         {groups?.length === 0 ? (
@@ -86,20 +113,39 @@ export default function GroupsPage() {
             </div>
           </Card>
         ) : (
-          groups?.map((group) => (
-            <Card 
-                key={group.id} 
-                className="glass-card cursor-pointer hover:border-primary/50 hover:shadow-md transition-all active:scale-[0.99]"
+          groups?.map((group) => {
+            const isArchived = !!group.archived_at
+            const isHidden = group.group_members?.some((m: any) => m.hidden_at)
+
+            return (
+              <Card
+                key={group.id}
+                className={`glass-card cursor-pointer hover:border-primary/50 hover:shadow-md transition-all active:scale-[0.99] ${isArchived ? "opacity-75" : ""}`}
                 onClick={() => router.push(`/groups/${group.id}`)}
-            >
-              <CardHeader>
-                <CardTitle>{group.name}</CardTitle>
-                <CardDescription>
-                  Base Currency: {group.base_currency}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ))
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="flex-1">{group.name}</CardTitle>
+                    {isArchived && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Archive className="h-3 w-3 mr-1" />
+                        Archived
+                      </Badge>
+                    )}
+                    {isHidden && (
+                      <Badge variant="outline" className="text-xs">
+                        <EyeOff className="h-3 w-3 mr-1" />
+                        Hidden
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription>
+                    Base Currency: {group.base_currency}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>

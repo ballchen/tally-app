@@ -126,6 +126,7 @@ export type Database = {
           group_avatar_url: string | null
           group_id: string
           group_nickname: string | null
+          hidden_at: string | null
           joined_at: string | null
           user_id: string
         }
@@ -133,6 +134,7 @@ export type Database = {
           group_avatar_url?: string | null
           group_id: string
           group_nickname?: string | null
+          hidden_at?: string | null
           joined_at?: string | null
           user_id: string
         }
@@ -140,6 +142,7 @@ export type Database = {
           group_avatar_url?: string | null
           group_id?: string
           group_nickname?: string | null
+          hidden_at?: string | null
           joined_at?: string | null
           user_id?: string
         }
@@ -162,25 +165,34 @@ export type Database = {
       }
       groups: {
         Row: {
+          archived_at: string | null
           base_currency: string
+          cover_image_url: string | null
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
           id: string
           invite_code: string
           name: string
         }
         Insert: {
+          archived_at?: string | null
           base_currency?: string
+          cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           id?: string
           invite_code: string
           name: string
         }
         Update: {
+          archived_at?: string | null
           base_currency?: string
+          cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           id?: string
           invite_code?: string
           name?: string

@@ -7,15 +7,18 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Loader2, Plus, ArrowLeft, Copy, ArrowRight, Trash2, History as HistoryIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Plus, ArrowLeft, Copy, ArrowRight, Trash2, History as HistoryIcon, Archive } from "lucide-react"
 import { format } from "date-fns"
 import { AddExpenseDrawer } from "@/components/expenses/add-expense-drawer"
 import { InviteMemberDialog } from "@/components/groups/invite-member-dialog"
+import { EditGroupDialog } from "@/components/groups/edit-group-dialog"
 import { useBalances } from "@/hooks/use-balances"
 import { SettleUpDialog } from "@/components/settlement/settle-up-dialog"
 import { useGranularSettle } from "@/hooks/use-granular-settle"
 import { useUndoSettlement } from "@/hooks/use-undo-settlement"
 import { useRealtimeSync } from "@/hooks/use-realtime-sync"
+import { useProfile } from "@/hooks/use-profile"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -34,7 +37,11 @@ export default function GroupDetailsPage() {
   const router = useRouter()
   const groupId = params.groupId as string
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
-  
+
+  // Get current user
+  const { data: profile } = useProfile()
+  const currentUserId = profile?.id || ""
+
   // Enable realtime sync for this group
   useRealtimeSync(groupId)
   const { data, isLoading, error } = useGroupDetails(groupId)
@@ -63,7 +70,10 @@ export default function GroupDetailsPage() {
 
   const { group, members, expenses } = data
 
-
+  // Check group status
+  const isArchived = !!group.archived_at
+  const currentMember = members?.find((m: any) => m.user_id === currentUserId)
+  const isHidden = !!currentMember?.hidden_at
 
   const filteredExpenses = expenses?.filter(e => {
     if (e.type === 'repayment') {
@@ -82,24 +92,46 @@ export default function GroupDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl space-y-6 pb-20">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/groups")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{group.name}</h1>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-             <span>Code: {group.invite_code}</span>
-             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyInviteCode}>
-                <Copy className="h-3 w-3" />
-             </Button>
-          </div>
+    <div className="container mx-auto max-w-2xl pb-20">
+      {/* Cover Image */}
+      {group.cover_image_url && (
+        <div className="relative w-full h-40 -mx-0 mb-4 overflow-hidden rounded-b-2xl">
+          <img
+            src={group.cover_image_url}
+            alt={`${group.name} cover`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
         </div>
-      </div>
+      )}
 
-      {/* Members Scroll */}
+      <div className={`space-y-6 p-4 ${group.cover_image_url ? 'pt-0' : ''}`}>
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/groups")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">{group.name}</h1>
+              {isArchived && (
+                <Badge variant="secondary" className="text-xs">
+                  <Archive className="h-3 w-3 mr-1" />
+                  Archived
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+               <span>Code: {group.invite_code}</span>
+               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyInviteCode}>
+                  <Copy className="h-3 w-3" />
+               </Button>
+            </div>
+          </div>
+          <EditGroupDialog group={group} currentUserId={currentUserId} isHidden={isHidden} />
+        </div>
+
+        {/* Members Scroll */}
       <div className="flex gap-4 overflow-x-auto pb-2">
         {members?.map((member) => (
           <div key={member.user_id} className="flex flex-col items-center gap-1 min-w-[60px]">
@@ -155,11 +187,11 @@ export default function GroupDetailsPage() {
                                  <div className="text-xs text-muted-foreground">{group.base_currency}</div>
                                  {debt.amount.toFixed(0)}
                              </div>
-                             <Button 
-                                size="sm" 
-                                variant="secondary" 
+                             <Button
+                                size="sm"
+                                variant="secondary"
                                 className="h-8 text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
-                                disabled={isSettling}
+                                disabled={isSettling || isArchived}
                                 onClick={() => settle({
                                     groupId,
                                     debtorId: debt.from,
@@ -175,14 +207,16 @@ export default function GroupDetailsPage() {
                  )
              })}
              
-             <div className="pt-2">
-                <SettleUpDialog 
-                    groupId={groupId} 
-                    debts={debts} 
-                    members={members || []} 
-                    currency={group.base_currency} 
-                />
-             </div>
+             {!isArchived && (
+               <div className="pt-2">
+                  <SettleUpDialog
+                      groupId={groupId}
+                      debts={debts}
+                      members={members || []}
+                      currency={group.base_currency}
+                  />
+               </div>
+             )}
           </CardContent>
         </Card>
       )}
@@ -225,7 +259,7 @@ export default function GroupDetailsPage() {
                              
                              <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isUndoing}>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isUndoing || isArchived}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </AlertDialogTrigger>
@@ -269,10 +303,10 @@ export default function GroupDetailsPage() {
         ) : (
           filteredExpenses?.map((expense) => {
             const isFullySettled = expense.expense_splits?.length > 0 && expense.expense_splits.every((s: any) => s.settlement_id)
-            const isEditable = !isFullySettled && expense.type !== 'repayment'
+            const isEditable = !isFullySettled && expense.type !== 'repayment' && !isArchived
             return (
-              <Card 
-                  key={expense.id} 
+              <Card
+                  key={expense.id}
                   className={`transition-colors ${
                       isEditable ? "cursor-pointer hover:bg-muted/50" : "opacity-80"
                   } ${expense.type === 'repayment' ? "bg-muted/20 border-l-4 border-l-primary/50" : ""}`}
@@ -317,29 +351,30 @@ export default function GroupDetailsPage() {
         )}
       </div>
 
-      {/* Floating Add Button & Drawers */}
-      {members && (
-        <>
-            {/* Drawer for Adding - Uncontrolled Trigger */}
-            <AddExpenseDrawer 
-                groupId={groupId} 
-                currency={group.base_currency} 
-                members={members} 
-            />
+        {/* Floating Add Button & Drawers */}
+        {members && !isArchived && (
+          <>
+              {/* Drawer for Adding - Uncontrolled Trigger */}
+              <AddExpenseDrawer
+                  groupId={groupId}
+                  currency={group.base_currency}
+                  members={members}
+              />
 
-            {/* Drawer for Editing - Controlled by selectedExpenseId */}
-            <AddExpenseDrawer 
-                groupId={groupId} 
-                currency={group.base_currency} 
-                members={members}
-                expenseId={selectedExpenseId}
-                open={!!selectedExpenseId}
-                onOpenChange={(open) => {
-                    if (!open) setSelectedExpenseId(null)
-                }}
-            />
-        </>
-      )}
+              {/* Drawer for Editing - Controlled by selectedExpenseId */}
+              <AddExpenseDrawer
+                  groupId={groupId}
+                  currency={group.base_currency}
+                  members={members}
+                  expenseId={selectedExpenseId}
+                  open={!!selectedExpenseId}
+                  onOpenChange={(open) => {
+                      if (!open) setSelectedExpenseId(null)
+                  }}
+              />
+          </>
+        )}
+      </div>
     </div>
   )
 }
