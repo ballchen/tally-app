@@ -38,6 +38,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ImageCropDialog } from "@/components/ui/image-crop-dialog"
 import { useUpdateGroup, useArchiveGroup, useDeleteGroup, useHideGroup, useUploadGroupCover } from "@/hooks/use-groups"
@@ -258,7 +259,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
           {/* Cover Image Section */}
           {isOwner && !isArchived && (
             <div className="space-y-2">
-              <FormLabel>Cover Image</FormLabel>
+              <Label>Cover Image</Label>
               <div
                 className="relative w-full h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
