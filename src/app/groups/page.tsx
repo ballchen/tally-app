@@ -56,38 +56,42 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl space-y-6">
-      {/* Header / Navbar */}
-      <header className="flex items-center justify-between py-2">
-        {/* Left: App Title */}
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md">
-            <img src="/icon-192x192.png" alt="Tally Logo" className="h-full w-full object-cover" />
+    <div className="h-screen flex flex-col max-w-2xl mx-auto">
+      {/* Fixed Header / Navbar */}
+      <header className="flex-shrink-0 sticky top-0 z-50 px-4 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left: App Title */}
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md">
+              <img src="/icon-192x192.png" alt="Tally Logo" className="h-full w-full object-cover" />
+            </div>
+            <h1 className="text-xl font-semibold">Tally</h1>
           </div>
-          <h1 className="text-xl font-semibold">Tally</h1>
-        </div>
-        
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1">
-          <PushNotificationManager />
-          <ProfileSettingsDialog />
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleLogout} 
-            title="Logout"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1">
+            <PushNotificationManager />
+            <ProfileSettingsDialog />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleLogout} 
+              title="Logout"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Section Title + Create Button */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-muted-foreground">My Groups</h2>
-        {filter === "active" && <CreateGroupDialog />}
-      </div>
+      {/* Fixed Controls Bar */}
+      <div className="flex-shrink-0 px-4 pb-3 space-y-3">
+        {/* Section Title + Create Button */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium text-muted-foreground">My Groups</h2>
+          {filter === "active" && <CreateGroupDialog />}
+        </div>
 
       {/* Filter Tabs */}
       <div className="flex bg-muted rounded-lg p-1 w-fit">
@@ -97,30 +101,32 @@ export default function GroupsPage() {
         >
           Active
         </button>
-        {archivedCount > 0 && (
-          <button
-            className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "archived" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-            onClick={() => setFilter("archived")}
-          >
-            <Archive className="h-3.5 w-3.5" />
-            Archived
+        <button
+          className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "archived" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          onClick={() => setFilter("archived")}
+        >
+          <Archive className="h-3.5 w-3.5" />
+          Archived
+          {archivedCount > 0 && (
             <span className="ml-1 text-xs opacity-60">({archivedCount})</span>
-          </button>
-        )}
-        {hiddenCount > 0 && (
-          <button
-            className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "hidden" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
-            onClick={() => setFilter("hidden")}
-          >
-            <EyeOff className="h-3.5 w-3.5" />
-            Hidden
+          )}
+        </button>
+        <button
+          className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${filter === "hidden" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}
+          onClick={() => setFilter("hidden")}
+        >
+          <EyeOff className="h-3.5 w-3.5" />
+          Hidden
+          {hiddenCount > 0 && (
             <span className="ml-1 text-xs opacity-60">({hiddenCount})</span>
-          </button>
-        )}
+          )}
+        </button>
+      </div>
       </div>
 
-      {/* Groups List */}
-      <div className="grid grid-cols-1 gap-4">
+      {/* Scrollable Groups List */}
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="grid grid-cols-1 gap-4 pb-6">
         {groups?.length === 0 ? (
           <Card className="p-12 text-center border-dashed">
             <div className="flex flex-col items-center gap-4 text-muted-foreground">
@@ -195,27 +201,31 @@ export default function GroupsPage() {
                   <div className="flex items-center justify-between gap-3 pt-2">
                     {/* Member Avatars */}
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center -space-x-2">
+                      <div className="flex items-center -space-x-1.5">
                         {displayMembers.map((member: any, idx: number) => (
                           <Avatar 
                             key={member.user_id || idx} 
-                            className="h-7 w-7 border-2 border-background ring-1 ring-muted"
+                            className="h-7 w-7 border-[1.5px] border-background shadow-sm"
+                            style={{ zIndex: displayMembers.length - idx }}
                           >
                             <AvatarImage src={member.profiles?.avatar_url} />
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            <AvatarFallback className="text-xs bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
                               {member.profiles?.display_name?.[0]?.toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
                         ))}
                         {memberCount > 3 && (
-                          <div className="h-7 w-7 rounded-full border-2 border-background bg-muted flex items-center justify-center ring-1 ring-muted">
-                            <span className="text-xs font-medium text-muted-foreground">
+                          <div 
+                            className="h-7 w-7 rounded-full border-[1.5px] border-background bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center shadow-sm"
+                            style={{ zIndex: 0 }}
+                          >
+                            <span className="text-[10px] font-semibold text-muted-foreground">
                               +{memberCount - 3}
                             </span>
                           </div>
                         )}
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground font-medium">
                         {memberCount} {memberCount === 1 ? "member" : "members"}
                       </span>
                     </div>
@@ -230,6 +240,7 @@ export default function GroupsPage() {
             )
           })
         )}
+        </div>
       </div>
     </div>
   )
