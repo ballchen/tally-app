@@ -43,8 +43,8 @@ export default function GroupsPage() {
       <header className="flex items-center justify-between py-2">
         {/* Left: App Title */}
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
-            <span className="text-white font-bold text-lg">T</span>
+          <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md">
+            <img src="/icon-192x192.png" alt="Tally Logo" className="h-full w-full object-cover" />
           </div>
           <h1 className="text-xl font-semibold">Tally</h1>
         </div>

@@ -137,6 +137,11 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md glass-card border-none shadow-xl ring-1 ring-white/20 dark:ring-white/10">
       <CardHeader>
+        <div className="flex justify-center mb-4">
+          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-lg">
+            <img src="/icon-192x192.png" alt="Tally Logo" className="h-full w-full object-cover" />
+          </div>
+        </div>
         <CardTitle className="text-2xl text-center">Welcome to Tally</CardTitle>
         <CardDescription className="text-center">
             Split bills with friends, easily.
