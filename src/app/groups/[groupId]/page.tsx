@@ -97,6 +97,7 @@ export default function GroupDetailsPage() {
       {group.cover_image_url && (
         <div className="relative w-full h-40 -mx-0 mb-4 overflow-hidden rounded-b-2xl">
           <img
+            key={group.cover_image_url}
             src={group.cover_image_url}
             alt={`${group.name} cover`}
             className="w-full h-full object-cover"

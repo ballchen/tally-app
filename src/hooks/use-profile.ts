@@ -45,19 +45,32 @@ export function useProfile() {
       if (!user) throw new Error("No user")
 
       const fileExt = file.name.split('.').pop()
-      const filePath = `${user.id}/${Date.now()}.${fileExt}`
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `${user.id}/${fileName}`
 
+      // Upload with upsert to replace existing files
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: '0',
+          upsert: true
+        })
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Upload error:', uploadError)
+        throw uploadError
+      }
 
+      // Get public URL with cache busting parameter
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
-      return publicUrl
+      // Add timestamp to prevent caching issues
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`
+      
+      console.log('Upload successful:', urlWithCacheBust)
+      return urlWithCacheBust
     }
   })
 

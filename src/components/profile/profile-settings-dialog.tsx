@@ -73,12 +73,22 @@ export function ProfileSettingsDialog() {
     setPreviewUrl(previewObjectUrl)
 
     try {
+      console.log('Starting avatar upload...')
       const publicUrl = await uploadAvatar.mutateAsync(croppedFile)
-      // Clean up preview URL and use the real one
+      console.log('Upload successful, new URL:', publicUrl)
+      
+      // Clean up preview URL
       URL.revokeObjectURL(previewObjectUrl)
+      
+      // Set the new public URL with cache buster
       setPreviewUrl(publicUrl)
+      
+      // Force a small delay to ensure the image is ready
+      await new Promise(resolve => setTimeout(resolve, 500))
     } catch (error) {
-      console.error("Upload failed", error)
+      console.error("Upload failed:", error)
+      // Clean up preview URL on error
+      URL.revokeObjectURL(previewObjectUrl)
       // Revert to previous avatar on error
       setPreviewUrl(profile?.avatar_url || null)
     }
@@ -135,7 +145,17 @@ export function ProfileSettingsDialog() {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-primary/20">
-                    <AvatarImage src={previewUrl || undefined} className="object-cover" />
+                    <AvatarImage 
+                      key={previewUrl} 
+                      src={previewUrl || undefined} 
+                      className="object-cover"
+                      onError={(e) => {
+                        console.error('Image load error:', e)
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', previewUrl)
+                      }}
+                    />
                     <AvatarFallback className="text-2xl bg-muted">
                       {name?.[0]?.toUpperCase() || "U"}
                     </AvatarFallback>

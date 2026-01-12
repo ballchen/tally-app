@@ -133,19 +133,32 @@ export function useUploadGroupCover() {
   return useMutation({
     mutationFn: async ({ groupId, file }: { groupId: string; file: File }) => {
       const fileExt = file.name.split('.').pop()
-      const filePath = `${groupId}/${Date.now()}.${fileExt}`
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `${groupId}/${fileName}`
 
+      // Upload with upsert to replace existing files
       const { error: uploadError } = await supabase.storage
         .from('group-covers')
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: '0',
+          upsert: true
+        })
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Group cover upload error:', uploadError)
+        throw uploadError
+      }
 
+      // Get public URL with cache busting parameter
       const { data: { publicUrl } } = supabase.storage
         .from('group-covers')
         .getPublicUrl(filePath)
 
-      return publicUrl
+      // Add timestamp to prevent caching issues
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`
+      
+      console.log('Group cover upload successful:', urlWithCacheBust)
+      return urlWithCacheBust
     }
   })
 }

@@ -116,15 +116,26 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
     setCoverPreview(previewUrl)
 
     try {
+      console.log('Starting group cover upload...')
       const publicUrl = await uploadCover.mutateAsync({ groupId: group.id, file: croppedFile })
+      console.log('Group cover upload successful, new URL:', publicUrl)
+      
+      // Clean up preview URL
       URL.revokeObjectURL(previewUrl)
+      
+      // Set the new public URL with cache buster
       setCoverPreview(publicUrl)
+      
+      // Force a small delay to ensure the image is ready
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       // Auto-save cover image
       await updateGroup.mutateAsync({ groupId: group.id, coverImageUrl: publicUrl })
       toast.success("Cover image updated!")
     } catch (error) {
-      console.error("Upload failed", error)
+      console.error("Group cover upload failed:", error)
+      // Clean up preview URL on error
+      URL.revokeObjectURL(previewUrl)
       setCoverPreview(group.cover_image_url)
       toast.error("Failed to upload cover image")
     }
@@ -267,9 +278,16 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                 {coverPreview ? (
                   <>
                     <img
+                      key={coverPreview}
                       src={coverPreview}
                       alt="Group cover"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Cover image load error:', e)
+                      }}
+                      onLoad={() => {
+                        console.log('Cover image loaded successfully:', coverPreview)
+                      }}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                       <ImagePlus className="h-8 w-8 text-white" />
