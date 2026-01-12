@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useGroups, type GroupFilter } from "@/hooks/use-groups"
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog"
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, LogOut, Users, Archive, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PushNotificationManager } from "@/components/pwa/push-notification-manager"
 import { useRealtimeGroups } from "@/hooks/use-realtime-sync"
@@ -20,6 +21,8 @@ export default function GroupsPage() {
   const { data: groups, isLoading } = useGroups(filter)
   const supabase = createClient()
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [navigatingGroupId, setNavigatingGroupId] = useState<string | null>(null)
 
   // Enable realtime sync for groups list
   useRealtimeGroups()
@@ -27,6 +30,13 @@ export default function GroupsPage() {
   const handleLogout = async () => {
       await supabase.auth.signOut()
       router.push("/login")
+  }
+
+  const handleGroupClick = (groupId: string) => {
+    setNavigatingGroupId(groupId)
+    startTransition(() => {
+      router.push(`/groups/${groupId}`)
+    })
   }
 
   if (isLoading) {
@@ -120,9 +130,25 @@ export default function GroupsPage() {
             return (
               <Card
                 key={group.id}
-                className={`glass-card cursor-pointer hover:border-primary/50 hover:shadow-md transition-all active:scale-[0.99] ${isArchived ? "opacity-75" : ""}`}
-                onClick={() => router.push(`/groups/${group.id}`)}
+                className={`glass-card relative cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-150 active:scale-[0.98] active:opacity-80 touch-manipulation ${
+                  isArchived ? "opacity-75" : ""
+                } ${navigatingGroupId === group.id ? "opacity-60 scale-[0.98]" : ""}`}
+                onClick={() => handleGroupClick(group.id)}
+                onTouchStart={(e) => {
+                  // Add haptic feedback on touch devices
+                  e.currentTarget.style.transform = 'scale(0.98)'
+                  e.currentTarget.style.opacity = '0.8'
+                }}
+                onTouchEnd={(e) => {
+                  e.currentTarget.style.transform = ''
+                  e.currentTarget.style.opacity = ''
+                }}
               >
+                {navigatingGroupId === group.id && (
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-lg backdrop-blur-sm z-10">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                )}
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <CardTitle className="flex-1">{group.name}</CardTitle>
