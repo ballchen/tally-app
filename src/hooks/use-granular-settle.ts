@@ -27,9 +27,35 @@ export function useGranularSettle() {
       if (error) throw error
       return data
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast.success("Settlement recorded!")
       queryClient.invalidateQueries({ queryKey: ["group-details", variables.groupId] })
+      
+      // Send push notification to the creditor
+      try {
+        // Get debtor's name for notification
+        const { data: debtorProfile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", variables.debtorId)
+          .single()
+        
+        const debtorName = debtorProfile?.display_name || "Someone"
+        
+        // Send notification to creditor
+        fetch("/api/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userIds: [variables.creditorId],
+            title: "Payment Received",
+            body: `${debtorName} settled ${variables.currency} ${variables.amount.toFixed(2)} with you`,
+            url: `/groups/${variables.groupId}`
+          })
+        }).catch(err => console.error("Push notification failed", err))
+      } catch (error) {
+        console.error("Failed to send settlement notification", error)
+      }
     },
     onError: (error: any) => {
       toast.error("Settlement failed", {

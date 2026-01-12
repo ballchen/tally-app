@@ -79,6 +79,37 @@ export default function JoinGroupPage() {
           setJoining(false)
       } else {
           toast.success(`Joined ${group.name}!`)
+          
+          // Get current user's profile for notification
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", user.id)
+            .single()
+          
+          // Get all existing members to notify
+          const { data: existingMembers } = await supabase
+            .from("group_members")
+            .select("user_id")
+            .eq("group_id", group.id)
+            .neq("user_id", user.id) // Exclude the new member
+          
+          // Send push notification to existing members
+          if (existingMembers && existingMembers.length > 0) {
+            const memberName = profile?.display_name || "Someone"
+            
+            fetch("/api/push/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userIds: existingMembers.map(m => m.user_id),
+                title: "New Member Joined",
+                body: `${memberName} joined ${group.name}`,
+                url: `/groups/${group.id}`
+              })
+            }).catch(err => console.error("Push notification failed", err))
+          }
+          
           router.push(`/groups/${group.id}`)
       }
   }
