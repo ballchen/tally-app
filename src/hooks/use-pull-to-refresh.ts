@@ -11,7 +11,7 @@ interface UsePullToRefreshReturn {
   pullDistance: number;
   isRefreshing: boolean;
   isPulling: boolean;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const DEFAULT_THRESHOLD = 80;
