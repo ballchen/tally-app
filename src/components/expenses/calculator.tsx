@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Eraser } from "lucide-react"
 import {
@@ -15,12 +15,20 @@ interface CalculatorProps {
   onConfirm: (amount: number) => void
   currency: string
   onCurrencyChange?: (currency: string) => void
+  initialValue?: number
 }
 
 const COMMON_CURRENCIES = ["TWD", "USD", "JPY", "EUR", "KRW", "CNY", "GBP", "AUD"]
 
-export function Calculator({ onConfirm, currency, onCurrencyChange }: CalculatorProps) {
+export function Calculator({ onConfirm, currency, onCurrencyChange, initialValue }: CalculatorProps) {
   const [display, setDisplay] = useState("0")
+
+  // Set initial value when component mounts or initialValue changes
+  useEffect(() => {
+    if (initialValue && initialValue > 0) {
+      setDisplay(initialValue.toString())
+    }
+  }, [initialValue])
   
   const handleNumber = (num: string) => {
     setDisplay(prev => {

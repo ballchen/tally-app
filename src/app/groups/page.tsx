@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useGroups, type GroupFilter } from "@/hooks/use-groups";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
@@ -69,11 +70,14 @@ export default function GroupsPage() {
         <div className="flex items-center justify-between">
           {/* Left: App Title */}
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md">
-              <img
+            <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md relative">
+              <Image
                 src="/icon-192x192.png"
                 alt="Tally Logo"
-                className="h-full w-full object-cover"
+                width={36}
+                height={36}
+                className="object-cover"
+                priority
               />
             </div>
             <h1 className="text-xl font-semibold">Tally</h1>

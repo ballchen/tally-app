@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -163,11 +164,14 @@ export function LoginForm() {
     <Card className="w-full max-w-md glass-card border-none shadow-xl ring-1 ring-white/20 dark:ring-white/10">
       <CardHeader>
         <div className="flex justify-center mb-4">
-          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-lg">
-            <img
+          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-lg relative">
+            <Image
               src="/icon-192x192.png"
               alt="Tally Logo"
-              className="h-full w-full object-cover"
+              width={64}
+              height={64}
+              className="object-cover"
+              priority
             />
           </div>
         </div>
@@ -179,7 +183,7 @@ export function LoginForm() {
       <CardContent>
         <Tabs
           value={tab}
-          onValueChange={(v: string) => setTab(v as any)}
+          onValueChange={(v: string) => setTab(v as "login" | "register")}
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-2 mb-4">

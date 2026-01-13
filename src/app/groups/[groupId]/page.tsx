@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 import { useGroupDetails } from "@/hooks/use-group-details";
 import { useParams, useRouter } from "next/navigation";
@@ -168,11 +169,13 @@ export default function GroupDetailsPage() {
         {/* Cover Image */}
         {group.cover_image_url && (
           <div className="relative w-full h-40 overflow-hidden">
-            <img
+            <Image
               key={group.cover_image_url}
               src={group.cover_image_url}
               alt={`${group.name} cover`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
           </div>

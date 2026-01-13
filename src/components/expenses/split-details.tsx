@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -45,24 +46,38 @@ interface SplitDetailsProps {
   onEditAmount?: () => void
 }
 
-export function SplitDetails({ 
-  amount, 
-  currency, 
-  members, 
+export function SplitDetails({
+  amount,
+  currency,
+  members,
   currentUser,
-  
+
   splitMode, setSplitMode,
   description, setDescription,
   payerId, setPayerId,
   involvedIds, toggleInvolved,
   exactAmounts, handleAmountChange,
   percentAmounts, handlePercentChange,
-  
+
   splitAmountEqual,
   remainingExact,
   remainingPercent,
   onEditAmount
 }: SplitDetailsProps) {
+  const descriptionInputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputFocus = (element: HTMLElement | null) => {
+    if (!element) return;
+
+    // Small delay to wait for keyboard to appear
+    setTimeout(() => {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    }, 300);
+  };
 
   return (
     <div className="flex flex-col h-full bg-background rounded-xl">
@@ -99,10 +114,12 @@ export function SplitDetails({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <div className="space-y-6">
             <div className="space-y-2">
-                <Input 
-                    placeholder="Description (e.g. Sushi)" 
+                <Input
+                    ref={descriptionInputRef}
+                    placeholder="Description (e.g. Sushi)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    onFocus={() => handleInputFocus(descriptionInputRef.current)}
                     className="h-12 text-lg bg-muted/50 border-transparent focus:border-primary transition-all text-center"
                     // Removed autoFocus to prevent keyboard jumping on mobile
                 />
@@ -174,26 +191,30 @@ export function SplitDetails({
                                 {splitMode === "EXACT" && (
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">{currency}</span>
-                                        <Input 
-                                            type="number" 
+                                        <Input
+                                            type="number"
+                                            inputMode="decimal"
                                             className="w-24 h-9 text-right font-mono"
                                             placeholder="0.00"
                                             value={exactAmounts[member.user_id] || ""}
                                             onChange={(e) => handleAmountChange(member.user_id, e.target.value)}
                                             onClick={(e) => e.stopPropagation()}
+                                            onFocus={(e) => handleInputFocus(e.currentTarget)}
                                         />
                                     </div>
                                 )}
 
                                 {splitMode === "PERCENT" && (
                                     <div className="flex items-center gap-2">
-                                        <Input 
-                                            type="number" 
+                                        <Input
+                                            type="number"
+                                            inputMode="decimal"
                                             className="w-20 h-9 text-right font-mono"
                                             placeholder="0"
                                             value={percentAmounts[member.user_id] || ""}
                                             onChange={(e) => handlePercentChange(member.user_id, e.target.value)}
                                             onClick={(e) => e.stopPropagation()}
+                                            onFocus={(e) => handleInputFocus(e.currentTarget)}
                                         />
                                         <span className="text-xs text-muted-foreground">%</span>
                                     </div>
