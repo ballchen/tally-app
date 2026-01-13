@@ -29,6 +29,7 @@ import { useUndoSettlement } from "@/hooks/use-undo-settlement";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { useProfile } from "@/hooks/use-profile";
 import { toast } from "sonner";
+import { getCurrencySymbol } from "@/lib/currency";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -294,10 +295,9 @@ export default function GroupDetailsPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="font-bold text-right">
-                          <div className="text-xs text-muted-foreground">
-                            {group.base_currency}
+                          <div className="text-sm">
+                            {getCurrencySymbol(group.base_currency)} {debt.amount.toFixed(0)}
                           </div>
-                          {debt.amount.toFixed(0)}
                         </div>
                         <Button
                           size="sm"
@@ -481,8 +481,8 @@ export default function GroupDetailsPage() {
                       isEditable && setSelectedExpenseId(expense.id)
                     }
                   >
-                    <CardContent className="px-4 py-2 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                    <CardContent className="px-4 py-2 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="text-center min-w-[3rem] shrink-0">
                           <div className="text-xs text-muted-foreground">
                             {format(new Date(expense.date), "MMM")}
@@ -491,20 +491,20 @@ export default function GroupDetailsPage() {
                             {format(new Date(expense.date), "dd")}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                          <div className="font-medium leading-none">
+                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                          <div className="font-medium leading-none truncate">
                             {expense.description || "Expense"}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-muted-foreground truncate">
                             {expense.type === "repayment"
                               ? "Settlement"
                               : `paid by ${expense.payer?.display_name}`}
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="font-bold">
-                          {expense.currency} {expense.amount}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <div className="font-bold whitespace-nowrap">
+                          {getCurrencySymbol(expense.currency)} {expense.amount}
                         </div>
                         {expense.type !== "repayment" && (
                           <div className="flex items-center -space-x-1.5 pt-1">

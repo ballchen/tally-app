@@ -12,9 +12,35 @@ export const AVAILABLE_CURRENCIES = [
 export type CurrencyCode = typeof AVAILABLE_CURRENCIES[number]
 
 /**
+ * Currency symbol mapping
+ */
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  TWD: "NT$",
+  USD: "$",
+  JPY: "¥",
+  EUR: "€",
+  KRW: "₩",
+  CNY: "¥",
+  GBP: "£",
+  AUD: "A$",
+  HKD: "HK$",
+  SGD: "S$",
+  THB: "฿",
+  VND: "₫"
+}
+
+/**
+ * Get currency symbol from currency code
+ * Falls back to currency code if symbol not found
+ */
+export function getCurrencySymbol(currencyCode: string): string {
+  return CURRENCY_SYMBOLS[currencyCode] || currencyCode
+}
+
+/**
  * Get the exchange rate from Source Currency to Target Currency.
  * Logic: (Amount / Rate_USD_to_Source) * Rate_USD_to_Target
- * 
+ *
  * Example: JPY to TWD
  * 1. JPY to USD: 1 / Rate(USDJPY)
  * 2. USD to TWD: * Rate(USDTWD)
