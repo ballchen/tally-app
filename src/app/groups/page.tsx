@@ -21,14 +21,18 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PushNotificationManager } from "@/components/pwa/push-notification-manager";
 import { useRealtimeGroups } from "@/hooks/use-realtime-sync";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function GroupsPage() {
   const { user } = useAuthStore();
   const [filter, setFilter] = useState<GroupFilter>("active");
-  const { data: groups, isLoading } = useGroups(filter);
+  const { data: groups, isLoading, refetch } = useGroups(filter);
   const { data: allGroups } = useGroups("all"); // Fetch all groups to check counts
   const supabase = createClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const [navigatingGroupId, setNavigatingGroupId] = useState<string | null>(
     null
@@ -36,6 +40,16 @@ export default function GroupsPage() {
 
   // Enable realtime sync for groups list
   useRealtimeGroups();
+
+  // Pull-to-refresh
+  const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({
+    onRefresh: async () => {
+      // Invalidate and refetch groups data
+      await queryClient.invalidateQueries({ queryKey: ["groups", filter] });
+      await queryClient.invalidateQueries({ queryKey: ["groups", "all"] });
+      await refetch();
+    },
+  });
 
   // Calculate counts for each filter
   const archivedCount = allGroups?.filter((g) => !!g.archived_at).length || 0;
@@ -154,7 +168,11 @@ export default function GroupsPage() {
       </div>
 
       {/* Scrollable Groups List */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-4 relative">
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+        />
         <div className="grid grid-cols-1 gap-4 pb-6">
           {groups?.length === 0 ? (
             <Card className="p-12 text-center border-dashed">

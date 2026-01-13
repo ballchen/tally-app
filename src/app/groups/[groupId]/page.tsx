@@ -43,6 +43,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function GroupDetailsPage() {
   const params = useParams();
@@ -53,7 +56,6 @@ export default function GroupDetailsPage() {
   );
   const [scrollY, setScrollY] = useState(0);
   const [showAllExpenses, setShowAllExpenses] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const INITIAL_EXPENSE_LIMIT = 5;
 
@@ -63,7 +65,8 @@ export default function GroupDetailsPage() {
 
   // Enable realtime sync for this group
   useRealtimeSync(groupId);
-  const { data, isLoading, error } = useGroupDetails(groupId);
+  const { data, isLoading, error, refetch } = useGroupDetails(groupId);
+  const queryClient = useQueryClient();
 
   // Handle scroll for sticky header effects
   useEffect(() => {
@@ -93,6 +96,15 @@ export default function GroupDetailsPage() {
   useEffect(() => {
     setShowAllExpenses(false);
   }, [view]);
+
+  // Pull-to-refresh
+  const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
+    onRefresh: async () => {
+      // Invalidate and refetch group details
+      await queryClient.invalidateQueries({ queryKey: ["group-details", groupId] });
+      await refetch();
+    },
+  });
 
   if (isLoading) {
     return (
@@ -182,7 +194,11 @@ export default function GroupDetailsPage() {
       )}
 
       {/* Scrollable Content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative">
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+        />
         {/* Cover Image */}
         {group.cover_image_url && (
           <div className="relative w-full h-40 overflow-hidden">
