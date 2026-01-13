@@ -91,6 +91,15 @@ export function SplitDetails({
     }, 300);
   };
 
+  const handleInputBlur = () => {
+    // Force a recheck after blur to ensure drawer resizes properly
+    // This helps when user taps the keyboard "Done" button
+    setTimeout(() => {
+      // Trigger a resize event to force drawer height recalculation
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
+
   return (
     <div className="flex flex-col h-full bg-background rounded-xl">
       <div className="p-4 bg-muted/20 border-b space-y-4">
@@ -143,6 +152,7 @@ export function SplitDetails({
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     onFocus={() => handleInputFocus(descriptionInputRef.current)}
+                    onBlur={handleInputBlur}
                     className="h-12 text-lg bg-muted/50 border-transparent focus:border-primary transition-all text-center"
                     // Removed autoFocus to prevent keyboard jumping on mobile
                 />
@@ -223,6 +233,7 @@ export function SplitDetails({
                                             onChange={(e) => handleAmountChange(member.user_id, e.target.value)}
                                             onClick={(e) => e.stopPropagation()}
                                             onFocus={(e) => handleInputFocus(e.currentTarget)}
+                                            onBlur={handleInputBlur}
                                         />
                                     </div>
                                 )}
@@ -238,6 +249,7 @@ export function SplitDetails({
                                             onChange={(e) => handlePercentChange(member.user_id, e.target.value)}
                                             onClick={(e) => e.stopPropagation()}
                                             onFocus={(e) => handleInputFocus(e.currentTarget)}
+                                            onBlur={handleInputBlur}
                                         />
                                         <span className="text-xs text-muted-foreground">%</span>
                                     </div>

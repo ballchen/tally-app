@@ -74,6 +74,7 @@ export function AddExpenseDrawer({
   const [amount, setAmount] = useState(0);
   const [selectedCurrency, setSelectedCurrency] = useState(currency);
   const [drawerHeight, setDrawerHeight] = useState("90vh");
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const drawerContentRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuthStore();
@@ -107,6 +108,8 @@ export function AddExpenseDrawer({
       return;
     }
 
+    let resizeTimeout: NodeJS.Timeout;
+
     const handleResize = () => {
       const viewport = window.visualViewport;
       if (!viewport) return;
@@ -124,9 +127,42 @@ export function AddExpenseDrawer({
         const newHeight = Math.min(availableHeight * 0.95, windowHeight * 0.9);
         setDrawerHeight(`${newHeight}px`);
       } else {
-        // Keyboard is closed - use default height
-        setDrawerHeight("90vh");
+        // Keyboard is closed - use taller height when input is focused
+        // This provides more space before keyboard appears and reduces feeling of being cramped
+        setDrawerHeight(isInputFocused ? "96vh" : "90vh");
       }
+    };
+
+    // Handle focus in - increase drawer height for better input experience
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if focused element is an input or textarea
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        setIsInputFocused(true);
+        // Immediately resize to taller height (before keyboard appears)
+        setTimeout(() => {
+          handleResize();
+        }, 50);
+      }
+    };
+
+    // Handle focus out with delay to allow keyboard animation
+    const handleFocusOut = () => {
+      // Clear any pending resize checks
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+
+      // Mark input as not focused
+      setIsInputFocused(false);
+
+      // Wait for keyboard to fully hide (iOS keyboard animation takes ~300-500ms)
+      resizeTimeout = setTimeout(() => {
+        handleResize();
+
+        // Double check after additional delay to ensure viewport has settled
+        setTimeout(() => {
+          handleResize();
+        }, 200);
+      }, 300);
     };
 
     // Initial check
@@ -136,11 +172,18 @@ export function AddExpenseDrawer({
     window.visualViewport.addEventListener("resize", handleResize);
     window.visualViewport.addEventListener("scroll", handleResize);
 
+    // Listen to focus events to catch keyboard show/hide
+    window.addEventListener("focusin", handleFocusIn);
+    window.addEventListener("focusout", handleFocusOut);
+
     return () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       window.visualViewport?.removeEventListener("resize", handleResize);
       window.visualViewport?.removeEventListener("scroll", handleResize);
+      window.removeEventListener("focusin", handleFocusIn);
+      window.removeEventListener("focusout", handleFocusOut);
     };
-  }, [isOpen]);
+  }, [isOpen, isInputFocused]);
 
   const form = useSplitForm(amount, members);
   const initializedRef = useRef<string | null>(null);
