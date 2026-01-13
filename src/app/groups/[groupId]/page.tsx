@@ -17,6 +17,8 @@ import {
   Trash2,
   History as HistoryIcon,
   Archive,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { AddExpenseDrawer } from "@/components/expenses/add-expense-drawer";
@@ -50,7 +52,10 @@ export default function GroupDetailsPage() {
     null
   );
   const [scrollY, setScrollY] = useState(0);
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const INITIAL_EXPENSE_LIMIT = 5;
 
   // Get current user
   const { data: profile } = useProfile();
@@ -83,6 +88,11 @@ export default function GroupDetailsPage() {
   );
   const { mutate: settle, isPending: isSettling } = useGranularSettle();
   const { mutate: undoSettlement, isPending: isUndoing } = useUndoSettlement();
+
+  // Reset showAllExpenses when view changes
+  useEffect(() => {
+    setShowAllExpenses(false);
+  }, [view]);
 
   if (isLoading) {
     return (
@@ -122,6 +132,12 @@ export default function GroupDetailsPage() {
     if (view === "current") return !isFullySettled;
     return isFullySettled;
   });
+
+  // Calculate displayed expenses
+  const displayedExpenses = showAllExpenses
+    ? filteredExpenses
+    : filteredExpenses?.slice(0, INITIAL_EXPENSE_LIMIT);
+  const hasMoreExpenses = filteredExpenses && filteredExpenses.length > INITIAL_EXPENSE_LIMIT;
 
   const copyInviteCode = () => {
     navigator.clipboard.writeText(group.invite_code);
@@ -455,7 +471,8 @@ export default function GroupDetailsPage() {
                 </div>
               </Card>
             ) : (
-              filteredExpenses?.map((expense) => {
+              <>
+                {displayedExpenses?.map((expense) => {
                 const isFullySettled =
                   expense.expense_splits?.length > 0 &&
                   expense.expense_splits.every(
@@ -542,7 +559,38 @@ export default function GroupDetailsPage() {
                     </CardContent>
                   </Card>
                 );
-              })
+              })}
+
+              {/* Show More / Show Less Button */}
+              {hasMoreExpenses && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full max-w-xs shadow-sm hover:shadow-md transition-all"
+                    onClick={() => setShowAllExpenses(!showAllExpenses)}
+                  >
+                    {showAllExpenses ? (
+                      <>
+                        <ChevronUp className="h-4 w-4 mr-2" />
+                        Show Less
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (showing {filteredExpenses?.length})
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4 mr-2" />
+                        Show All
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({filteredExpenses?.length - INITIAL_EXPENSE_LIMIT} more)
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
             )}
           </div>
         </div>
