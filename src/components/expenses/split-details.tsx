@@ -6,8 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 // import { ScrollArea } from "@/components/ui/scroll-area" // Removed for better touch handling in Drawer
 import { cn } from "@/lib/utils"
-import { Check, User } from "lucide-react"
+import { Check, User, ArrowRightLeft } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useExchangeRates } from "@/hooks/use-exchange-rates"
+import { getExchangeRate, getCurrencySymbol } from "@/lib/currency"
 
 interface Member {
   user_id: string
@@ -17,28 +19,29 @@ interface Member {
 interface SplitDetailsProps {
   amount: number
   currency: string
+  baseCurrency: string
   members: Member[]
   currentUser: any
-  
+
   // State from hook
   splitMode: "EQUAL" | "EXACT" | "PERCENT"
   setSplitMode: (mode: "EQUAL" | "EXACT" | "PERCENT") => void
-  
+
   description: string
   setDescription: (val: string) => void
-  
+
   payerId: string
   setPayerId: (val: string) => void
-  
+
   involvedIds: string[]
   toggleInvolved: (id: string) => void
-  
+
   exactAmounts: Record<string, number>
   handleAmountChange: (id: string, val: string) => void
-  
+
   percentAmounts: Record<string, number>
   handlePercentChange: (id: string, val: string) => void
-  
+
   // Derived
   splitAmountEqual: number
   remainingExact: number
@@ -49,6 +52,7 @@ interface SplitDetailsProps {
 export function SplitDetails({
   amount,
   currency,
+  baseCurrency,
   members,
   currentUser,
 
@@ -65,6 +69,14 @@ export function SplitDetails({
   onEditAmount
 }: SplitDetailsProps) {
   const descriptionInputRef = useRef<HTMLInputElement>(null);
+  const { data: exchangeRates } = useExchangeRates();
+
+  // Calculate exchange rate if currencies differ
+  const showExchangeRate = currency !== baseCurrency;
+  const exchangeRate = showExchangeRate
+    ? getExchangeRate(currency, baseCurrency, exchangeRates)
+    : null;
+  const convertedAmount = exchangeRate ? amount * exchangeRate : null;
 
   const handleInputFocus = (element: HTMLElement | null) => {
     if (!element) return;
@@ -84,12 +96,23 @@ export function SplitDetails({
       <div className="p-4 bg-muted/20 border-b space-y-4">
          <div className="text-center">
             <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Total Bill</div>
-            <div 
+            <div
                 className={cn("text-4xl font-bold mt-1 text-primary animate-in zoom-in-50 duration-300", onEditAmount && "cursor-pointer hover:opacity-80 transition-opacity")}
                 onClick={onEditAmount}
             >
-                {currency} {amount.toFixed(2)}
+                {getCurrencySymbol(currency)} {amount.toFixed(2)}
             </div>
+            {showExchangeRate && exchangeRate && convertedAmount && (
+              <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+                <ArrowRightLeft className="h-3 w-3" />
+                <span>
+                  ≈ {getCurrencySymbol(baseCurrency)} {convertedAmount.toFixed(2)}
+                </span>
+                <span className="text-[10px]">
+                  (1 {currency} = {exchangeRate.toFixed(4)} {baseCurrency})
+                </span>
+              </div>
+            )}
              {splitMode === "EXACT" && (
                 <div className={cn("text-xs mt-1 font-medium", Math.abs(remainingExact) < 0.05 ? "text-green-500" : "text-destructive")}>
                     {Math.abs(remainingExact) < 0.05 ? "Perfectly allocated" : `Remaining: ${remainingExact.toFixed(2)}`}

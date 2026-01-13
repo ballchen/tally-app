@@ -351,6 +351,7 @@ export function AddExpenseDrawer({
                 <Calculator
                   onConfirm={handleConfirmAmount}
                   currency={selectedCurrency}
+                  baseCurrency={currency}
                   onCurrencyChange={setSelectedCurrency}
                   initialValue={amount}
                 />
@@ -361,6 +362,7 @@ export function AddExpenseDrawer({
                   <SplitDetails
                     amount={amount}
                     currency={selectedCurrency}
+                    baseCurrency={currency}
                     members={members}
                     currentUser={user}
                     {...form}

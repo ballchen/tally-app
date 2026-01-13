@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Eraser } from "lucide-react"
+import { Eraser, ArrowRightLeft } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -10,18 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useExchangeRates } from "@/hooks/use-exchange-rates"
+import { getExchangeRate, getCurrencySymbol } from "@/lib/currency"
 
 interface CalculatorProps {
   onConfirm: (amount: number) => void
   currency: string
+  baseCurrency?: string
   onCurrencyChange?: (currency: string) => void
   initialValue?: number
 }
 
 const COMMON_CURRENCIES = ["TWD", "USD", "JPY", "EUR", "KRW", "CNY", "GBP", "AUD"]
 
-export function Calculator({ onConfirm, currency, onCurrencyChange, initialValue }: CalculatorProps) {
+export function Calculator({ onConfirm, currency, baseCurrency, onCurrencyChange, initialValue }: CalculatorProps) {
   const [display, setDisplay] = useState("0")
+  const { data: exchangeRates } = useExchangeRates();
 
   // Set initial value when component mounts or initialValue changes
   useEffect(() => {
@@ -29,11 +33,21 @@ export function Calculator({ onConfirm, currency, onCurrencyChange, initialValue
       setDisplay(initialValue.toString())
     }
   }, [initialValue])
+
+  // Calculate exchange rate if currencies differ
+  const showExchangeRate = baseCurrency && currency !== baseCurrency;
+  const amount = parseFloat(display) || 0;
+  const exchangeRate = showExchangeRate
+    ? getExchangeRate(currency, baseCurrency, exchangeRates)
+    : null;
+  const convertedAmount = exchangeRate && amount > 0 ? amount * exchangeRate : null;
   
   const handleNumber = (num: string) => {
     setDisplay(prev => {
       if (prev === "0") return num
       if (prev.includes(".") && prev.split(".")[1].length >= 2) return prev
+      // Limit total length to prevent overflow
+      if (prev.length >= 12) return prev
       return prev + num
     })
   }
@@ -63,10 +77,20 @@ export function Calculator({ onConfirm, currency, onCurrencyChange, initialValue
     }
   }
 
+  // Dynamic font size based on display length
+  const getFontSize = () => {
+    const length = display.length
+    if (length <= 6) return "text-6xl"
+    if (length <= 8) return "text-5xl"
+    if (length <= 10) return "text-4xl"
+    return "text-3xl"
+  }
+
   return (
     <div className="w-full bg-transparent p-4 pt-0">
-      <div className="flex items-center justify-between mb-6 px-6 py-8 bg-muted/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
-          <div className="min-w-[80px]">
+      <div className="mb-6 px-6 py-8 bg-muted/20 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
+        <div className="flex items-center justify-between">
+          <div className="min-w-[80px] flex-shrink-0">
             {onCurrencyChange ? (
                <Select value={currency} onValueChange={onCurrencyChange}>
                  <SelectTrigger className="h-10 border-none bg-transparent text-3xl font-medium text-muted-foreground shadow-none p-0 focus:ring-0">
@@ -84,9 +108,18 @@ export function Calculator({ onConfirm, currency, onCurrencyChange, initialValue
                <span className="text-3xl font-medium text-muted-foreground">{currency}</span>
             )}
           </div>
-          <span className="text-6xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <span className={`${getFontSize()} font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent transition-all duration-200 overflow-hidden text-ellipsis whitespace-nowrap flex-1 text-right`}>
             {display}
           </span>
+        </div>
+        {showExchangeRate && exchangeRate && convertedAmount && (
+          <div className="text-xs text-muted-foreground mt-2 text-right flex items-center justify-end gap-1">
+            <ArrowRightLeft className="h-3 w-3" />
+            <span>
+              ≈ {getCurrencySymbol(baseCurrency!)} {convertedAmount.toFixed(2)}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-4 gap-4">
