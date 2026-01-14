@@ -2,22 +2,15 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { useAuthStore } from "@/store/useAuthStore";
 import { useGroups, type GroupFilter } from "@/hooks/use-groups";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
 import { ProfileSettingsDialog } from "@/components/profile/profile-settings-dialog";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, LogOut, Users, Archive, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PushNotificationManager } from "@/components/pwa/push-notification-manager";
 import { useRealtimeGroups } from "@/hooks/use-realtime-sync";
@@ -26,14 +19,13 @@ import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicato
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function GroupsPage() {
-  const { user } = useAuthStore();
   const [filter, setFilter] = useState<GroupFilter>("active");
   const { data: groups, isLoading, refetch } = useGroups(filter);
   const { data: allGroups } = useGroups("all"); // Fetch all groups to check counts
   const supabase = createClient();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isPending, startTransition] = useTransition();
+  const [startTransition] = useTransition();
   const [navigatingGroupId, setNavigatingGroupId] = useState<string | null>(
     null
   );
@@ -80,7 +72,7 @@ export default function GroupsPage() {
   return (
     <div className="h-screen flex flex-col max-w-2xl mx-auto">
       {/* Fixed Header / Navbar */}
-      <header className="flex-shrink-0 sticky top-0 z-50 px-4 py-4">
+      <header className="shrink-0 sticky top-0 z-50 px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Left: App Title */}
           <div className="flex items-center gap-3">
@@ -115,7 +107,7 @@ export default function GroupsPage() {
       </header>
 
       {/* Fixed Controls Bar */}
-      <div className="flex-shrink-0 sticky top-[73px] z-40 px-4 pb-3 space-y-3">
+      <div className="shrink-0 sticky top-[73px] z-40 px-4 pb-3 space-y-3">
         {/* Section Title + Create Button */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium text-muted-foreground">
@@ -168,7 +160,10 @@ export default function GroupsPage() {
       </div>
 
       {/* Scrollable Groups List */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-4 relative">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 relative"
+      >
         <PullToRefreshIndicator
           pullDistance={pullDistance}
           isRefreshing={isRefreshing}
@@ -264,7 +259,7 @@ export default function GroupsPage() {
                               style={{ zIndex: displayMembers.length - idx }}
                             >
                               <AvatarImage src={member.profiles?.avatar_url} />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
+                              <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
                                 {member.profiles?.display_name?.[0]?.toUpperCase() ||
                                   "?"}
                               </AvatarFallback>
@@ -272,7 +267,7 @@ export default function GroupsPage() {
                           ))}
                           {memberCount > 3 && (
                             <div
-                              className="h-7 w-7 rounded-full border-[1.5px] border-background bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center shadow-sm"
+                              className="h-7 w-7 rounded-full border-[1.5px] border-background bg-linear-to-br from-muted to-muted/80 flex items-center justify-center shadow-sm"
                               style={{ zIndex: 0 }}
                             >
                               <span className="text-[10px] font-semibold text-muted-foreground">
