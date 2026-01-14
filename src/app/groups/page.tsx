@@ -25,7 +25,7 @@ export default function GroupsPage() {
   const supabase = createClient();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [navigatingGroupId, setNavigatingGroupId] = useState<string | null>(
     null
   );

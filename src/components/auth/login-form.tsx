@@ -27,8 +27,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
+
+const REMEMBER_ME_KEY = "tally_remember_me";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const loginSchema = z.object({
@@ -50,12 +53,28 @@ export function LoginForm() {
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = React.useState(false);
   const [tab, setTab] = React.useState<"login" | "register">("login");
+  const [rememberMe, setRememberMe] = React.useState(false);
 
   // Login Form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  // Load saved credentials on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem(REMEMBER_ME_KEY);
+    if (saved) {
+      try {
+        const { email, password } = JSON.parse(saved);
+        loginForm.setValue("email", email || "");
+        loginForm.setValue("password", password || "");
+        setRememberMe(true);
+      } catch {
+        localStorage.removeItem(REMEMBER_ME_KEY);
+      }
+    }
+  }, [loginForm]);
 
   // Signup Form
   const signupForm = useForm<z.infer<typeof signupSchema>>({
@@ -80,6 +99,16 @@ export function LoginForm() {
     }
 
     if (data.user) {
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem(
+          REMEMBER_ME_KEY,
+          JSON.stringify({ email: values.email, password: values.password })
+        );
+      } else {
+        localStorage.removeItem(REMEMBER_ME_KEY);
+      }
+
       setUser(data.user);
       toast.success("Welcome back!");
       router.push(next || "/");
@@ -232,6 +261,21 @@ export function LoginForm() {
                     </FormItem>
                   )}
                 />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) =>
+                      setRememberMe(checked === true)
+                    }
+                  />
+                  <label
+                    htmlFor="remember-me"
+                    className="text-sm text-muted-foreground cursor-pointer select-none"
+                  >
+                    Remember me
+                  </label>
+                </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
