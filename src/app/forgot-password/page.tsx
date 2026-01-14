@@ -45,8 +45,9 @@ export default function ForgotPasswordPage() {
   async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
     setIsLoading(true);
 
-    const redirectUrl = new URL("/auth/callback", window.location.origin);
-    redirectUrl.searchParams.set("next", "/reset-password");
+    // Redirect directly to reset-password page
+    // Supabase will append hash fragment with access_token
+    const redirectUrl = new URL("/reset-password", window.location.origin);
 
     const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
       redirectTo: redirectUrl.toString(),

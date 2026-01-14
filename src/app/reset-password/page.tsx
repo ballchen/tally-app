@@ -7,7 +7,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowLeft, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -44,11 +44,55 @@ export default function ResetPasswordPage() {
   const supabase = createClient();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [isSessionReady, setIsSessionReady] = React.useState(false);
+  const [sessionError, setSessionError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
+
+  // Handle the recovery token from URL hash on mount
+  React.useEffect(() => {
+    const handleRecoveryToken = async () => {
+      // Check if there's already a valid session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsSessionReady(true);
+        return;
+      }
+
+      // Check for hash params (Supabase sends tokens via hash fragment)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const type = hashParams.get("type");
+
+      if (type === "recovery" && accessToken) {
+        // Set the session using the recovery tokens
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || "",
+        });
+
+        if (error) {
+          setSessionError("Invalid or expired reset link. Please request a new one.");
+          return;
+        }
+
+        // Clear the hash from URL for security
+        window.history.replaceState(null, "", window.location.pathname);
+        setIsSessionReady(true);
+      } else {
+        // No valid recovery token found
+        setSessionError("Invalid reset link. Please request a new password reset.");
+      }
+    };
+
+    handleRecoveryToken();
+  }, [supabase.auth]);
 
   async function onSubmit(values: z.infer<typeof resetPasswordSchema>) {
     setIsLoading(true);
@@ -101,7 +145,31 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isSuccess ? (
+          {sessionError ? (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
+              <p className="text-center text-sm text-muted-foreground">
+                {sessionError}
+              </p>
+              <Link href="/forgot-password" className="block">
+                <Button className="w-full">Request New Reset Link</Button>
+              </Link>
+              <Link href="/login" className="block">
+                <Button variant="ghost" className="w-full">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Login
+                </Button>
+              </Link>
+            </div>
+          ) : !isSessionReady ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : isSuccess ? (
             <div className="space-y-4">
               <div className="flex justify-center">
                 <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -128,11 +196,24 @@ export default function ResetPasswordPage() {
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Enter new password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter new password"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -145,11 +226,24 @@ export default function ResetPasswordPage() {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Confirm new password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="Confirm new password"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
