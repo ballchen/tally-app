@@ -54,10 +54,28 @@ export default function ResetPasswordPage() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  // Handle the recovery token from URL hash on mount
+  // Handle the recovery token from URL hash or auth state change
   React.useEffect(() => {
-    const handleRecoveryToken = async () => {
-      // Check if there's already a valid session
+    let isSubscribed = true;
+
+    // Listen for auth state changes (Supabase triggers PASSWORD_RECOVERY event)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isSubscribed) return;
+
+        if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+          // Clear the hash from URL for security
+          if (window.location.hash) {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+          setIsSessionReady(true);
+        }
+      }
+    );
+
+    // Also check for existing session or hash params
+    const checkSession = async () => {
+      // First check if there's already a valid session
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsSessionReady(true);
@@ -65,33 +83,51 @@ export default function ResetPasswordPage() {
       }
 
       // Check for hash params (Supabase sends tokens via hash fragment)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
-      const type = hashParams.get("type");
+      const hash = window.location.hash;
+      if (hash) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const type = hashParams.get("type");
 
-      if (type === "recovery" && accessToken) {
-        // Set the session using the recovery tokens
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || "",
-        });
+        if (type === "recovery" && accessToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || "",
+          });
 
-        if (error) {
-          setSessionError("Invalid or expired reset link. Please request a new one.");
+          if (error) {
+            setSessionError("Invalid or expired reset link. Please request a new one.");
+            return;
+          }
+
+          window.history.replaceState(null, "", window.location.pathname);
+          setIsSessionReady(true);
           return;
         }
-
-        // Clear the hash from URL for security
-        window.history.replaceState(null, "", window.location.pathname);
-        setIsSessionReady(true);
-      } else {
-        // No valid recovery token found
-        setSessionError("Invalid reset link. Please request a new password reset.");
       }
+
+      // Wait a bit for auth state change event before showing error
+      setTimeout(() => {
+        if (isSubscribed) {
+          // Check session one more time before showing error
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+              setIsSessionReady(true);
+            } else if (isSubscribed) {
+              setSessionError("Invalid reset link. Please request a new password reset.");
+            }
+          });
+        }
+      }, 1500);
     };
 
-    handleRecoveryToken();
+    checkSession();
+
+    return () => {
+      isSubscribed = false;
+      subscription.unsubscribe();
+    };
   }, [supabase.auth]);
 
   async function onSubmit(values: z.infer<typeof resetPasswordSchema>) {
