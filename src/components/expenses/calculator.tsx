@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { useExchangeRates } from "@/hooks/use-exchange-rates"
 import { getExchangeRate, getCurrencySymbol } from "@/lib/currency"
+import { useTranslations } from "next-intl"
 
 interface CalculatorProps {
   onConfirm: (amount: number) => void
@@ -26,6 +27,7 @@ const COMMON_CURRENCIES = ["TWD", "USD", "JPY", "EUR", "KRW", "CNY", "GBP", "AUD
 export function Calculator({ onConfirm, currency, baseCurrency, onCurrencyChange, initialValue }: CalculatorProps) {
   const [display, setDisplay] = useState("0")
   const { data: exchangeRates } = useExchangeRates();
+  const t = useTranslations("Calculator")
 
   // Set initial value when component mounts or initialValue changes
   useEffect(() => {
@@ -139,7 +141,7 @@ export function Calculator({ onConfirm, currency, baseCurrency, onCurrencyChange
         <Button variant="outline" className="h-16 text-2xl font-medium rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 transition-all hover:scale-105" onClick={() => handleNumber("1")}>1</Button>
         <Button variant="outline" className="h-16 text-2xl font-medium rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 transition-all hover:scale-105" onClick={() => handleNumber("2")}>2</Button>
         <Button variant="outline" className="h-16 text-2xl font-medium rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 transition-all hover:scale-105" onClick={() => handleNumber("3")}>3</Button>
-        <Button className="h-[9rem] row-span-2 text-2xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-xl shadow-primary/30 hover:scale-105 transition-all" onClick={handleConfirm}>OK</Button>
+        <Button className="h-[9rem] row-span-2 text-2xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-xl shadow-primary/30 hover:scale-105 transition-all" onClick={handleConfirm}>{t("ok")}</Button>
         
         {/* Row 4 */}
         <Button variant="outline" className="h-16 text-2xl font-medium col-span-2 rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 transition-all hover:scale-105" onClick={() => handleNumber("0")}>0</Button>

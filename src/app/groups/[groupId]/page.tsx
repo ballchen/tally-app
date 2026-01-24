@@ -46,6 +46,7 @@ import {
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 
 export default function GroupDetailsPage() {
   const params = useParams();
@@ -56,6 +57,7 @@ export default function GroupDetailsPage() {
   );
   const [scrollY, setScrollY] = useState(0);
   const [showAllExpenses, setShowAllExpenses] = useState(false);
+  const t = useTranslations("GroupDetails");
 
   const INITIAL_EXPENSE_LIMIT = 5;
 
@@ -117,8 +119,8 @@ export default function GroupDetailsPage() {
   if (error || !data) {
     return (
       <div className="flex h-screen items-center justify-center flex-col gap-4">
-        <p className="text-destructive">Error loading group</p>
-        <Button onClick={() => router.push("/groups")}>Back to Groups</Button>
+        <p className="text-destructive">{t("errorLoading")}</p>
+        <Button onClick={() => router.push("/groups")}>{t("backToGroups")}</Button>
       </div>
     );
   }
@@ -153,7 +155,7 @@ export default function GroupDetailsPage() {
 
   const copyInviteCode = () => {
     navigator.clipboard.writeText(group.invite_code);
-    toast.success("Invite code copied!");
+    toast.success(t("inviteCodeCopied"));
   };
 
   // Calculate when to show sticky title
@@ -179,7 +181,7 @@ export default function GroupDetailsPage() {
                 {isArchived && (
                   <Badge variant="secondary" className="text-xs">
                     <Archive className="h-3 w-3 mr-1" />
-                    Archived
+                    {t("archived")}
                   </Badge>
                 )}
               </div>
@@ -233,12 +235,12 @@ export default function GroupDetailsPage() {
                 {isArchived && (
                   <Badge variant="secondary" className="text-xs">
                     <Archive className="h-3 w-3 mr-1" />
-                    Archived
+                    {t("archived")}
                   </Badge>
                 )}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Code: {group.invite_code}</span>
+                <span>{t("code")}: {group.invite_code}</span>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -285,7 +287,7 @@ export default function GroupDetailsPage() {
             <Card className="bg-muted/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Outstanding Balances
+                  {t("outstandingBalances")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -321,7 +323,7 @@ export default function GroupDetailsPage() {
                             {fromUser?.display_name}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            owes {toUser?.display_name}
+                            {t("owes")} {toUser?.display_name}
                           </span>
                         </div>
                       </div>
@@ -346,7 +348,7 @@ export default function GroupDetailsPage() {
                             })
                           }
                         >
-                          Settle
+                          {t("settle")}
                         </Button>
                       </div>
                     </div>
@@ -379,7 +381,7 @@ export default function GroupDetailsPage() {
                   }`}
                   onClick={() => setView("current")}
                 >
-                  Current
+                  {t("current")}
                 </button>
                 <button
                   className={`px-3 py-1 text-sm rounded-md transition-all ${
@@ -389,7 +391,7 @@ export default function GroupDetailsPage() {
                   }`}
                   onClick={() => setView("history")}
                 >
-                  History
+                  {t("history")}
                 </button>
               </div>
             </div>
@@ -400,7 +402,7 @@ export default function GroupDetailsPage() {
               data.settlements.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
-                    Recent Settlements
+                    {t("recentSettlements")}
                   </h3>
                   {data.settlements.map((settlement) => (
                     <Card
@@ -414,7 +416,7 @@ export default function GroupDetailsPage() {
                           </div>
                           <div className="flex flex-col">
                             <div className="text-sm font-medium">
-                              Settled by{" "}
+                              {t("settledBy")}{" "}
                               {settlement.creator?.display_name || "Unknown"}
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -440,21 +442,19 @@ export default function GroupDetailsPage() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Undo Settlement?
+                                {t("undoSettlement")}
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will reactivate the expenses associated
-                                with this settlement and remove the repayment
-                                record.
+                                {t("undoSettlementDesc")}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => undoSettlement(settlement.id)}
                                 className="bg-destructive hover:bg-destructive/90"
                               >
-                                Confirm Undo
+                                {t("confirmUndo")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -475,13 +475,13 @@ export default function GroupDetailsPage() {
                   <div className="space-y-1">
                     <h3 className="font-semibold text-foreground">
                       {view === "current"
-                        ? "All settled up!"
-                        : "No history yet"}
+                        ? t("allSettledUp")
+                        : t("noHistoryYet")}
                     </h3>
                     <p className="text-sm">
                       {view === "current"
-                        ? "Add an expense to get started"
-                        : "Past settlements will appear here"}
+                        ? t("addExpenseToStart")
+                        : t("pastSettlements")}
                     </p>
                   </div>
                 </div>
@@ -526,12 +526,12 @@ export default function GroupDetailsPage() {
                         </div>
                         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                           <div className="font-medium leading-none truncate">
-                            {expense.description || "Expense"}
+                            {expense.description || t("expense")}
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
                             {expense.type === "repayment"
-                              ? "Settlement"
-                              : `paid by ${expense.payer?.display_name}`}
+                              ? t("settlement")
+                              : t("paidBy", { name: expense.payer?.display_name || "" })}
                           </div>
                         </div>
                       </div>
@@ -544,7 +544,7 @@ export default function GroupDetailsPage() {
                             {!expense.expense_splits ||
                             expense.expense_splits.length === 0 ? (
                               <span className="text-[10px] text-muted-foreground/50">
-                                Details not loaded
+                                {t("detailsNotLoaded")}
                               </span>
                             ) : (
                               expense.expense_splits.map(
@@ -589,17 +589,17 @@ export default function GroupDetailsPage() {
                     {showAllExpenses ? (
                       <>
                         <ChevronUp className="h-4 w-4 mr-2" />
-                        Show Less
+                        {t("showLess")}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          (showing {filteredExpenses?.length})
+                          {t("showing", {count: filteredExpenses?.length})}
                         </span>
                       </>
                     ) : (
                       <>
                         <ChevronDown className="h-4 w-4 mr-2" />
-                        Show All
+                        {t("showAll")}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          ({filteredExpenses?.length - INITIAL_EXPENSE_LIMIT} more)
+                          {t("more", {count: filteredExpenses?.length - INITIAL_EXPENSE_LIMIT})}
                         </span>
                       </>
                     )}

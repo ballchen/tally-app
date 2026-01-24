@@ -17,6 +17,7 @@ import { useRealtimeGroups } from "@/hooks/use-realtime-sync";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 
 export default function GroupsPage() {
   const [filter, setFilter] = useState<GroupFilter>("active");
@@ -29,6 +30,7 @@ export default function GroupsPage() {
   const [navigatingGroupId, setNavigatingGroupId] = useState<string | null>(
     null
   );
+  const t = useTranslations("Groups");
 
   // Enable realtime sync for groups list
   useRealtimeGroups();
@@ -97,7 +99,7 @@ export default function GroupsPage() {
               variant="ghost"
               size="icon"
               onClick={handleLogout}
-              title="Logout"
+              title={t("logout")}
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-5 w-5" />
@@ -111,7 +113,7 @@ export default function GroupsPage() {
         {/* Section Title + Create Button */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium text-muted-foreground">
-            My Groups
+            {t("title")}
           </h2>
           {filter === "active" && <CreateGroupDialog />}
         </div>
@@ -126,7 +128,7 @@ export default function GroupsPage() {
             }`}
             onClick={() => setFilter("active")}
           >
-            Active
+            {t("active")}
           </button>
           <button
             className={`px-3 py-1.5 text-sm rounded-md transition-all flex items-center gap-1 ${
@@ -137,7 +139,7 @@ export default function GroupsPage() {
             onClick={() => setFilter("archived")}
           >
             <Archive className="h-3.5 w-3.5" />
-            Archived
+            {t("archived")}
             {archivedCount > 0 && (
               <span className="ml-1 text-xs opacity-60">({archivedCount})</span>
             )}
@@ -151,7 +153,7 @@ export default function GroupsPage() {
             onClick={() => setFilter("hidden")}
           >
             <EyeOff className="h-3.5 w-3.5" />
-            Hidden
+            {t("hidden")}
             {hiddenCount > 0 && (
               <span className="ml-1 text-xs opacity-60">({hiddenCount})</span>
             )}
@@ -179,16 +181,14 @@ export default function GroupsPage() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-foreground">
-                    {filter === "active" && "No groups yet"}
-                    {filter === "archived" && "No archived groups"}
-                    {filter === "hidden" && "No hidden groups"}
+                    {filter === "active" && t("noGroups")}
+                    {filter === "archived" && t("noArchived")}
+                    {filter === "hidden" && t("noHidden")}
                   </h3>
                   <p className="text-sm max-w-sm">
-                    {filter === "active" &&
-                      "Create your first group to start splitting bills with friends!"}
-                    {filter === "archived" &&
-                      "Archived groups will appear here"}
-                    {filter === "hidden" && "Hidden groups will appear here"}
+                    {filter === "active" && t("createFirst")}
+                    {filter === "archived" && t("archivedDesc")}
+                    {filter === "hidden" && t("hiddenDesc")}
                   </p>
                 </div>
                 {filter === "active" && <CreateGroupDialog />}
@@ -236,13 +236,13 @@ export default function GroupsPage() {
                       {isArchived && (
                         <Badge variant="secondary" className="text-xs">
                           <Archive className="h-3 w-3 mr-1" />
-                          Archived
+                          {t("archived")}
                         </Badge>
                       )}
                       {isHidden && (
                         <Badge variant="outline" className="text-xs">
                           <EyeOff className="h-3 w-3 mr-1" />
-                          Hidden
+                          {t("hidden")}
                         </Badge>
                       )}
                     </div>
@@ -278,7 +278,7 @@ export default function GroupsPage() {
                         </div>
                         <span className="text-sm text-muted-foreground font-medium">
                           {memberCount}{" "}
-                          {memberCount === 1 ? "member" : "members"}
+                          {memberCount === 1 ? t("member") : t("members")}
                         </span>
                       </div>
 

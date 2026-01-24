@@ -43,11 +43,7 @@ import { Separator } from "@/components/ui/separator"
 import { ImageCropDialog } from "@/components/ui/image-crop-dialog"
 import { useUpdateGroup, useArchiveGroup, useDeleteGroup, useHideGroup, useUploadGroupCover } from "@/hooks/use-groups"
 import { toast } from "sonner"
-
-const formSchema = z.object({
-  name: z.string().min(1, "Group name is required"),
-  baseCurrency: z.string().min(3, "Currency code must be 3 characters").max(3),
-})
+import { useTranslations } from "next-intl"
 
 interface EditGroupDialogProps {
   group: {
@@ -76,6 +72,12 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
   const deleteGroup = useDeleteGroup()
   const hideGroup = useHideGroup()
   const uploadCover = useUploadGroupCover()
+  const t = useTranslations("EditGroup")
+
+  const formSchema = z.object({
+    name: z.string().min(1, t("validation.nameRequired")),
+    baseCurrency: z.string().min(3, t("validation.currencyLength")).max(3),
+  })
 
   const isOwner = group.created_by === currentUserId
   const isArchived = !!group.archived_at
@@ -131,13 +133,13 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
 
       // Auto-save cover image
       await updateGroup.mutateAsync({ groupId: group.id, coverImageUrl: publicUrl })
-      toast.success("Cover image updated!")
+      toast.success(t("success.coverUpdated"))
     } catch (error) {
       console.error("Group cover upload failed:", error)
       // Clean up preview URL on error
       URL.revokeObjectURL(previewUrl)
       setCoverPreview(group.cover_image_url)
-      toast.error("Failed to upload cover image")
+      toast.error(t("error.uploadCover"))
     }
   }
 
@@ -145,10 +147,10 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
     try {
       await updateGroup.mutateAsync({ groupId: group.id, coverImageUrl: null })
       setCoverPreview(null)
-      toast.success("Cover image removed!")
+      toast.success(t("success.coverRemoved"))
     } catch (error) {
       console.error("Failed to remove cover", error)
-      toast.error("Failed to remove cover image")
+      toast.error(t("error.removeCover"))
     }
   }
 
@@ -170,10 +172,10 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
       {
         onSuccess: () => {
           setOpen(false)
-          toast.success("Group updated!")
+          toast.success(t("success.updated"))
         },
         onError: (error) => {
-          toast.error("Failed to update group")
+          toast.error(t("error.update"))
           console.error(error)
         },
       }
@@ -188,10 +190,10 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
       },
       {
         onSuccess: () => {
-          toast.success("Invite code regenerated!")
+          toast.success(t("success.inviteRegenerated"))
         },
         onError: (error) => {
-          toast.error("Failed to regenerate invite code")
+          toast.error(t("error.regenerate"))
           console.error(error)
         },
       }
@@ -203,11 +205,11 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
       { groupId: group.id, archive: !isArchived },
       {
         onSuccess: () => {
-          toast.success(isArchived ? "Group unarchived!" : "Group archived!")
+          toast.success(isArchived ? t("success.unarchived") : t("success.archived"))
           setOpen(false)
         },
         onError: (error) => {
-          toast.error(`Failed to ${isArchived ? "unarchive" : "archive"} group`)
+          toast.error(isArchived ? t("error.unarchive") : t("error.archive"))
           console.error(error)
         },
       }
@@ -219,14 +221,14 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
       { groupId: group.id, hide: !isHidden },
       {
         onSuccess: () => {
-          toast.success(isHidden ? "Group unhidden!" : "Group hidden from your list!")
+          toast.success(isHidden ? t("success.unhidden") : t("success.hidden"))
           setOpen(false)
           if (!isHidden) {
             router.push("/groups")
           }
         },
         onError: (error) => {
-          toast.error(`Failed to ${isHidden ? "unhide" : "hide"} group`)
+          toast.error(isHidden ? t("error.unhide") : t("error.hide"))
           console.error(error)
         },
       }
@@ -236,12 +238,12 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
   function handleDelete() {
     deleteGroup.mutate(group.id, {
       onSuccess: () => {
-        toast.success("Group deleted!")
+        toast.success(t("success.deleted"))
         setOpen(false)
         router.push("/groups")
       },
       onError: (error) => {
-        toast.error("Failed to delete group")
+        toast.error(t("error.delete"))
         console.error(error)
       },
     })
@@ -259,18 +261,18 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Group Settings</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
               {isArchived
-                ? "This group is archived and read-only."
-                : "Update group settings. Changes to currency may affect balance calculations."}
+                ? t("archivedDesc")
+                : t("activeDesc")}
             </DialogDescription>
           </DialogHeader>
 
           {/* Cover Image Section */}
           {isOwner && !isArchived && (
             <div className="space-y-2">
-              <Label>Cover Image</Label>
+              <Label>{t("coverImage")}</Label>
               <div
                 className="relative w-full h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
@@ -313,7 +315,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                     <ImagePlus className="h-8 w-8 mb-2" />
-                    <span className="text-sm">Click to add cover image</span>
+                    <span className="text-sm">{t("addCover")}</span>
                   </div>
                 )}
               </div>
@@ -345,7 +347,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Group Name</FormLabel>
+                    <FormLabel>{t("name")}</FormLabel>
                     <FormControl>
                       <Input {...field} disabled={isArchived || !isOwner} />
                     </FormControl>
@@ -358,12 +360,12 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                 name="baseCurrency"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base Currency</FormLabel>
+                    <FormLabel>{t("baseCurrency")}</FormLabel>
                     <FormControl>
                       <Input {...field} disabled={isArchived || !isOwner} />
                     </FormControl>
                     <FormDescription>
-                      Changing currency will affect how balances are displayed
+                      {t("currencyDesc")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -371,7 +373,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
               />
 
               <div className="space-y-2">
-                <FormLabel>Invite Code</FormLabel>
+                <FormLabel>{t("inviteCode")}</FormLabel>
                 <div className="flex items-center gap-2">
                   <Input value={group.invite_code} disabled className="font-mono" />
                   {isOwner && !isArchived && (
@@ -391,7 +393,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Regenerating will invalidate the old invite link
+                  {t("regenerateDesc")}
                 </p>
               </div>
 
@@ -401,7 +403,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                     {updateGroup.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Save Changes
+                    {t("save")}
                   </Button>
                 </DialogFooter>
               )}
@@ -412,18 +414,18 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
 
           {/* Danger Zone */}
           <div className="space-y-4">
-            <h4 className="text-sm font-medium text-destructive">Danger Zone</h4>
+            <h4 className="text-sm font-medium text-destructive">{t("dangerZone")}</h4>
 
             {/* Hide/Unhide - Available to all members */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">
-                  {isHidden ? "Unhide Group" : "Hide Group"}
+                  {isHidden ? t("unhide") : t("hide")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {isHidden
-                    ? "Show this group in your active list"
-                    : "Hide this group from your list (personal)"}
+                    ? t("unhideDesc")
+                    : t("hideDesc")}
                 </p>
               </div>
               <Button
@@ -447,12 +449,12 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">
-                    {isArchived ? "Unarchive Group" : "Archive Group"}
+                    {isArchived ? t("unarchive") : t("archive")}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {isArchived
-                      ? "Restore this group to active status"
-                      : "Make this group read-only for all members"}
+                      ? t("unarchiveDesc")
+                      : t("archiveDesc")}
                   </p>
                 </div>
                 <Button
@@ -476,9 +478,9 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
             {isOwner && (
               <div className="flex items-center justify-between rounded-lg border border-destructive/50 p-3">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-destructive">Delete Group</p>
+                  <p className="text-sm font-medium text-destructive">{t("delete")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Permanently delete this group and all its data
+                    {t("deleteDesc")}
                   </p>
                 </div>
                 <AlertDialog>
@@ -489,13 +491,13 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Group?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete <strong>{group.name}</strong> and all its expenses, settlements, and member data. This action cannot be undone.
+                       {t("deleteConfirmDesc")} <strong>{group.name}</strong>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
                         className="bg-destructive hover:bg-destructive/90"
@@ -503,7 +505,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                         {deleteGroup.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        Delete
+                        {t("confirmDelete")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

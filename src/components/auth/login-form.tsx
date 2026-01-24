@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +10,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,20 +32,9 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
-
-const REMEMBER_ME_KEY = "tally_remember_me";
 import { useAuthStore } from "@/store/useAuthStore";
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-const signupSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email(),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+const REMEMBER_ME_KEY = "tally_remember_me";
 
 export function LoginForm() {
   const router = useRouter();
@@ -51,11 +42,24 @@ export function LoginForm() {
   const next = searchParams.get("next");
   const supabase = createClient();
   const { setUser } = useAuthStore();
+  const t = useTranslations("Auth");
+  
   const [isLoading, setIsLoading] = React.useState(false);
   const [tab, setTab] = React.useState<"login" | "register">("login");
   const [rememberMe, setRememberMe] = React.useState(false);
   const [showLoginPassword, setShowLoginPassword] = React.useState(false);
   const [showSignupPassword, setShowSignupPassword] = React.useState(false);
+
+  const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6, t("password") + " " + t("loginFailed")), // Simplification for validation msg
+  });
+  
+  const signupSchema = z.object({
+    name: z.string().min(2, t("displayName") + "..."),
+    email: z.string().email(),
+    password: z.string().min(6),
+  });
 
   // Login Form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -93,7 +97,7 @@ export function LoginForm() {
     });
 
     if (error) {
-      toast.error("Login failed", {
+      toast.error(t("loginFailed"), {
         description: error.message,
       });
       setIsLoading(false);
@@ -112,7 +116,7 @@ export function LoginForm() {
       }
 
       setUser(data.user);
-      toast.success("Welcome back!");
+      toast.success(t("welcomeBack"));
       router.push(next || "/");
     }
     setIsLoading(false);
@@ -142,7 +146,7 @@ export function LoginForm() {
     );
 
     if (signupError) {
-      toast.error("Signup failed", {
+      toast.error(t("signupFailed"), {
         description: signupError.message,
       });
       setIsLoading(false);
@@ -155,8 +159,8 @@ export function LoginForm() {
 
       if (needsConfirmation) {
         // Email confirmation required
-        toast.success("Account created!", {
-          description: "Please check your email to verify your account",
+        toast.success(t("accountCreated"), {
+          description: t("checkEmail"),
           duration: 10000,
         });
         setTab("login");
@@ -174,8 +178,8 @@ export function LoginForm() {
 
       if (loginError) {
         // If auto-login fails, show success but ask to login manually
-        toast.success("Account created!", {
-          description: "Please sign in to continue",
+        toast.success(t("accountCreated"), {
+          description: t("signInToContinue"),
         });
         setTab("login");
         loginForm.setValue("email", values.email);
@@ -185,7 +189,7 @@ export function LoginForm() {
 
       if (loginData.user) {
         setUser(loginData.user);
-        toast.success(`Welcome, ${values.name}!`);
+        toast.success(t("welcomeUser", { name: values.name }));
         router.push(next || "/");
       }
     }
@@ -207,9 +211,9 @@ export function LoginForm() {
             />
           </div>
         </div>
-        <CardTitle className="text-2xl text-center">Welcome to Tally</CardTitle>
+        <CardTitle className="text-2xl text-center">{t("welcomeTitle")}</CardTitle>
         <CardDescription className="text-center">
-          Split bills with friends, easily.
+          {t("welcomeDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -219,8 +223,8 @@ export function LoginForm() {
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Sign Up</TabsTrigger>
+            <TabsTrigger value="login">{t("login")}</TabsTrigger>
+            <TabsTrigger value="register">{t("signUp")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
@@ -234,7 +238,7 @@ export function LoginForm() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("email")}</FormLabel>
                       <FormControl>
                         <Input placeholder="m@example.com" {...field} />
                       </FormControl>
@@ -248,12 +252,12 @@ export function LoginForm() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center justify-between">
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel>{t("password")}</FormLabel>
                         <Link
                           href="/forgot-password"
                           className="text-sm text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
                         >
-                          Forgot password?
+                          {t("forgotPassword")}
                         </Link>
                       </div>
                       <FormControl>
@@ -291,14 +295,14 @@ export function LoginForm() {
                     htmlFor="remember-me"
                     className="text-sm text-muted-foreground cursor-pointer select-none"
                   >
-                    Remember me
+                    {t("rememberMe")}
                   </label>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Sign In
+                  {t("signIn")}
                 </Button>
               </form>
             </Form>
@@ -315,7 +319,7 @@ export function LoginForm() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Display Name</FormLabel>
+                      <FormLabel>{t("displayName")}</FormLabel>
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
                       </FormControl>
@@ -328,7 +332,7 @@ export function LoginForm() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("email")}</FormLabel>
                       <FormControl>
                         <Input placeholder="m@example.com" {...field} />
                       </FormControl>
@@ -341,7 +345,7 @@ export function LoginForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t("password")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -369,7 +373,7 @@ export function LoginForm() {
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Create Account
+                  {t("createAccount")}
                 </Button>
               </form>
             </Form>

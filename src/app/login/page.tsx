@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { LoginForm } from "@/components/auth/login-form"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 // Loading fallback component
 function LoginFormSkeleton() {
@@ -23,6 +24,9 @@ function LoginFormSkeleton() {
 export default function LoginPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10 relative overflow-hidden">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
       {/* Background Decor */}
       <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-secondary/20 -z-10" />
       

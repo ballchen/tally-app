@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Debt } from "@/hooks/use-balances"
 import { useSettleUp } from "@/hooks/use-settle-up"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface SettleUpDialogProps {
   groupId: string
@@ -26,6 +27,7 @@ interface SettleUpDialogProps {
 export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDialogProps) {
   const [open, setOpen] = useState(false)
   const settleUp = useSettleUp()
+  const t = useTranslations("SettleUp")
 
   const getMember = (id: string) => members.find(m => m.user_id === id)?.profiles
 
@@ -44,14 +46,14 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">
-          View Balances & Settle
+          {t("viewBalancesAndSettle")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Settlement Plan</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Here is the suggested plan to settle all debts.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
         
@@ -74,7 +76,7 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
                             </Avatar>
                         </div>
                         <div className="font-semibold text-right">
-                            <div className="text-xs text-muted-foreground">pays</div>
+                            <div className="text-xs text-muted-foreground">{t("pays")}</div>
                             {currency} {debt.amount.toFixed(2)}
                         </div>
                     </div>
@@ -85,10 +87,10 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
         <DialogFooter className="sm:justify-between gap-2">
            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle2 className="h-4 w-4" />
-              <span>Marks all expenses as settled</span>
+              <span>{t("marksAsSettled")}</span>
            </div>
            <Button onClick={handleSettle} disabled={settleUp.isPending}>
-             {settleUp.isPending ? "Settling..." : "Settle All"}
+             {settleUp.isPending ? t("settling") : t("settleAll")}
            </Button>
         </DialogFooter>
       </DialogContent>

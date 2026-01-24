@@ -32,6 +32,7 @@ import { useUpdateExpense } from "@/hooks/use-update-expense";
 import { useDeleteExpense } from "@/hooks/use-delete-expense";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 // ... imports
 
@@ -81,6 +82,7 @@ export function AddExpenseDrawer({
   const addExpense = useAddExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
+  const t = useTranslations("AddExpense");
 
   // Fetch expense if editing
   const { data: expenseData, isLoading: isLoadingExpense } = useExpense(
@@ -91,11 +93,11 @@ export function AddExpenseDrawer({
     if (!expenseId) return;
     deleteExpense.mutate(expenseId, {
       onSuccess: () => {
-        toast.success("Expense deleted");
+        toast.success(t("expenseDeleted"));
         setIsOpen(false);
       },
       onError: (error) => {
-        toast.error("Failed to delete expense", {
+        toast.error(t("failedToDelete"), {
           description: error.message,
         });
       },
@@ -267,11 +269,11 @@ export function AddExpenseDrawer({
         },
         {
           onSuccess: () => {
-            toast.success("Expense updated");
+            toast.success(t("expenseUpdated"));
             setIsOpen(false);
           },
           onError: (error) => {
-            toast.error("Failed to update expense", {
+            toast.error(t("failedToUpdate"), {
               description: error.message,
             });
           },
@@ -280,7 +282,7 @@ export function AddExpenseDrawer({
     } else {
       addExpense.mutate(commonData, {
         onSuccess: () => {
-          toast.success("Expense added");
+          toast.success(t("expenseAdded"));
           setIsOpen(false);
 
           // Trigger Push Notification (Fire and forget)
@@ -299,10 +301,12 @@ export function AddExpenseDrawer({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   userIds: targetUserIds,
-                  title: "New Expense Added",
-                  body: `${payerName} added: ${
-                    form.description || "Expense"
-                  } (${selectedCurrency} ${amount})`,
+                  title: t("pushTitle"),
+                  body: t("pushBody", {
+                    name: payerName,
+                    description: form.description || "Expense",
+                    amount: `${selectedCurrency} ${amount}`
+                  }),
                   url: `/groups/${groupId}`,
                 }),
               }).catch((err) => console.error("Push failed", err));
@@ -310,7 +314,7 @@ export function AddExpenseDrawer({
           }
         },
         onError: (error) => {
-          toast.error("Failed to add expense", {
+          toast.error(t("failedToAdd"), {
             description: error.message,
           });
         },
@@ -341,12 +345,12 @@ export function AddExpenseDrawer({
         <DrawerHeader className="relative">
           <DrawerTitle className="text-center">
             {isLoadingExpense
-              ? "Loading..."
+              ? t("loading")
               : step === "amount"
-              ? "Enter Amount"
+              ? t("enterAmount")
               : expenseId
-              ? "Edit Expense"
-              : "Details"}
+              ? t("editExpense")
+              : t("details")}
           </DrawerTitle>
           {expenseId && !isLoadingExpense && (
             <div className="absolute right-4 top-3">
@@ -362,19 +366,18 @@ export function AddExpenseDrawer({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
+                    <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This cannot be undone. This will permanently remove the
-                      expense and all associated splits.
+                      {t("deleteDesc")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
                       className="bg-destructive hover:bg-destructive/90"
                     >
-                      Delete
+                      {t("delete")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -419,12 +422,12 @@ export function AddExpenseDrawer({
                     disabled={isPending || !form.isValid}
                   >
                     {isPending
-                      ? "Saving..."
+                      ? t("saving")
                       : form.isValid
                       ? expenseId
-                        ? "Update Expense"
-                        : "Save Split"
-                      : "Check Allocation"}
+                        ? t("updateExpense")
+                        : t("saveSplit")
+                      : t("checkAllocation")}
                   </Button>
                 </DrawerFooter>
               </>
