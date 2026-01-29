@@ -89,7 +89,9 @@ export function Calculator({ onConfirm, currency, baseCurrency, onCurrencyChange
     if (length <= 6) return "text-6xl"
     if (length <= 8) return "text-5xl"
     if (length <= 10) return "text-4xl"
-    return "text-3xl"
+    if (length <= 12) return "text-3xl"
+    if (length <= 14) return "text-2xl"
+    return "text-xl"
   }
 
   return (
@@ -114,7 +116,7 @@ export function Calculator({ onConfirm, currency, baseCurrency, onCurrencyChange
                <span className="text-3xl font-medium text-muted-foreground">{currency}</span>
             )}
           </div>
-          <span className={`${getFontSize()} font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent transition-all duration-200 overflow-hidden text-ellipsis whitespace-nowrap flex-1 text-right`}>
+          <span className={`${getFontSize()} font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent transition-all duration-200 flex-1 text-right break-all`}>
             {display}
           </span>
         </div>
