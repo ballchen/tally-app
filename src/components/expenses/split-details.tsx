@@ -227,6 +227,7 @@ export function SplitDetails({
                                         <Input
                                             type="number"
                                             inputMode="decimal"
+                                            min="0"
                                             className="w-24 h-9 text-right font-mono"
                                             placeholder="0.00"
                                             value={exactAmounts[member.user_id] || ""}
@@ -243,6 +244,7 @@ export function SplitDetails({
                                         <Input
                                             type="number"
                                             inputMode="decimal"
+                                            min="0"
                                             className="w-20 h-9 text-right font-mono"
                                             placeholder="0"
                                             value={percentAmounts[member.user_id] || ""}

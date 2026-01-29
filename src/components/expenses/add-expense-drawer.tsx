@@ -91,17 +91,20 @@ export function AddExpenseDrawer({
 
   const handleDelete = () => {
     if (!expenseId) return;
-    deleteExpense.mutate(expenseId, {
-      onSuccess: () => {
-        toast.success(t("expenseDeleted"));
-        setIsOpen(false);
-      },
-      onError: (error) => {
-        toast.error(t("failedToDelete"), {
-          description: error.message,
-        });
-      },
-    });
+    deleteExpense.mutate(
+      { expenseId, groupId },
+      {
+        onSuccess: () => {
+          toast.success(t("expenseDeleted"));
+          setIsOpen(false);
+        },
+        onError: (error) => {
+          toast.error(t("failedToDelete"), {
+            description: error.message,
+          });
+        },
+      }
+    );
   };
 
   // Handle keyboard appearance on mobile using Visual Viewport API

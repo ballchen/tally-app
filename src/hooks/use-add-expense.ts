@@ -19,6 +19,10 @@ export function useAddExpense() {
 
   return useMutation({
     mutationFn: async ({ groupId, payerId, amount, currency, description, split }: CreateExpenseParams) => {
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
       // 1. Create Expense
       const { data: expense, error: expenseError } = await supabase
         .from("expenses")
@@ -27,7 +31,8 @@ export function useAddExpense() {
           payer_id: payerId,
           amount,
           currency,
-          description
+          description,
+          created_by: user.id
         })
         .select()
         .single()

@@ -31,7 +31,7 @@ export function useGroupDetails(groupId: string) {
 
       if (membersError) throw membersError
 
-      // 3. Fetch Expenses
+      // 3. Fetch Expenses (exclude soft-deleted)
       const { data: expenses, error: expensesError } = await supabase
         .from("expenses")
         .select(`
@@ -54,6 +54,7 @@ export function useGroupDetails(groupId: string) {
           )
         `)
         .eq("group_id", groupId)
+        .is("deleted_at", null)
         .order("date", { ascending: false })
 
       if (expensesError) throw expensesError

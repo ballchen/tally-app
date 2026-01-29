@@ -48,8 +48,12 @@ export function Calculator({ onConfirm, currency, baseCurrency, onCurrencyChange
     setDisplay(prev => {
       if (prev === "0") return num
       if (prev.includes(".") && prev.split(".")[1].length >= 2) return prev
-      // Limit total length to prevent overflow
-      if (prev.length >= 12) return prev
+
+      // Count digits (excluding decimal point)
+      const digitCount = prev.replace(".", "").length
+      // Limit to 10 digits total
+      if (digitCount >= 10) return prev
+
       return prev + num
     })
   }

@@ -9,7 +9,7 @@ export function useExpense(expenseId: string | null) {
     queryFn: async () => {
       if (!expenseId) return null
 
-      // 1. Fetch Expense
+      // 1. Fetch Expense (exclude soft-deleted)
       const { data: expense, error: expenseError } = await supabase
         .from("expenses")
         .select(`
@@ -21,6 +21,7 @@ export function useExpense(expenseId: string | null) {
             )
         `)
         .eq("id", expenseId)
+        .is("deleted_at", null)
         .single()
 
       if (expenseError) throw expenseError

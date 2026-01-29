@@ -46,11 +46,15 @@ export function useSplitForm(amount: number, members: Member[]) {
 
   const handleAmountChange = (userId: string, val: string) => {
     const num = parseFloat(val) || 0
+    // Prevent negative amounts
+    if (num < 0) return
     setExactAmounts(prev => ({ ...prev, [userId]: num }))
   }
 
   const handlePercentChange = (userId: string, val: string) => {
     const num = parseFloat(val) || 0
+    // Prevent negative percentages
+    if (num < 0) return
     setPercentAmounts(prev => ({ ...prev, [userId]: num }))
   }
 
