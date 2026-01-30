@@ -7,7 +7,14 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, CheckCircle2, ArrowLeft, AlertCircle, Eye, EyeOff } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  ArrowLeft,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -59,24 +66,26 @@ export default function ResetPasswordPage() {
     let isSubscribed = true;
 
     // Listen for auth state changes (Supabase triggers PASSWORD_RECOVERY event)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!isSubscribed) return;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isSubscribed) return;
 
-        if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
-          // Clear the hash from URL for security
-          if (window.location.hash) {
-            window.history.replaceState(null, "", window.location.pathname);
-          }
-          setIsSessionReady(true);
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        // Clear the hash from URL for security
+        if (window.location.hash) {
+          window.history.replaceState(null, "", window.location.pathname);
         }
+        setIsSessionReady(true);
       }
-    );
+    });
 
     // Also check for existing session or hash params
     const checkSession = async () => {
       // First check if there's already a valid session
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         setIsSessionReady(true);
         return;
@@ -97,7 +106,9 @@ export default function ResetPasswordPage() {
           });
 
           if (error) {
-            setSessionError("Invalid or expired reset link. Please request a new one.");
+            setSessionError(
+              "Invalid or expired reset link. Please request a new one.",
+            );
             return;
           }
 
@@ -115,7 +126,9 @@ export default function ResetPasswordPage() {
             if (session) {
               setIsSessionReady(true);
             } else if (isSubscribed) {
-              setSessionError("Invalid reset link. Please request a new password reset.");
+              setSessionError(
+                "Invalid reset link. Please request a new password reset.",
+              );
             }
           });
         }
@@ -156,7 +169,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-dvh flex items-center justify-center p-4 bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       <Card className="w-full max-w-md glass-card border-none shadow-xl ring-1 ring-white/20 dark:ring-white/10">
         <CardHeader>
           <div className="flex justify-center mb-4">
@@ -270,7 +283,9 @@ export default function ResetPasswordPage() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                           >
                             {showConfirmPassword ? (

@@ -28,7 +28,7 @@ export default function GroupsPage() {
   const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
   const [navigatingGroupId, setNavigatingGroupId] = useState<string | null>(
-    null
+    null,
   );
   const t = useTranslations("Groups");
 
@@ -198,7 +198,7 @@ export default function GroupsPage() {
             groups?.map((group) => {
               const isArchived = !!group.archived_at;
               const isHidden = group.group_members?.some(
-                (m: any) => m.hidden_at
+                (m: any) => m.hidden_at,
               );
               const allMembers = (group as any).all_members || [];
               const memberCount = allMembers.length;
