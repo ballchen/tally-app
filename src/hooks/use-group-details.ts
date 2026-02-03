@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useQuery } from "@tanstack/react-query"
 
 export function useGroupDetails(groupId: string) {
@@ -7,6 +8,11 @@ export function useGroupDetails(groupId: string) {
   return useQuery({
     queryKey: ["group", groupId],
     queryFn: async () => {
+      // Verify authentication
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
+      if (!user) throw new Error("Not authenticated")
+
       // 1. Fetch Group Info
       const { data: group, error: groupError } = await supabase
         .from("groups")
@@ -16,20 +22,26 @@ export function useGroupDetails(groupId: string) {
 
       if (groupError) throw groupError
 
-      // 2. Fetch Members
-      const { data: members, error: membersError } = await supabase
-        .from("group_members")
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq("group_id", groupId)
+      // 2. Fetch Members using RPC (bypasses RLS restrictions)
+      const { data: membersData, error: membersError } = await supabase
+        .rpc('get_group_members_batch', { p_group_ids: [groupId] })
 
       if (membersError) throw membersError
+
+      // Transform RPC response to match expected format
+      const members = membersData?.map(m => ({
+        group_id: m.group_id,
+        user_id: m.user_id,
+        group_nickname: m.group_nickname,
+        group_avatar_url: m.group_avatar_url,
+        joined_at: m.joined_at,
+        hidden_at: m.hidden_at,
+        profiles: {
+          id: m.profile_id,
+          display_name: m.profile_display_name,
+          avatar_url: m.profile_avatar_url
+        }
+      })) || []
 
       // 3. Fetch Expenses (exclude soft-deleted)
       const { data: expenses, error: expensesError } = await supabase

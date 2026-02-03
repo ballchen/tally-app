@@ -87,12 +87,14 @@ export default function JoinGroupPage() {
             .eq("id", user.id)
             .single()
           
-          // Get all existing members to notify
-          const { data: existingMembers } = await supabase
-            .from("group_members")
-            .select("user_id")
-            .eq("group_id", group.id)
-            .neq("user_id", user.id) // Exclude the new member
+          // Get all existing members to notify using RPC
+          const { data: allMembers } = await supabase
+            .rpc('get_group_members_batch', { p_group_ids: [group.id] })
+
+          // Filter out the new member
+          const existingMembers = allMembers
+            ?.filter(m => m.user_id !== user.id)
+            .map(m => ({ user_id: m.user_id }))
           
           // Send push notification to existing members
           if (existingMembers && existingMembers.length > 0) {
