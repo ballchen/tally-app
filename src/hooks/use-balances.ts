@@ -12,7 +12,7 @@ export type Balance = {
   [userId: string]: number
 }
 
-export function useBalances(expenses: any[], members: any[], baseCurrency: string) {
+export function useBalances(expenses: any[] | null | undefined, members: any[] | null | undefined, baseCurrency: string) {
   const { data: rates } = useExchangeRates()
 
   return useMemo(() => {
@@ -37,7 +37,7 @@ export function useBalances(expenses: any[], members: any[], baseCurrency: strin
       let payerCreditInBase = 0
 
       if (expense.expense_splits?.length > 0) {
-        expense.expense_splits.forEach((split: any) => {
+        expense.expense_splits.forEach((split: { user_id: string; owed_amount: number; settlement_id: string | null }) => {
           // If split is settled (Granular Settlement), ignore it
           if (split.settlement_id) return
 

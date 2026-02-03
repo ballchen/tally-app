@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
       return webpush
         .sendNotification(pushSubscription, notificationPayload)
-        .catch((err: any) => {
+        .catch((err: { statusCode?: number } & Error) => {
           if (err.statusCode === 404 || err.statusCode === 410) {
             console.log("Subscription expired, deleting:", sub.id)
             // Cleanup expired subscription

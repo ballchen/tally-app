@@ -129,7 +129,7 @@ export default function GroupDetailsPage() {
 
   // Check group status
   const isArchived = !!group.archived_at;
-  const currentMember = members?.find((m) => m.user_id === currentUserId);
+  const currentMember = members?.find((m: { user_id: string }) => m.user_id === currentUserId);
   const isHidden = !!currentMember?.hidden_at;
 
   const filteredExpenses = expenses?.filter((e) => {
@@ -260,7 +260,7 @@ export default function GroupDetailsPage() {
 
           {/* Members Scroll */}
           <div className="flex gap-4 overflow-x-auto pb-2">
-            {members?.map((member) => (
+            {members?.map((member: { user_id: string; profiles: { avatar_url?: string | null; display_name: string | null } | null }) => (
               <div
                 key={member.user_id}
                 className="flex flex-col items-center gap-1 min-w-[60px]"
@@ -294,10 +294,10 @@ export default function GroupDetailsPage() {
                 {debts.map((debt, i) => {
                   // Helper to find member profile safely
                   const fromUser = members?.find(
-                    (m) => m.user_id === debt.from
+                    (m: { user_id: string }) => m.user_id === debt.from
                   )?.profiles;
                   const toUser = members?.find(
-                    (m) => m.user_id === debt.to
+                    (m: { user_id: string }) => m.user_id === debt.to
                   )?.profiles;
 
                   return (

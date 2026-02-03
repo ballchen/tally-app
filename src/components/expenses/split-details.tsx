@@ -21,7 +21,7 @@ interface SplitDetailsProps {
   currency: string
   baseCurrency: string
   members: Member[]
-  currentUser: any
+  currentUser: { id: string } | null
 
   // State from hook
   splitMode: "EQUAL" | "EXACT" | "PERCENT"
@@ -134,7 +134,7 @@ export function SplitDetails({
              )}
         </div>
 
-        <Tabs value={splitMode} onValueChange={(v: any) => setSplitMode(v)} className="w-full">
+        <Tabs value={splitMode} onValueChange={(v: string) => setSplitMode(v as "EQUAL" | "EXACT" | "PERCENT")} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="EQUAL">Equal</TabsTrigger>
                 <TabsTrigger value="EXACT">Exact</TabsTrigger>

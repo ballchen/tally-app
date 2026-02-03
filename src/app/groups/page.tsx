@@ -48,7 +48,7 @@ export default function GroupsPage() {
   // Calculate counts for each filter
   const archivedCount = allGroups?.filter((g) => !!g.archived_at).length || 0;
   const hiddenCount =
-    allGroups?.filter((g) => g.group_members?.some((m: any) => m.hidden_at))
+    allGroups?.filter((g: { group_members?: { hidden_at: string | null }[] | null }) => g.group_members?.some((m) => m.hidden_at))
       .length || 0;
 
   const handleLogout = async () => {
@@ -198,9 +198,9 @@ export default function GroupsPage() {
             groups?.map((group) => {
               const isArchived = !!group.archived_at;
               const isHidden = group.group_members?.some(
-                (m: any) => m.hidden_at,
+                (m: { hidden_at: string | null }) => m.hidden_at,
               );
-              const allMembers = (group as any).all_members || [];
+              const allMembers = (group as { all_members?: any[] }).all_members || [];
               const memberCount = allMembers.length;
               const displayMembers = allMembers.slice(0, 3); // Show max 3 avatars
 
@@ -252,13 +252,13 @@ export default function GroupsPage() {
                       {/* Member Avatars */}
                       <div className="flex items-center gap-2">
                         <div className="flex items-center -space-x-1.5">
-                          {displayMembers.map((member: any, idx: number) => (
+                          {displayMembers.map((member: { user_id: string; profiles: { avatar_url?: string | null; display_name?: string | null } | null }, idx: number) => (
                             <Avatar
                               key={member.user_id || idx}
                               className="h-7 w-7 border-[1.5px] border-background shadow-sm"
                               style={{ zIndex: displayMembers.length - idx }}
                             >
-                              <AvatarImage src={member.profiles?.avatar_url} />
+                              <AvatarImage src={member.profiles?.avatar_url || undefined} />
                               <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
                                 {member.profiles?.display_name?.[0]?.toUpperCase() ||
                                   "?"}

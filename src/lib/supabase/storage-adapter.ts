@@ -6,7 +6,7 @@
 interface CookieOptions {
   maxAge?: number
   path?: string
-  sameSite?: 'lax' | 'strict' | 'none'
+  sameSite?: boolean | 'lax' | 'strict' | 'none'
   secure?: boolean
 }
 

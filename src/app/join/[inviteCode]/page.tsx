@@ -92,9 +92,9 @@ export default function JoinGroupPage() {
             .rpc('get_group_members_batch', { p_group_ids: [group.id] })
 
           // Filter out the new member
-          const existingMembers = allMembers
-            ?.filter(m => m.user_id !== user.id)
-            .map(m => ({ user_id: m.user_id }))
+          const existingMembers = (allMembers as { user_id: string }[])
+            ?.filter((m: { user_id: string }) => m.user_id !== user.id)
+            .map((m: { user_id: string }) => ({ user_id: m.user_id }))
           
           // Send push notification to existing members
           if (existingMembers && existingMembers.length > 0) {

@@ -46,7 +46,7 @@ export function useGroups(filter: GroupFilter = "active") {
       if (membersError) throw membersError
 
       // Transform RPC response to match expected format
-      const allMembers = membersData?.map(m => ({
+      const allMembers = (membersData as any[])?.map((m: any) => ({
         group_id: m.group_id,
         user_id: m.user_id,
         group_nickname: m.group_nickname,
@@ -63,22 +63,22 @@ export function useGroups(filter: GroupFilter = "active") {
       // Filter to only groups where user is a member
       const userGroupIds = new Set(
         allMembers
-          .filter(m => m.user_id === user.id)
-          .map(m => m.group_id)
+          .filter((m: any) => m.user_id === user.id)
+          .map((m: any) => m.group_id)
       )
 
       const userGroups = allGroups.filter(g => userGroupIds.has(g.id))
 
       // Attach members and member info to each group
       const enrichedData = userGroups.map(group => {
-        const groupMembers = allMembers.filter(m => m.group_id === group.id)
+        const groupMembers = allMembers.filter((m: any) => m.group_id === group.id)
 
         return {
           ...group,
           all_members: groupMembers,
           group_members: [{
             user_id: user.id,
-            hidden_at: groupMembers.find(m => m.user_id === user.id)?.hidden_at
+            hidden_at: groupMembers.find((m: any) => m.user_id === user.id)?.hidden_at
           }]
         }
       })

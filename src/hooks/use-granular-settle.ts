@@ -57,7 +57,7 @@ export function useGranularSettle() {
         console.error("Failed to send settlement notification", error)
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error("Settlement failed", {
         description: error.message
       })

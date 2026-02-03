@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 interface SettleUpDialogProps {
   groupId: string
   debts: Debt[]
-  members: any[]
+  members: { user_id: string; profiles: { avatar_url?: string | null; display_name?: string | null } | null }[]
   currency: string
 }
 
@@ -29,7 +29,7 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
   const settleUp = useSettleUp()
   const t = useTranslations("SettleUp")
 
-  const getMember = (id: string) => members.find(m => m.user_id === id)?.profiles
+  const getMember = (id: string) => members.find((m: { user_id: string }) => m.user_id === id)?.profiles
 
   const handleSettle = () => {
     settleUp.mutate({
@@ -66,12 +66,12 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
                     <div key={i} className="flex items-center justify-between bg-muted/30 p-3 rounded-lg">
                         <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={fromUser?.avatar_url || ""} />
+                                <AvatarImage src={fromUser?.avatar_url || undefined} />
                                 <AvatarFallback>{fromUser?.display_name?.[0]}</AvatarFallback>
                             </Avatar>
                             <ArrowRight className="h-4 w-4 text-muted-foreground" />
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={toUser?.avatar_url || ""} />
+                                <AvatarImage src={toUser?.avatar_url || undefined} />
                                 <AvatarFallback>{toUser?.display_name?.[0]}</AvatarFallback>
                             </Avatar>
                         </div>

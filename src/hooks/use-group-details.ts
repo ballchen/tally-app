@@ -29,7 +29,7 @@ export function useGroupDetails(groupId: string) {
       if (membersError) throw membersError
 
       // Transform RPC response to match expected format
-      const members = membersData?.map(m => ({
+      const members = (membersData as any[])?.map((m: any) => ({
         group_id: m.group_id,
         user_id: m.user_id,
         group_nickname: m.group_nickname,
