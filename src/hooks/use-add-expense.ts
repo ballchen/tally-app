@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export type CreateExpenseParams = {
@@ -19,8 +20,9 @@ export function useAddExpense() {
 
   return useMutation({
     mutationFn: async ({ groupId, payerId, amount, currency, description, split }: CreateExpenseParams) => {
-      // Get current user ID
-      const { data: { user } } = await supabase.auth.getUser()
+      // Get current user ID with safe error handling
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
       if (!user) throw new Error("Not authenticated")
 
       // 1. Create Expense

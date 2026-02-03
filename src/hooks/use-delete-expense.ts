@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export function useDeleteExpense() {
@@ -7,13 +8,14 @@ export function useDeleteExpense() {
 
   return useMutation({
     mutationFn: async ({ expenseId, groupId }: { expenseId: string; groupId: string }) => {
-      // Debug: Check auth status first
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      // Debug: Check auth status first with safe error handling
+      const { user, error: authError } = await safeGetUser(supabase)
       console.log('🔐 Auth check before delete:')
       console.log('  User ID:', user?.id || 'NOT LOGGED IN')
       console.log('  User email:', user?.email)
       console.log('  Auth error:', authError)
 
+      if (authError) throw authError
       if (!user) {
         throw new Error('User not authenticated. Please login again.')
       }

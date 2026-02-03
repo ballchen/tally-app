@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { safeGetUser } from "@/lib/supabase/auth-helpers"
 
 export function useProfile() {
   const supabase = createClient()
@@ -8,7 +9,8 @@ export function useProfile() {
   const profileQuery = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
       if (!user) return null
 
       const { data, error } = await supabase
@@ -24,7 +26,8 @@ export function useProfile() {
 
   const updateProfile = useMutation({
     mutationFn: async (updates: { display_name?: string; gender?: string; avatar_url?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
       if (!user) throw new Error("No user")
 
       const { error } = await supabase
@@ -41,7 +44,8 @@ export function useProfile() {
 
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
       if (!user) throw new Error("No user")
 
       const fileExt = file.name.split('.').pop()

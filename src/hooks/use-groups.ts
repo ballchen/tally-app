@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { nanoid } from "nanoid"
 
@@ -11,67 +12,89 @@ export function useGroups(filter: GroupFilter = "active") {
     queryKey: ["groups", filter],
     placeholderData: (previousData) => previousData, // Keep previous data while loading
     queryFn: async () => {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
+      // Safe auth with error handling
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
       if (!user) throw new Error("Not authenticated")
 
-      // First, get groups where user is a member
+      // Use RPC to get groups and members in one call (bypasses RLS recursion)
+      // First, get ALL groups (we'll filter by membership via RPC)
       let query = supabase
         .from("groups")
-        .select(`
-          *,
-          group_members!inner(user_id, hidden_at)
-        `)
-        .is("deleted_at", null) // Always exclude deleted groups
-        .eq("group_members.user_id", user.id)
+        .select("*")
+        .is("deleted_at", null)
 
-      // Apply filter
+      // Apply archive filter at query level for performance
       if (filter === "active") {
         query = query.is("archived_at", null)
-        // Filter out hidden groups in JS since we need the join
       } else if (filter === "archived") {
         query = query.not("archived_at", "is", null)
       }
-      // "hidden" and "all" will be filtered in JS
 
-      const { data, error } = await query
+      const { data: allGroups, error } = await query
 
       if (error) throw error
+      if (!allGroups || allGroups.length === 0) return []
 
-      // Fetch all members for each group to get member count
-      const groupIds = data?.map(g => g.id) || []
-      
-      if (groupIds.length > 0) {
-        const { data: allMembers } = await supabase
-          .from("group_members")
-          .select(`
-            group_id,
-            user_id,
-            profiles(id, display_name, avatar_url)
-          `)
-          .in("group_id", groupIds)
-        
-        // Attach all members to each group
-        const enrichedData = data?.map(group => ({
-          ...group,
-          all_members: allMembers?.filter(m => m.group_id === group.id) || []
-        }))
+      // Get all group IDs
+      const groupIds = allGroups.map(g => g.id)
 
-        // Apply hidden filter in JS
-        if (filter === "active") {
-          return enrichedData?.filter(g =>
-            !g.group_members?.some((m: any) => m.user_id === user.id && m.hidden_at)
-          ) || []
-        } else if (filter === "hidden") {
-          return enrichedData?.filter(g =>
-            g.group_members?.some((m: any) => m.user_id === user.id && m.hidden_at)
-          ) || []
+      // Fetch members using RPC (bypasses RLS recursion)
+      const { data: membersData, error: membersError } = await supabase
+        .rpc('get_group_members_batch', { p_group_ids: groupIds })
+
+      if (membersError) throw membersError
+
+      // Transform RPC response to match expected format
+      const allMembers = membersData?.map(m => ({
+        group_id: m.group_id,
+        user_id: m.user_id,
+        group_nickname: m.group_nickname,
+        group_avatar_url: m.group_avatar_url,
+        joined_at: m.joined_at,
+        hidden_at: m.hidden_at,
+        profiles: {
+          id: m.profile_id,
+          display_name: m.profile_display_name,
+          avatar_url: m.profile_avatar_url
         }
+      })) || []
 
-        return enrichedData || []
+      // Filter to only groups where user is a member
+      const userGroupIds = new Set(
+        allMembers
+          .filter(m => m.user_id === user.id)
+          .map(m => m.group_id)
+      )
+
+      const userGroups = allGroups.filter(g => userGroupIds.has(g.id))
+
+      // Attach members and member info to each group
+      const enrichedData = userGroups.map(group => {
+        const groupMembers = allMembers.filter(m => m.group_id === group.id)
+
+        return {
+          ...group,
+          all_members: groupMembers,
+          group_members: [{
+            user_id: user.id,
+            hidden_at: groupMembers.find(m => m.user_id === user.id)?.hidden_at
+          }]
+        }
+      })
+
+      // Apply hidden filter in JS
+      if (filter === "active") {
+        return enrichedData.filter(g =>
+          !g.group_members.some((m: any) => m.user_id === user.id && m.hidden_at)
+        )
+      } else if (filter === "hidden") {
+        return enrichedData.filter(g =>
+          g.group_members.some((m: any) => m.user_id === user.id && m.hidden_at)
+        )
       }
 
-      return data || []
+      return enrichedData
     }
   })
 }

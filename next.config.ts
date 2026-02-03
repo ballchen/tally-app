@@ -7,6 +7,12 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     importScripts: ["/push-sw.js"],
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
+        handler: 'NetworkOnly', // Never cache auth endpoints
+      },
+    ],
   },
 });
 
