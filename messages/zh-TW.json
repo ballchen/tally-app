@@ -179,5 +179,26 @@
   },
   "Common": {
     "language": "語言"
+  },
+  "ResetPassword": {
+    "title": "重設密碼",
+    "description": "請在下方輸入您的新密碼",
+    "successTitle": "密碼已重設！",
+    "successDescription": "您的密碼已成功更新",
+    "newPassword": "新密碼",
+    "newPasswordPlaceholder": "輸入新密碼",
+    "confirmPassword": "確認密碼",
+    "confirmPasswordPlaceholder": "再次輸入新密碼",
+    "submitButton": "重設密碼",
+    "backToLogin": "返回登入",
+    "requestNewLink": "申請新的重設連結",
+    "redirecting": "正在導向應用程式...",
+    "continueToApp": "前往應用程式",
+    "passwordMinLength": "密碼長度必須至少為 6 個字元",
+    "passwordsDontMatch": "密碼不相符",
+    "sessionErrorExpired": "無效或已過期的重設連結。請申請新的連結。",
+    "sessionErrorInvalid": "無效的重設連結。請重新申請重設密碼。",
+    "errorToastTitle": "重設密碼失敗",
+    "successToastTitle": "密碼重設成功！"
   }
 }

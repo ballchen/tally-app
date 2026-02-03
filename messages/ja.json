@@ -179,5 +179,26 @@
   },
   "Common": {
     "language": "言語"
+  },
+  "ResetPassword": {
+    "title": "パスワードをリセット",
+    "description": "新しいパスワードを入力してください",
+    "successTitle": "パスワードをリセットしました！",
+    "successDescription": "パスワードが正常に更新されました",
+    "newPassword": "新しいパスワード",
+    "newPasswordPlaceholder": "新しいパスワードを入力",
+    "confirmPassword": "パスワード（確認）",
+    "confirmPasswordPlaceholder": "新しいパスワードを再入力",
+    "submitButton": "パスワードをリセット",
+    "backToLogin": "ログインに戻る",
+    "requestNewLink": "新しいリセットリンクをリクエスト",
+    "redirecting": "アプリに移動しています...",
+    "continueToApp": "アプリへ移動",
+    "passwordMinLength": "パスワードは6文字以上である必要があります",
+    "passwordsDontMatch": "パスワードが一致しません",
+    "sessionErrorExpired": "無効または期限切れのリセットリンクです。新しくリクエストしてください。",
+    "sessionErrorInvalid": "無効なリセットリンクです。パスワードのリセットを再度リクエストしてください。",
+    "errorToastTitle": "パスワードのリセットに失敗しました",
+    "successToastTitle": "パスワードをリセットしました！"
   }
 }

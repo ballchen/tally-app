@@ -16,6 +16,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,26 +36,29 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-
-const resetPasswordSchema = z
-  .object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
+  const t = useTranslations("ResetPassword");
+  
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [isSessionReady, setIsSessionReady] = React.useState(false);
   const [sessionError, setSessionError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  const resetPasswordSchema = z
+    .object({
+      password: z.string().min(6, t("passwordMinLength")),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("passwordsDontMatch"),
+      path: ["confirmPassword"],
+    });
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
@@ -106,9 +110,7 @@ export default function ResetPasswordPage() {
           });
 
           if (error) {
-            setSessionError(
-              "Invalid or expired reset link. Please request a new one.",
-            );
+            setSessionError(t("sessionErrorExpired"));
             return;
           }
 
@@ -126,9 +128,7 @@ export default function ResetPasswordPage() {
             if (session) {
               setIsSessionReady(true);
             } else if (isSubscribed) {
-              setSessionError(
-                "Invalid reset link. Please request a new password reset.",
-              );
+              setSessionError(t("sessionErrorInvalid"));
             }
           });
         }
@@ -141,7 +141,7 @@ export default function ResetPasswordPage() {
       isSubscribed = false;
       subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, [supabase.auth, t]);
 
   async function onSubmit(values: z.infer<typeof resetPasswordSchema>) {
     setIsLoading(true);
@@ -151,7 +151,7 @@ export default function ResetPasswordPage() {
     });
 
     if (error) {
-      toast.error("Failed to reset password", {
+      toast.error(t("errorToastTitle"), {
         description: error.message,
       });
       setIsLoading(false);
@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
     }
 
     setIsSuccess(true);
-    toast.success("Password reset successfully!");
+    toast.success(t("successToastTitle"));
     setIsLoading(false);
 
     // Redirect to home after a short delay
@@ -169,8 +169,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4 bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-md glass-card border-none shadow-xl ring-1 ring-white/20 dark:ring-white/10">
+    <div className="min-h-dvh flex items-center justify-center p-4 bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
+      
+      <Card className="w-full max-w-md glass-card border-none shadow-xl ring-1 ring-white/20 dark:ring-white/10 z-10 animate-fade-in-up">
         <CardHeader>
           <div className="flex justify-center mb-4">
             <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-lg relative">
@@ -185,12 +189,10 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           <CardTitle className="text-2xl text-center">
-            {isSuccess ? "Password Reset!" : "Reset Password"}
+            {isSuccess ? t("successTitle") : t("title")}
           </CardTitle>
           <CardDescription className="text-center">
-            {isSuccess
-              ? "Your password has been updated successfully"
-              : "Enter your new password below"}
+            {isSuccess ? t("successDescription") : t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -205,12 +207,12 @@ export default function ResetPasswordPage() {
                 {sessionError}
               </p>
               <Link href="/forgot-password" className="block">
-                <Button className="w-full">Request New Reset Link</Button>
+                <Button className="w-full">{t("requestNewLink")}</Button>
               </Link>
               <Link href="/login" className="block">
                 <Button variant="ghost" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
+                  {t("backToLogin")}
                 </Button>
               </Link>
             </div>
@@ -226,10 +228,10 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
               <p className="text-center text-sm text-muted-foreground">
-                Redirecting you to the app...
+                {t("redirecting")}
               </p>
               <Link href="/" className="block">
-                <Button className="w-full">Continue to App</Button>
+                <Button className="w-full">{t("continueToApp")}</Button>
               </Link>
             </div>
           ) : (
@@ -243,12 +245,12 @@ export default function ResetPasswordPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel>{t("newPassword")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter new password"
+                            placeholder={t("newPasswordPlaceholder")}
                             {...field}
                           />
                           <button
@@ -273,12 +275,12 @@ export default function ResetPasswordPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>{t("confirmPassword")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm new password"
+                            placeholder={t("confirmPasswordPlaceholder")}
                             {...field}
                           />
                           <button
@@ -304,12 +306,12 @@ export default function ResetPasswordPage() {
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Reset Password
+                  {t("submitButton")}
                 </Button>
                 <Link href="/login" className="block">
                   <Button variant="ghost" className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Login
+                    {t("backToLogin")}
                   </Button>
                 </Link>
               </form>

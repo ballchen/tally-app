@@ -179,5 +179,26 @@
   },
   "Common": {
     "language": "Language"
+  },
+  "ResetPassword": {
+    "title": "Reset Password",
+    "description": "Enter your new password below",
+    "successTitle": "Password Reset!",
+    "successDescription": "Your password has been updated successfully",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "submitButton": "Reset Password",
+    "backToLogin": "Back to Login",
+    "requestNewLink": "Request New Reset Link",
+    "redirecting": "Redirecting you to the app...",
+    "continueToApp": "Continue to App",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordsDontMatch": "Passwords don't match",
+    "sessionErrorExpired": "Invalid or expired reset link. Please request a new one.",
+    "sessionErrorInvalid": "Invalid reset link. Please request a new password reset.",
+    "errorToastTitle": "Failed to reset password",
+    "successToastTitle": "Password reset successfully!"
   }
 }
