@@ -440,13 +440,13 @@ export default function GroupDetailsPage() {
                     return (
                       <Card
                         key={`settlement-${settlement.id}`}
-                        className="bg-primary/5 border-primary/20"
+                        className="bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors cursor-pointer"
+                        onClick={() => toggleSettlement(settlement.id)}
                       >
                         <CardContent className="p-0">
                           {/* Settlement header - clickable to expand */}
                           <div
-                            className="p-3 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors rounded-t-lg"
-                            onClick={() => toggleSettlement(settlement.id)}
+                            className="p-3 flex items-center justify-between"
                           >
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
