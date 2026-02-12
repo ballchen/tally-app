@@ -519,7 +519,7 @@ export default function GroupDetailsPage() {
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
                             {expense.type === "repayment"
-                              ? t("settlement")
+                              ? `${expense.payer?.display_name || ""} → ${expense.expense_splits?.[0]?.profiles?.display_name || ""}`
                               : t("paidBy", { name: expense.payer?.display_name || "" })}
                           </div>
                         </div>

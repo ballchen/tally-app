@@ -16,6 +16,7 @@ import { Debt } from "@/hooks/use-balances"
 import { useSettleUp } from "@/hooks/use-settle-up"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { getCurrencySymbol } from "@/lib/currency"
 
 interface SettleUpDialogProps {
   groupId: string
@@ -77,7 +78,7 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
                         </div>
                         <div className="font-semibold text-right">
                             <div className="text-xs text-muted-foreground">{t("pays")}</div>
-                            {currency} {debt.amount.toFixed(2)}
+                            {getCurrencySymbol(currency)} {debt.amount.toFixed(0)}
                         </div>
                     </div>
                 )

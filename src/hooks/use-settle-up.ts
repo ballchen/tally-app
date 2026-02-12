@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 type SettleUpParams = {
   groupId: string
@@ -24,8 +25,14 @@ export function useSettleUp() {
       if (error) throw error
     },
     onSuccess: (_, { groupId }) => {
+      toast.success("All balances settled!")
       queryClient.invalidateQueries({ queryKey: ["group", groupId] })
       queryClient.invalidateQueries({ queryKey: ["groups"] })
+    },
+    onError: (error: Error) => {
+      toast.error("Settlement failed", {
+        description: error.message
+      })
     }
   })
 }
