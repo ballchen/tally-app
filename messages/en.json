@@ -79,7 +79,10 @@
     "current": "Current",
     "history": "History",
     "settlement": "Settlement",
-    "expense": "Expense"
+    "expense": "Expense",
+    "activity": "Activity",
+    "noExpensesYet": "No expenses yet",
+    "total": "total"
   },
   "InviteMember": {
     "invite": "Invite",

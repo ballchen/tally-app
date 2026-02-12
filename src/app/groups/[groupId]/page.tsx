@@ -57,6 +57,7 @@ export default function GroupDetailsPage() {
   );
   const [scrollY, setScrollY] = useState(0);
   const [showAllExpenses, setShowAllExpenses] = useState(false);
+  const [expandedSettlements, setExpandedSettlements] = useState<Set<string>>(new Set());
   const t = useTranslations("GroupDetails");
 
   const INITIAL_EXPENSE_LIMIT = 5;
@@ -85,7 +86,6 @@ export default function GroupDetailsPage() {
     }
   }, []);
 
-  const [view, setView] = useState<"current" | "history">("current");
   const { debts } = useBalances(
     data?.expenses || [],
     data?.members || [],
@@ -93,11 +93,6 @@ export default function GroupDetailsPage() {
   );
   const { mutate: settle, isPending: isSettling } = useGranularSettle();
   const { mutate: undoSettlement, isPending: isUndoing } = useUndoSettlement();
-
-  // Reset showAllExpenses when view changes
-  useEffect(() => {
-    setShowAllExpenses(false);
-  }, [view]);
 
   // Pull-to-refresh
   const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
@@ -132,20 +127,69 @@ export default function GroupDetailsPage() {
   const currentMember = members?.find((m: { user_id: string }) => m.user_id === currentUserId);
   const isHidden = !!currentMember?.hidden_at;
 
-  const filteredExpenses = expenses?.filter((e) => {
-    // "current" = regular expenses (type != 'repayment')
-    // "history" = repayments (settlement records)
-    if (view === "current") {
-      return e.type !== "repayment";
+  // Build timeline: merge expenses and settlements, sorted by date
+  // Group repayment expenses with their settlement
+  type TimelineItem =
+    | { type: 'expense'; data: typeof expenses[0]; date: Date }
+    | { type: 'settlement'; data: typeof data.settlements[0]; repayments: typeof expenses; totalAmount: number; date: Date };
+
+  const timelineItems: TimelineItem[] = [];
+
+  // Group repayments by settlement_id
+  const repaymentsBySettlement = new Map<string, typeof expenses>();
+  expenses?.forEach(expense => {
+    if (expense.type === 'repayment' && expense.settlement_id) {
+      const existing = repaymentsBySettlement.get(expense.settlement_id) || [];
+      existing.push(expense);
+      repaymentsBySettlement.set(expense.settlement_id, existing);
     }
-    return e.type === "repayment";
   });
 
-  // Calculate displayed expenses
-  const displayedExpenses = showAllExpenses
-    ? filteredExpenses
-    : filteredExpenses?.slice(0, INITIAL_EXPENSE_LIMIT);
-  const hasMoreExpenses = filteredExpenses && filteredExpenses.length > INITIAL_EXPENSE_LIMIT;
+  // Add non-repayment expenses to timeline
+  expenses?.forEach(expense => {
+    if (expense.type !== 'repayment') {
+      timelineItems.push({
+        type: 'expense',
+        data: expense,
+        date: new Date(expense.date)
+      });
+    }
+  });
+
+  // Add settlements with their repayments
+  data?.settlements?.forEach(settlement => {
+    const repayments = repaymentsBySettlement.get(settlement.id) || [];
+    const totalAmount = repayments.reduce((sum, r) => sum + Number(r.amount), 0);
+    timelineItems.push({
+      type: 'settlement',
+      data: settlement,
+      repayments,
+      totalAmount,
+      date: new Date(settlement.created_at)
+    });
+  });
+
+  // Sort by date descending (newest first)
+  timelineItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  // Toggle settlement expansion
+  const toggleSettlement = (settlementId: string) => {
+    setExpandedSettlements(prev => {
+      const next = new Set(prev);
+      if (next.has(settlementId)) {
+        next.delete(settlementId);
+      } else {
+        next.add(settlementId);
+      }
+      return next;
+    });
+  };
+
+  // Calculate displayed items
+  const displayedItems = showAllExpenses
+    ? timelineItems
+    : timelineItems.slice(0, INITIAL_EXPENSE_LIMIT);
+  const hasMoreItems = timelineItems.length > INITIAL_EXPENSE_LIMIT;
 
   const copyInviteCode = () => {
     navigator.clipboard.writeText(group.invite_code);
@@ -363,239 +407,260 @@ export default function GroupDetailsPage() {
             </Card>
           )}
 
-          {/* Expenses List - Always visible */}
-          <div className="space-y-4 pb-20">
-            <div className="flex items-center justify-between">
-              <div className="flex bg-muted rounded-lg p-1">
-                <button
-                  className={`px-3 py-1 text-sm rounded-md transition-all ${
-                    view === "current"
-                      ? "bg-background shadow-sm font-medium"
-                      : "text-muted-foreground"
-                  }`}
-                  onClick={() => setView("current")}
-                >
-                  {t("current")}
-                </button>
-                <button
-                  className={`px-3 py-1 text-sm rounded-md transition-all ${
-                    view === "history"
-                      ? "bg-background shadow-sm font-medium"
-                      : "text-muted-foreground"
-                  }`}
-                  onClick={() => setView("history")}
-                >
-                  {t("history")}
-                </button>
-              </div>
-            </div>
+          {/* Activity Timeline */}
+          <div className="space-y-3 pb-20">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+              {t("activity")}
+            </h3>
 
-            {/* Settlements History List */}
-            {view === "history" &&
-              data?.settlements &&
-              data.settlements.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
-                    {t("recentSettlements")}
-                  </h3>
-                  {data.settlements.map((settlement) => (
-                    <Card
-                      key={settlement.id}
-                      className="bg-muted/10 border-dashed"
-                    >
-                      <CardContent className="p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                            <HistoryIcon className="h-4 w-4" />
-                          </div>
-                          <div className="flex flex-col">
-                            <div className="text-sm font-medium">
-                              {t("settledBy")}{" "}
-                              {settlement.creator?.display_name || "Unknown"}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {format(
-                                new Date(settlement.created_at),
-                                "MMM d, yyyy HH:mm"
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              disabled={isUndoing || isArchived}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                {t("undoSettlement")}
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t("undoSettlementDesc")}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => undoSettlement(settlement.id)}
-                                className="bg-destructive hover:bg-destructive/90"
-                              >
-                                {t("confirmUndo")}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-            {filteredExpenses?.length === 0 &&
-            (!data?.settlements || data.settlements.length === 0) ? (
+            {timelineItems.length === 0 ? (
               <Card className="p-12 text-center border-dashed">
                 <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                  <div className="text-4xl">
-                    {view === "current" ? "✨" : "📜"}
-                  </div>
+                  <div className="text-4xl">✨</div>
                   <div className="space-y-1">
                     <h3 className="font-semibold text-foreground">
-                      {view === "current"
-                        ? t("allSettledUp")
-                        : t("noHistoryYet")}
+                      {t("noExpensesYet")}
                     </h3>
                     <p className="text-sm">
-                      {view === "current"
-                        ? t("addExpenseToStart")
-                        : t("pastSettlements")}
+                      {t("addExpenseToStart")}
                     </p>
                   </div>
                 </div>
               </Card>
             ) : (
               <>
-                {displayedExpenses?.map((expense) => {
-                // Repayments are not editable, regular expenses are (unless archived)
-                const isEditable =
-                  expense.type !== "repayment" &&
-                  !isArchived;
-                return (
-                  <Card
-                    key={expense.id}
-                    className={`transition-colors ${
-                      isEditable
-                        ? "cursor-pointer hover:bg-muted/50"
-                        : "opacity-80"
-                    } ${
-                      expense.type === "repayment"
-                        ? "bg-muted/20 border-l-4 border-l-primary/50"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      isEditable && setSelectedExpenseId(expense.id)
-                    }
-                  >
-                    <CardContent className="px-4 py-2 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="text-center min-w-[3rem] shrink-0">
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(expense.date), "MMM")}
-                          </div>
-                          <div className="font-bold text-lg">
-                            {format(new Date(expense.date), "dd")}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                          <div className="font-medium leading-none truncate">
-                            {expense.description || t("expense")}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {expense.type === "repayment"
-                              ? `${expense.payer?.display_name || ""} → ${expense.expense_splits?.[0]?.profiles?.display_name || ""}`
-                              : t("paidBy", { name: expense.payer?.display_name || "" })}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <div className="font-bold whitespace-nowrap">
-                          {getCurrencySymbol(expense.currency)} {expense.amount}
-                        </div>
-                        {expense.type !== "repayment" && (
-                          <div className="flex items-center -space-x-1.5 pt-1">
-                            {!expense.expense_splits ||
-                            expense.expense_splits.length === 0 ? (
-                              <span className="text-[10px] text-muted-foreground/50">
-                                {t("detailsNotLoaded")}
-                              </span>
-                            ) : (
-                              expense.expense_splits.map(
-                                (split: {
-                                  user_id: string;
-                                  profiles?: {
-                                    display_name?: string;
-                                    avatar_url?: string;
-                                  };
-                                }) => (
-                                  <Avatar
-                                    key={split.user_id}
-                                    className="h-5 w-5 border-2 border-background"
-                                  >
-                                    <AvatarImage
-                                      src={split.profiles?.avatar_url || ""}
-                                    />
-                                    <AvatarFallback className="text-[8px]">
-                                      {split.profiles?.display_name?.[0] || "?"}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                )
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                {displayedItems.map((item) => {
+                  if (item.type === 'settlement') {
+                    // Expandable Settlement card
+                    const settlement = item.data;
+                    const repayments = item.repayments;
+                    const totalAmount = item.totalAmount;
+                    const isExpanded = expandedSettlements.has(settlement.id);
 
-              {/* Show More / Show Less Button */}
-              {hasMoreExpenses && (
-                <div className="flex justify-center pt-4">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full max-w-xs shadow-sm hover:shadow-md transition-all"
-                    onClick={() => setShowAllExpenses(!showAllExpenses)}
-                  >
-                    {showAllExpenses ? (
-                      <>
-                        <ChevronUp className="h-4 w-4 mr-2" />
-                        {t("showLess")}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {t("showing", {count: filteredExpenses?.length})}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4 mr-2" />
-                        {t("showAll")}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {t("more", {count: filteredExpenses?.length - INITIAL_EXPENSE_LIMIT})}
-                        </span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-            </>
+                    return (
+                      <Card
+                        key={`settlement-${settlement.id}`}
+                        className="bg-primary/5 border-primary/20"
+                      >
+                        <CardContent className="p-0">
+                          {/* Settlement header - clickable to expand */}
+                          <div
+                            className="p-3 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors rounded-t-lg"
+                            onClick={() => toggleSettlement(settlement.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <HistoryIcon className="h-4 w-4" />
+                              </div>
+                              <div className="flex flex-col">
+                                <div className="text-sm font-medium text-primary">
+                                  {t("settledBy")}{" "}
+                                  {settlement.creator?.display_name || "Unknown"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {format(
+                                    new Date(settlement.created_at),
+                                    "MMM d, yyyy"
+                                  )}
+                                  {totalAmount > 0 && (
+                                    <span className="ml-2">
+                                      • {getCurrencySymbol(group.base_currency)} {totalAmount.toFixed(0)} {t("total")}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-muted-foreground"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleSettlement(settlement.id);
+                                }}
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                    disabled={isUndoing || isArchived}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      {t("undoSettlement")}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {t("undoSettlementDesc")}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => undoSettlement(settlement.id)}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      {t("confirmUndo")}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+
+                          {/* Expanded repayments list */}
+                          {isExpanded && repayments.length > 0 && (
+                            <div className="border-t border-primary/10 px-3 py-2 space-y-2">
+                              {repayments.map((repayment) => (
+                                <div
+                                  key={repayment.id}
+                                  className="flex items-center justify-between text-sm pl-11"
+                                >
+                                  <span className="text-muted-foreground">
+                                    {repayment.payer?.display_name || ""} → {repayment.expense_splits?.[0]?.profiles?.display_name || ""}
+                                  </span>
+                                  <span className="font-medium">
+                                    {getCurrencySymbol(repayment.currency)} {repayment.amount}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  // Expense card (including repayments)
+                  const expense = item.data;
+                  const isEditable =
+                    expense.type !== "repayment" &&
+                    !isArchived;
+
+                  return (
+                    <Card
+                      key={`expense-${expense.id}`}
+                      className={`transition-colors ${
+                        isEditable
+                          ? "cursor-pointer hover:bg-muted/50"
+                          : ""
+                      } ${
+                        expense.type === "repayment"
+                          ? "bg-muted/20 border-l-4 border-l-primary/50"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        isEditable && setSelectedExpenseId(expense.id)
+                      }
+                    >
+                      <CardContent className="px-4 py-2 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="text-center min-w-[3rem] shrink-0">
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(expense.date), "MMM")}
+                            </div>
+                            <div className="font-bold text-lg">
+                              {format(new Date(expense.date), "dd")}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <div className="font-medium leading-none truncate">
+                              {expense.description || t("expense")}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {expense.type === "repayment"
+                                ? `${expense.payer?.display_name || ""} → ${expense.expense_splits?.[0]?.profiles?.display_name || ""}`
+                                : t("paidBy", { name: expense.payer?.display_name || "" })}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <div className="font-bold whitespace-nowrap">
+                            {getCurrencySymbol(expense.currency)} {expense.amount}
+                          </div>
+                          {expense.type !== "repayment" && (
+                            <div className="flex items-center -space-x-1.5 pt-1">
+                              {!expense.expense_splits ||
+                              expense.expense_splits.length === 0 ? (
+                                <span className="text-[10px] text-muted-foreground/50">
+                                  {t("detailsNotLoaded")}
+                                </span>
+                              ) : (
+                                expense.expense_splits.map(
+                                  (split: {
+                                    user_id: string;
+                                    profiles?: {
+                                      display_name?: string;
+                                      avatar_url?: string;
+                                    };
+                                  }) => (
+                                    <Avatar
+                                      key={split.user_id}
+                                      className="h-5 w-5 border-2 border-background"
+                                    >
+                                      <AvatarImage
+                                        src={split.profiles?.avatar_url || ""}
+                                      />
+                                      <AvatarFallback className="text-[8px]">
+                                        {split.profiles?.display_name?.[0] || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  )
+                                )
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* Show More / Show Less Button */}
+                {hasMoreItems && (
+                  <div className="flex justify-center pt-4">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full max-w-xs shadow-sm hover:shadow-md transition-all"
+                      onClick={() => setShowAllExpenses(!showAllExpenses)}
+                    >
+                      {showAllExpenses ? (
+                        <>
+                          <ChevronUp className="h-4 w-4 mr-2" />
+                          {t("showLess")}
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {t("showing", {count: timelineItems.length})}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4 mr-2" />
+                          {t("showAll")}
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {t("more", {count: timelineItems.length - INITIAL_EXPENSE_LIMIT})}
+                          </span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

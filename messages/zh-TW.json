@@ -79,7 +79,10 @@
     "current": "目前",
     "history": "歷史紀錄",
     "settlement": "結清",
-    "expense": "費用"
+    "expense": "費用",
+    "activity": "動態",
+    "noExpensesYet": "尚無費用紀錄",
+    "total": "總計"
   },
   "InviteMember": {
     "invite": "邀請",

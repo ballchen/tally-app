@@ -79,7 +79,10 @@
     "current": "現在",
     "history": "履歴",
     "settlement": "精算",
-    "expense": "経費"
+    "expense": "経費",
+    "activity": "アクティビティ",
+    "noExpensesYet": "経費はまだありません",
+    "total": "合計"
   },
   "InviteMember": {
     "invite": "招待",
