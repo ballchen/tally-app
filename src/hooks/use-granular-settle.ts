@@ -29,7 +29,8 @@ export function useGranularSettle() {
     },
     onSuccess: async (_, variables) => {
       toast.success("Settlement recorded!")
-      queryClient.invalidateQueries({ queryKey: ["group-details", variables.groupId] })
+      queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
       
       // Send push notification to the creditor
       try {

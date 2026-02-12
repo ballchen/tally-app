@@ -27,20 +27,13 @@ export function useBalances(expenses: any[] | null | undefined, members: any[] |
     })
 
     // 1. Calculate Net Balances
-    // 1. Calculate Net Balances
+    // Include ALL expenses (including repayments) in balance calculation
+    // Repayments naturally offset debts: when A pays B, A's balance increases, B's decreases
     expenses.forEach(expense => {
-      // Skip repayments (they are historical records of settlement, shouldn't affect "Outstanding" debt calculation)
-      if (expense.type === 'repayment') return
-
-
-
       let payerCreditInBase = 0
 
       if (expense.expense_splits?.length > 0) {
         expense.expense_splits.forEach((split: { user_id: string; owed_amount: number; settlement_id: string | null }) => {
-          // If split is settled (Granular Settlement), ignore it
-          if (split.settlement_id) return
-
           // Calculate split amount in base currency
           const splitAmountInBase = convertAmount(split.owed_amount, expense.currency, baseCurrency, rates)
 

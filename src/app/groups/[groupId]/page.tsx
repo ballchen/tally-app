@@ -103,7 +103,7 @@ export default function GroupDetailsPage() {
   const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
     onRefresh: async () => {
       // Invalidate and refetch group details
-      await queryClient.invalidateQueries({ queryKey: ["group-details", groupId] });
+      await queryClient.invalidateQueries({ queryKey: ["group", groupId] });
       await refetch();
     },
   });
@@ -133,18 +133,12 @@ export default function GroupDetailsPage() {
   const isHidden = !!currentMember?.hidden_at;
 
   const filteredExpenses = expenses?.filter((e) => {
-    if (e.type === "repayment") {
-      return view === "history";
+    // "current" = regular expenses (type != 'repayment')
+    // "history" = repayments (settlement records)
+    if (view === "current") {
+      return e.type !== "repayment";
     }
-    // Check if fully settled (all splits have a settlement_id)
-    const isFullySettled =
-      e.expense_splits?.length > 0 &&
-      e.expense_splits.every(
-        (s: { settlement_id: string | null }) => s.settlement_id
-      );
-
-    if (view === "current") return !isFullySettled;
-    return isFullySettled;
+    return e.type === "repayment";
   });
 
   // Calculate displayed expenses
@@ -489,13 +483,8 @@ export default function GroupDetailsPage() {
             ) : (
               <>
                 {displayedExpenses?.map((expense) => {
-                const isFullySettled =
-                  expense.expense_splits?.length > 0 &&
-                  expense.expense_splits.every(
-                    (s: { settlement_id: string | null }) => s.settlement_id
-                  );
+                // Repayments are not editable, regular expenses are (unless archived)
                 const isEditable =
-                  !isFullySettled &&
                   expense.type !== "repayment" &&
                   !isArchived;
                 return (

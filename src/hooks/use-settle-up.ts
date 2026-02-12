@@ -25,6 +25,7 @@ export function useSettleUp() {
     },
     onSuccess: (_, { groupId }) => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] })
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
     }
   })
 }

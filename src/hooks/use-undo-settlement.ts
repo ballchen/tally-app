@@ -17,6 +17,7 @@ export function useUndoSettlement() {
     onSuccess: (_, settlementId) => {
       toast.success("Settlement undone")
       queryClient.invalidateQueries({ queryKey: ["group"] })
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
     },
     onError: (error: any) => {
       toast.error("Failed to undo settlement", {
