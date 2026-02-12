@@ -529,7 +529,7 @@ export default function GroupDetailsPage() {
                               {repayments.map((repayment) => (
                                 <div
                                   key={repayment.id}
-                                  className="flex items-center justify-between text-sm pl-11"
+                                  className="flex items-center justify-between text-sm pl-11 pr-3"
                                 >
                                   <span className="text-muted-foreground">
                                     {repayment.payer?.display_name || ""} → {repayment.expense_splits?.[0]?.profiles?.display_name || ""}
