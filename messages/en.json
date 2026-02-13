@@ -180,6 +180,27 @@
     "pushTitle": "New Expense Added",
     "pushBody": "{name} added: {description} ({amount})"
   },
+  "ActivityLog": {
+    "title": "Activity Log",
+    "viewHistory": "History",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "expenseCreated": "{actor} added \"{description}\"",
+    "expenseUpdated": "{actor} updated an expense",
+    "expenseDeleted": "{actor} deleted \"{description}\"",
+    "expenseRestored": "{actor} restored \"{description}\"",
+    "settlementCreated": "{actor} settled debts",
+    "settlementUndone": "{actor} undid a settlement",
+    "groupUpdated": "{actor} updated group settings",
+    "groupArchived": "{actor} archived the group",
+    "groupUnarchived": "{actor} unarchived the group",
+    "noActivity": "No activity yet",
+    "amount": "Amount",
+    "description": "Description",
+    "currency": "Currency",
+    "payer": "Payer",
+    "changedTo": "{field}: {old} → {new}"
+  },
   "Common": {
     "language": "Language"
   },

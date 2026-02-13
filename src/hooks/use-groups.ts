@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
+import { logActivity } from "@/lib/activity-log"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { nanoid } from "nanoid"
 
@@ -150,6 +151,13 @@ export function useUpdateGroup() {
       coverImageUrl?: string | null
       regenerateInviteCode?: boolean
     }) => {
+      // Fetch old values for diff logging
+      const { data: oldGroup } = await supabase
+        .from('groups')
+        .select('name, base_currency')
+        .eq('id', groupId)
+        .single()
+
       const updates: Record<string, string | null> = {}
 
       if (name !== undefined) updates.name = name
@@ -165,11 +173,27 @@ export function useUpdateGroup() {
         .single()
 
       if (error) throw error
-      return data
+      return { data, oldGroup }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: ({ oldGroup }, variables) => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
       queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
+
+      const changes: Record<string, unknown> = {}
+      if (oldGroup) {
+        if (variables.name !== undefined && oldGroup.name !== variables.name)
+          changes.name = { old: oldGroup.name, new: variables.name }
+        if (variables.baseCurrency !== undefined && oldGroup.base_currency !== variables.baseCurrency)
+          changes.base_currency = { old: oldGroup.base_currency, new: variables.baseCurrency }
+      }
+
+      logActivity(supabase, {
+        groupId: variables.groupId,
+        action: "group.update",
+        entityType: "group",
+        entityId: variables.groupId,
+        changes,
+      })
     }
   })
 }
@@ -225,6 +249,12 @@ export function useArchiveGroup() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
       queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
+      logActivity(supabase, {
+        groupId: variables.groupId,
+        action: variables.archive ? "group.archive" : "group.unarchive",
+        entityType: "group",
+        entityId: variables.groupId,
+      })
     }
   })
 }

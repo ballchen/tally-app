@@ -92,7 +92,7 @@ export function AddExpenseDrawer({
   const handleDelete = () => {
     if (!expenseId) return;
     deleteExpense.mutate(
-      { expenseId, groupId },
+      { expenseId, groupId, description: expenseData?.description, amount: expenseData?.amount ? Number(expenseData.amount) : undefined, currency: expenseData?.currency },
       {
         onSuccess: () => {
           toast.success(t("expenseDeleted"));

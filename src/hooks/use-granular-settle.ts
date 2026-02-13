@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
@@ -8,6 +9,8 @@ type GranularSettleParams = {
   creditorId: string
   amount: number
   currency: string
+  debtorName?: string
+  creditorName?: string
 }
 
 export function useGranularSettle() {
@@ -31,7 +34,22 @@ export function useGranularSettle() {
       toast.success("Settlement recorded!")
       queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
       queryClient.invalidateQueries({ queryKey: ["groups"] })
-      
+
+      logActivity(supabase, {
+        groupId: variables.groupId,
+        action: "settlement.create",
+        entityType: "settlement",
+        changes: {
+          type: "granular",
+          repayments: [{
+            from_name: variables.debtorName,
+            to_name: variables.creditorName,
+            amount: variables.amount,
+            currency: variables.currency,
+          }],
+        },
+      })
+
       // Send push notification to the creditor
       try {
         // Get debtor's name for notification

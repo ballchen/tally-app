@@ -35,7 +35,12 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
   const handleSettle = () => {
     settleUp.mutate({
         groupId,
-        repayments: debts
+        repayments: debts,
+        repaymentNames: debts.map(d => ({
+          fromName: getMember(d.from)?.display_name || "",
+          toName: getMember(d.to)?.display_name || "",
+          amount: d.amount,
+        })),
     }, {
         onSuccess: () => setOpen(false)
     })

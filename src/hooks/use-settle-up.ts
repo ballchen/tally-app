@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
@@ -9,6 +10,7 @@ type SettleUpParams = {
     to: string
     amount: number
   }[]
+  repaymentNames?: { fromName: string; toName: string; amount: number }[]
 }
 
 export function useSettleUp() {
@@ -24,10 +26,19 @@ export function useSettleUp() {
 
       if (error) throw error
     },
-    onSuccess: (_, { groupId }) => {
+    onSuccess: (_, { groupId, repaymentNames }) => {
       toast.success("All balances settled!")
       queryClient.invalidateQueries({ queryKey: ["group", groupId] })
       queryClient.invalidateQueries({ queryKey: ["groups"] })
+      logActivity(supabase, {
+        groupId,
+        action: "settlement.create",
+        entityType: "settlement",
+        changes: {
+          type: "all",
+          repayments: repaymentNames ?? [],
+        },
+      })
     },
     onError: (error: Error) => {
       toast.error("Settlement failed", {

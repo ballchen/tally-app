@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
+import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export type CreateExpenseParams = {
@@ -56,8 +57,19 @@ export function useAddExpense() {
 
       return expense
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
+      logActivity(supabase, {
+        groupId: variables.groupId,
+        action: "expense.create",
+        entityType: "expense",
+        entityId: data.id,
+        changes: {
+          description: variables.description,
+          amount: variables.amount,
+          currency: variables.currency,
+        },
+      })
     }
   })
 }

@@ -180,6 +180,27 @@
     "pushTitle": "新增費用",
     "pushBody": "{name} 新增了：{description} ({amount})"
   },
+  "ActivityLog": {
+    "title": "活動記錄",
+    "viewHistory": "歷史紀錄",
+    "today": "今天",
+    "yesterday": "昨天",
+    "expenseCreated": "{actor} 新增了「{description}」",
+    "expenseUpdated": "{actor} 更新了一筆費用",
+    "expenseDeleted": "{actor} 刪除了「{description}」",
+    "expenseRestored": "{actor} 復原了「{description}」",
+    "settlementCreated": "{actor} 結清了債務",
+    "settlementUndone": "{actor} 復原了一筆結清",
+    "groupUpdated": "{actor} 更新了群組設定",
+    "groupArchived": "{actor} 封存了群組",
+    "groupUnarchived": "{actor} 取消封存了群組",
+    "noActivity": "尚無活動記錄",
+    "amount": "金額",
+    "description": "說明",
+    "currency": "貨幣",
+    "payer": "付款人",
+    "changedTo": "{field}：{old} → {new}"
+  },
   "Common": {
     "language": "語言"
   },

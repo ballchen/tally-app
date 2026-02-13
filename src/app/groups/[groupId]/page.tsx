@@ -47,6 +47,7 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicator";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { ActivityLogSheet } from "@/components/activity/activity-log-sheet";
 
 export default function GroupDetailsPage() {
   const params = useParams();
@@ -383,6 +384,8 @@ export default function GroupDetailsPage() {
                               creditorId: debt.to,
                               amount: debt.amount,
                               currency: group.base_currency,
+                              debtorName: fromUser?.display_name ?? undefined,
+                              creditorName: toUser?.display_name ?? undefined,
                             })
                           }
                         >
@@ -409,9 +412,12 @@ export default function GroupDetailsPage() {
 
           {/* Activity Timeline */}
           <div className="space-y-3 pb-20">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
-              {t("activity")}
-            </h3>
+            <div className="flex items-end justify-between px-1">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {t("activity")}
+              </h3>
+              <ActivityLogSheet groupId={groupId} members={members || []} />
+            </div>
 
             {timelineItems.length === 0 ? (
               <Card className="p-12 text-center border-dashed">
@@ -512,7 +518,7 @@ export default function GroupDetailsPage() {
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                                     <AlertDialogAction
-                                      onClick={() => undoSettlement(settlement.id)}
+                                      onClick={() => undoSettlement({ settlementId: settlement.id, groupId })}
                                       className="bg-destructive hover:bg-destructive/90"
                                     >
                                       {t("confirmUndo")}

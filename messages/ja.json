@@ -180,6 +180,27 @@
     "pushTitle": "新しい経費が追加されました",
     "pushBody": "{name} が追加: {description} ({amount})"
   },
+  "ActivityLog": {
+    "title": "アクティビティログ",
+    "viewHistory": "履歴",
+    "today": "今日",
+    "yesterday": "昨日",
+    "expenseCreated": "{actor} が「{description}」を追加しました",
+    "expenseUpdated": "{actor} が経費を更新しました",
+    "expenseDeleted": "{actor} が「{description}」を削除しました",
+    "expenseRestored": "{actor} が「{description}」を復元しました",
+    "settlementCreated": "{actor} が精算しました",
+    "settlementUndone": "{actor} が精算を取り消しました",
+    "groupUpdated": "{actor} がグループ設定を更新しました",
+    "groupArchived": "{actor} がグループをアーカイブしました",
+    "groupUnarchived": "{actor} がグループのアーカイブを解除しました",
+    "noActivity": "アクティビティはまだありません",
+    "amount": "金額",
+    "description": "説明",
+    "currency": "通貨",
+    "payer": "支払者",
+    "changedTo": "{field}：{old} → {new}"
+  },
   "Common": {
     "language": "言語"
   },

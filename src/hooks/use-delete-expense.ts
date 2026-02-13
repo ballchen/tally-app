@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
+import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export function useDeleteExpense() {
@@ -7,7 +8,7 @@ export function useDeleteExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ expenseId, groupId }: { expenseId: string; groupId: string }) => {
+    mutationFn: async ({ expenseId, groupId, description, amount, currency }: { expenseId: string; groupId: string; description?: string; amount?: number; currency?: string }) => {
       // Debug: Check auth status first with safe error handling
       const { user, error: authError } = await safeGetUser(supabase)
       console.log('🔐 Auth check before delete:')
@@ -44,13 +45,24 @@ export function useDeleteExpense() {
         console.log('✅ Soft delete successful:', data)
       }
 
-      return { groupId }
+      return { groupId, expenseId, description, amount, currency }
     },
     onSuccess: (data) => {
       // Invalidate the specific group query to refresh expenses list
       queryClient.invalidateQueries({ queryKey: ["group", data.groupId] })
       // Also invalidate the expense query if it exists
       queryClient.invalidateQueries({ queryKey: ["expense"] })
+      logActivity(supabase, {
+        groupId: data.groupId,
+        action: "expense.delete",
+        entityType: "expense",
+        entityId: data.expenseId,
+        changes: {
+          description: data.description,
+          amount: data.amount,
+          currency: data.currency,
+        },
+      })
     }
   })
 }
