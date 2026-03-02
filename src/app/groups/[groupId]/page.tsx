@@ -32,6 +32,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { useProfile } from "@/hooks/use-profile";
 import { toast } from "sonner";
 import { getCurrencySymbol } from "@/lib/currency";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,7 +88,7 @@ export default function GroupDetailsPage() {
     }
   }, []);
 
-  const { debts } = useBalances(
+  const { debts, isLoading: isBalancesLoading } = useBalances(
     data?.expenses || [],
     data?.members || [],
     data?.group?.base_currency || "TWD"
@@ -322,7 +323,33 @@ export default function GroupDetailsPage() {
           </div>
 
           {/* Settlement & Balances */}
-          {debts.length > 0 && (
+          {isBalancesLoading ? (
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {t("outstandingBalances")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[0, 1].map((i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <Skeleton className="h-3.5 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-8 w-16 rounded-md" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : debts.length > 0 && (
             <Card className="bg-muted/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

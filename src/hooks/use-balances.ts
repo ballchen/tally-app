@@ -13,11 +13,17 @@ export type Balance = {
 }
 
 export function useBalances(expenses: any[] | null | undefined, members: any[] | null | undefined, baseCurrency: string) {
-  const { data: rates } = useExchangeRates()
+  const { data: rates, isLoading: ratesLoading } = useExchangeRates()
 
   return useMemo(() => {
-    // console.log("useBalances inputs:", { expensesCount: expenses?.length, membersCount: members?.length, baseCurrency })
-    if (!expenses || !members) return { balances: {}, debts: [] }
+    if (!expenses || !members) return { balances: {}, debts: [], isLoading: false }
+
+    // Only block rendering if there are cross-currency splits that lack a locked base amount
+    const needsRates = expenses.some(e =>
+      e.currency !== baseCurrency &&
+      e.expense_splits?.some((s: any) => s.owed_amount_base == null)
+    )
+    if (needsRates && ratesLoading) return { balances: {}, debts: [], isLoading: true }
 
     const balances: Balance = {}
 
@@ -33,9 +39,11 @@ export function useBalances(expenses: any[] | null | undefined, members: any[] |
       let payerCreditInBase = 0
 
       if (expense.expense_splits?.length > 0) {
-        expense.expense_splits.forEach((split: { user_id: string; owed_amount: number; settlement_id: string | null }) => {
-          // Calculate split amount in base currency
-          const splitAmountInBase = convertAmount(split.owed_amount, expense.currency, baseCurrency, rates)
+        expense.expense_splits.forEach((split: { user_id: string; owed_amount: number; owed_amount_base: number | null; settlement_id: string | null }) => {
+          // Use locked base amount when available; fall back to live conversion for legacy splits
+          const splitAmountInBase = split.owed_amount_base != null
+            ? split.owed_amount_base
+            : convertAmount(split.owed_amount, expense.currency, baseCurrency, rates)
 
           // Debtor owes this amount (-)
           balances[split.user_id] = (balances[split.user_id] || 0) - splitAmountInBase
@@ -91,6 +99,6 @@ export function useBalances(expenses: any[] | null | undefined, members: any[] |
       if (creditor.amount < 0.01) j++
     }
 
-    return { balances, debts }
-  }, [expenses, members, baseCurrency, rates])
+    return { balances, debts, isLoading: false }
+  }, [expenses, members, baseCurrency, rates, ratesLoading])
 }

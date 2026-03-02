@@ -18,7 +18,7 @@ export function useUndoSettlement() {
     },
     onSuccess: (data) => {
       toast.success("Settlement undone")
-      queryClient.invalidateQueries({ queryKey: ["group"] })
+      queryClient.invalidateQueries({ queryKey: ["group", data.groupId] })
       queryClient.invalidateQueries({ queryKey: ["groups"] })
       logActivity(supabase, {
         groupId: data.groupId,

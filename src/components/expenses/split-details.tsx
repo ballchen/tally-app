@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 // import { ScrollArea } from "@/components/ui/scroll-area" // Removed for better touch handling in Drawer
 import { cn } from "@/lib/utils"
-import { Check, User, ArrowRightLeft } from "lucide-react"
+import { Check, User, ArrowRightLeft, Lock } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useExchangeRates } from "@/hooks/use-exchange-rates"
 import { getExchangeRate, getCurrencySymbol } from "@/lib/currency"
@@ -47,6 +47,7 @@ interface SplitDetailsProps {
   remainingExact: number
   remainingPercent: number
   onEditAmount?: () => void
+  lockedExchangeRate?: number
 }
 
 export function SplitDetails({
@@ -66,7 +67,8 @@ export function SplitDetails({
   splitAmountEqual,
   remainingExact,
   remainingPercent,
-  onEditAmount
+  onEditAmount,
+  lockedExchangeRate
 }: SplitDetailsProps) {
   const descriptionInputRef = useRef<HTMLInputElement>(null);
   const { data: exchangeRates } = useExchangeRates();
@@ -111,7 +113,14 @@ export function SplitDetails({
             >
                 {getCurrencySymbol(currency)} {amount.toFixed(2)}
             </div>
-            {showExchangeRate && exchangeRate && convertedAmount && (
+            {showExchangeRate && lockedExchangeRate && (
+              <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+                <Lock className="h-3 w-3" />
+                <span>≈ {getCurrencySymbol(baseCurrency)} {(amount * lockedExchangeRate).toFixed(2)}</span>
+                <span className="text-[10px]">(1 {currency} = {lockedExchangeRate.toFixed(4)} {baseCurrency})</span>
+              </div>
+            )}
+            {showExchangeRate && !lockedExchangeRate && exchangeRate && convertedAmount && (
               <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
                 <ArrowRightLeft className="h-3 w-3" />
                 <span>

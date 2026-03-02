@@ -9,6 +9,7 @@ export type UpdateExpenseParams = {
   amount: number
   currency: string
   description: string
+  exchangeRate: number
   split: {
     userId: string
     amount: number
@@ -20,7 +21,7 @@ export function useUpdateExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ expenseId, groupId, payerId, amount, currency, description, split }: UpdateExpenseParams) => {
+    mutationFn: async ({ expenseId, groupId, payerId, amount, currency, description, exchangeRate, split }: UpdateExpenseParams) => {
       // Fetch old values for diff logging
       const { data: oldExpense } = await supabase
         .from("expenses")
@@ -35,7 +36,8 @@ export function useUpdateExpense() {
         p_amount: amount,
         p_currency: currency,
         p_description: description,
-        p_splits: split.map(s => ({ user_id: s.userId, amount: s.amount }))
+        p_exchange_rate: exchangeRate,
+        p_splits: split.map(s => ({ user_id: s.userId, amount: s.amount, amount_base: s.amount * exchangeRate }))
       })
 
       if (error) throw error

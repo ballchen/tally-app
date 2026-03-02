@@ -58,6 +58,7 @@ export function useGroupDetails(groupId: string) {
           expense_splits (
             user_id,
             owed_amount,
+            owed_amount_base,
             settlement_id,
             profiles:user_id (
                display_name,

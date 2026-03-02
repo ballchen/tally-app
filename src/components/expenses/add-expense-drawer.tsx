@@ -30,6 +30,8 @@ import {
 import { useExpense } from "@/hooks/use-expense";
 import { useUpdateExpense } from "@/hooks/use-update-expense";
 import { useDeleteExpense } from "@/hooks/use-delete-expense";
+import { useExchangeRates } from "@/hooks/use-exchange-rates";
+import { getExchangeRate } from "@/lib/currency";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -82,6 +84,7 @@ export function AddExpenseDrawer({
   const addExpense = useAddExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
+  const { data: exchangeRates } = useExchangeRates();
   const t = useTranslations("AddExpense");
 
   // Fetch expense if editing
@@ -255,12 +258,14 @@ export function AddExpenseDrawer({
     if (!form.isValid) return;
 
     const splits = form.getSplits();
+    const exchangeRate = getExchangeRate(selectedCurrency, currency, exchangeRates);
     const commonData = {
       groupId,
       payerId: form.payerId,
       amount,
       currency: selectedCurrency,
       description: form.description || "Expense",
+      exchangeRate,
       split: splits,
     };
 
@@ -416,6 +421,7 @@ export function AddExpenseDrawer({
                     currentUser={user}
                     {...form}
                     onEditAmount={() => setStep("amount")}
+                    lockedExchangeRate={expenseId ? (expenseData?.exchange_rate ?? undefined) : undefined}
                   />
                 </div>
                 <DrawerFooter className="pt-2 pb-6 px-4">

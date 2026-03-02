@@ -9,6 +9,7 @@ export type CreateExpenseParams = {
   amount: number
   currency: string
   description: string
+  exchangeRate: number
   split: {
     userId: string
     amount: number // Simplified for now: Assume frontend calculates amounts
@@ -20,7 +21,7 @@ export function useAddExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ groupId, payerId, amount, currency, description, split }: CreateExpenseParams) => {
+    mutationFn: async ({ groupId, payerId, amount, currency, description, exchangeRate, split }: CreateExpenseParams) => {
       // Get current user ID with safe error handling
       const { user, error: authError } = await safeGetUser(supabase)
       if (authError) throw authError
@@ -35,6 +36,7 @@ export function useAddExpense() {
           amount,
           currency,
           description,
+          exchange_rate: exchangeRate,
           created_by: user.id
         })
         .select()
@@ -46,7 +48,8 @@ export function useAddExpense() {
       const splitsData = split.map(s => ({
         expense_id: expense.id,
         user_id: s.userId,
-        owed_amount: s.amount
+        owed_amount: s.amount,
+        owed_amount_base: s.amount * exchangeRate
       }))
 
       const { error: splitError } = await supabase
