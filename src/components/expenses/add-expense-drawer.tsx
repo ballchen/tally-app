@@ -270,10 +270,12 @@ export function AddExpenseDrawer({
     };
 
     if (expenseId) {
+      const payerName = members.find(m => m.user_id === form.payerId)?.profiles?.display_name ?? "Unknown"
       updateExpense.mutate(
         {
           expenseId,
           ...commonData,
+          payerName,
         },
         {
           onSuccess: () => {

@@ -6,6 +6,7 @@ export type UpdateExpenseParams = {
   expenseId: string
   groupId: string
   payerId: string
+  payerName: string
   amount: number
   currency: string
   description: string
@@ -25,7 +26,7 @@ export function useUpdateExpense() {
       // Fetch old values for diff logging
       const { data: oldExpense } = await supabase
         .from("expenses")
-        .select("amount, currency, description, payer_id")
+        .select("amount, currency, description, payer_id, payer:payer_id(display_name)")
         .eq("id", expenseId)
         .single()
 
@@ -54,7 +55,13 @@ export function useUpdateExpense() {
         if (old.description !== variables.description) changes.description = { old: old.description, new: variables.description }
         if (Number(old.amount) !== variables.amount) changes.amount = { old: old.amount, new: variables.amount }
         if (old.currency !== variables.currency) changes.currency = { old: old.currency, new: variables.currency }
-        if (old.payer_id !== variables.payerId) changes.payer = { old: old.payer_id, new: variables.payerId }
+        if (old.payer_id !== variables.payerId) {
+          const oldPayer = old.payer as unknown as { display_name: string | null } | null
+          changes.payer = {
+            old: oldPayer?.display_name ?? old.payer_id,
+            new: variables.payerName,
+          }
+        }
       }
 
       logActivity(supabase, {
