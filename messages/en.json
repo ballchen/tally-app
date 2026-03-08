@@ -186,7 +186,7 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "expenseCreated": "{actor} added \"{description}\"",
-    "expenseUpdated": "{actor} updated an expense",
+    "expenseUpdated": "{actor} updated \"{description}\"",
     "expenseDeleted": "{actor} deleted \"{description}\"",
     "expenseRestored": "{actor} restored \"{description}\"",
     "settlementCreated": "{actor} settled debts",
@@ -199,6 +199,8 @@
     "description": "Description",
     "currency": "Currency",
     "payer": "Payer",
+    "name": "Name",
+    "base_currency": "Base Currency",
     "changedTo": "{field}: {old} → {new}"
   },
   "Common": {

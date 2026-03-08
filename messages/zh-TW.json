@@ -186,11 +186,11 @@
     "today": "今天",
     "yesterday": "昨天",
     "expenseCreated": "{actor} 新增了「{description}」",
-    "expenseUpdated": "{actor} 更新了一筆費用",
+    "expenseUpdated": "{actor} 更新了「{description}」",
     "expenseDeleted": "{actor} 刪除了「{description}」",
     "expenseRestored": "{actor} 復原了「{description}」",
     "settlementCreated": "{actor} 結清了債務",
-    "settlementUndone": "{actor} 復原了一筆結清",
+    "settlementUndone": "{actor} 撤銷了一筆結清",
     "groupUpdated": "{actor} 更新了群組設定",
     "groupArchived": "{actor} 封存了群組",
     "groupUnarchived": "{actor} 取消封存了群組",
@@ -199,6 +199,8 @@
     "description": "說明",
     "currency": "貨幣",
     "payer": "付款人",
+    "name": "名稱",
+    "base_currency": "基礎貨幣",
     "changedTo": "{field}：{old} → {new}"
   },
   "Common": {

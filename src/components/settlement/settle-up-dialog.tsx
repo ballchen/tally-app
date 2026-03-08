@@ -40,6 +40,7 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
           fromName: getMember(d.from)?.display_name || "",
           toName: getMember(d.to)?.display_name || "",
           amount: d.amount,
+          currency,
         })),
     }, {
         onSuccess: () => setOpen(false)

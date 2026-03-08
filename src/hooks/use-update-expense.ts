@@ -52,6 +52,7 @@ export function useUpdateExpense() {
       const changes: Record<string, unknown> = {}
       const old = data.oldExpense
       if (old) {
+        changes.expenseName = variables.description
         if (old.description !== variables.description) changes.description = { old: old.description, new: variables.description }
         if (Number(old.amount) !== variables.amount) changes.amount = { old: old.amount, new: variables.amount }
         if (old.currency !== variables.currency) changes.currency = { old: old.currency, new: variables.currency }

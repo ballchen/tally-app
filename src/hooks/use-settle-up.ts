@@ -10,7 +10,7 @@ type SettleUpParams = {
     to: string
     amount: number
   }[]
-  repaymentNames?: { fromName: string; toName: string; amount: number }[]
+  repaymentNames?: { fromName: string; toName: string; amount: number; currency: string }[]
 }
 
 export function useSettleUp() {

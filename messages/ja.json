@@ -186,7 +186,7 @@
     "today": "今日",
     "yesterday": "昨日",
     "expenseCreated": "{actor} が「{description}」を追加しました",
-    "expenseUpdated": "{actor} が経費を更新しました",
+    "expenseUpdated": "{actor} が「{description}」を更新しました",
     "expenseDeleted": "{actor} が「{description}」を削除しました",
     "expenseRestored": "{actor} が「{description}」を復元しました",
     "settlementCreated": "{actor} が精算しました",
@@ -199,6 +199,8 @@
     "description": "説明",
     "currency": "通貨",
     "payer": "支払者",
+    "name": "名前",
+    "base_currency": "基準通貨",
     "changedTo": "{field}：{old} → {new}"
   },
   "Common": {

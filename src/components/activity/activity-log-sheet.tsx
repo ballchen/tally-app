@@ -47,7 +47,7 @@ function ActionDescription({ log, t }: { log: ActivityLog; t: (key: string, valu
     case "expense.create":
       return <span>{t("expenseCreated", { actor: actorName, description: (changes.description as string) || "" })}</span>
     case "expense.update":
-      return <span>{t("expenseUpdated", { actor: actorName })}</span>
+      return <span>{t("expenseUpdated", { actor: actorName, description: (changes.expenseName as string) || "" })}</span>
     case "expense.delete":
       return <span>{t("expenseDeleted", { actor: actorName, description: (changes.description as string) || "" })}</span>
     case "expense.restore":
@@ -123,7 +123,7 @@ function ChangeDetails({ log, t }: { log: ActivityLog; t: (key: string, values?:
           const v = value as { old: string; new: string }
           return (
             <div key={field}>
-              {t("changedTo", { field, old: String(v.old), new: String(v.new) })}
+              {t("changedTo", { field: t(field as "name" | "base_currency"), old: String(v.old), new: String(v.new) })}
             </div>
           )
         })}
