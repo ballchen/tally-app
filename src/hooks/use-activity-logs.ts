@@ -18,7 +18,7 @@ export type ActivityLog = {
 
 const PAGE_SIZE = 20
 
-export function useActivityLogs(groupId: string) {
+export function useActivityLogs(groupId: string, enabled = true) {
   const supabase = createClient()
 
   return useInfiniteQuery({
@@ -42,6 +42,6 @@ export function useActivityLogs(groupId: string) {
       if (lastPage.data.length < PAGE_SIZE) return undefined
       return lastPage.page + 1
     },
-    enabled: !!groupId,
+    enabled: !!groupId && enabled,
   })
 }
