@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 import { useGroupDetails } from "@/hooks/use-group-details";
@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2,
   ArrowLeft,
   Copy,
   ArrowRight,
@@ -49,6 +48,7 @@ import { PullToRefreshIndicator } from "@/components/ui/pull-to-refresh-indicato
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ActivityLogSheet } from "@/components/activity/activity-log-sheet";
+import { GroupDetailsSkeleton } from "@/components/groups/group-details-skeleton";
 
 export default function GroupDetailsPage() {
   const params = useParams();
@@ -70,8 +70,14 @@ export default function GroupDetailsPage() {
 
   // Enable realtime sync for this group
   useRealtimeSync(groupId);
-  const { data, isLoading, error, refetch } = useGroupDetails(groupId);
+  const { data, isLoading, error } = useGroupDetails(groupId);
   const queryClient = useQueryClient();
+
+  const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
+    onRefresh: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    },
+  });
 
   // Handle scroll for sticky header effects
   useEffect(() => {
@@ -86,7 +92,7 @@ export default function GroupDetailsPage() {
       container.addEventListener("scroll", handleScroll, { passive: true });
       return () => container.removeEventListener("scroll", handleScroll);
     }
-  }, []);
+  }, [scrollContainerRef]);
 
   const { debts, isLoading: isBalancesLoading } = useBalances(
     data?.expenses || [],
@@ -96,21 +102,8 @@ export default function GroupDetailsPage() {
   const { mutate: settle, isPending: isSettling } = useGranularSettle();
   const { mutate: undoSettlement, isPending: isUndoing } = useUndoSettlement();
 
-  // Pull-to-refresh
-  const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
-    onRefresh: async () => {
-      // Invalidate and refetch group details
-      await queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      await refetch();
-    },
-  });
-
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <GroupDetailsSkeleton />;
   }
 
   if (error || !data) {

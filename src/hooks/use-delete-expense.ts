@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { logActivity } from "@/lib/activity-log"
+import type { GroupDetailsCache } from "@/lib/group-query-cache"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export function useDeleteExpense() {
@@ -8,50 +9,60 @@ export function useDeleteExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ expenseId, groupId, description, amount, currency }: { expenseId: string; groupId: string; description?: string; amount?: number; currency?: string }) => {
-      // Debug: Check auth status first with safe error handling
+    mutationFn: async ({
+      expenseId,
+      groupId,
+      description,
+      amount,
+      currency,
+    }: {
+      expenseId: string
+      groupId: string
+      description?: string
+      amount?: number
+      currency?: string
+    }) => {
       const { user, error: authError } = await safeGetUser(supabase)
-      console.log('🔐 Auth check before delete:')
-      console.log('  User ID:', user?.id || 'NOT LOGGED IN')
-      console.log('  User email:', user?.email)
-      console.log('  Auth error:', authError)
-
       if (authError) throw authError
       if (!user) {
-        throw new Error('User not authenticated. Please login again.')
+        throw new Error("User not authenticated. Please login again.")
       }
 
-      // Soft delete: set deleted_at timestamp instead of actually deleting
       const { data, error } = await supabase
         .from("expenses")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", expenseId)
         .select()
 
-      if (error) {
-        console.error('❌ Delete expense error:', error)
-        console.error('  Error code:', error.code)
-        console.error('  Error message:', error.message)
-        console.error('  Expense ID:', expenseId)
-        console.error('  Group ID:', groupId)
-        throw error
-      }
+      if (error) throw error
 
       if (!data || data.length === 0) {
-        console.warn('⚠️ No rows updated. Possible RLS policy blocking update.')
-        console.log('Expense ID:', expenseId)
-        console.log('Group ID:', groupId)
-      } else {
-        console.log('✅ Soft delete successful:', data)
+        console.warn("No rows updated. Possible RLS policy blocking update.")
       }
 
       return { groupId, expenseId, description, amount, currency }
     },
+    onMutate: async ({ expenseId, groupId }) => {
+      const queryKey = ["group", groupId] as const
+      await queryClient.cancelQueries({ queryKey })
+
+      const previous = queryClient.getQueryData<GroupDetailsCache>(queryKey)
+
+      if (previous) {
+        queryClient.setQueryData<GroupDetailsCache>(queryKey, {
+          ...previous,
+          expenses: previous.expenses.filter((e) => e.id !== expenseId),
+        })
+      }
+
+      return { previous, queryKey }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous)
+      }
+    },
     onSuccess: (data) => {
-      // Invalidate the specific group query to refresh expenses list
-      queryClient.invalidateQueries({ queryKey: ["group", data.groupId] })
-      // Also invalidate the expense query if it exists
-      queryClient.invalidateQueries({ queryKey: ["expense"] })
       logActivity(supabase, {
         groupId: data.groupId,
         action: "expense.delete",
@@ -63,6 +74,10 @@ export function useDeleteExpense() {
           currency: data.currency,
         },
       })
-    }
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
+      queryClient.invalidateQueries({ queryKey: ["expense"] })
+    },
   })
 }

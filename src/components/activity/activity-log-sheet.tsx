@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Sheet,
   SheetContent,
@@ -136,13 +136,14 @@ function ChangeDetails({ log, t }: { log: ActivityLog; t: (key: string, values?:
 
 export function ActivityLogSheet({ groupId }: ActivityLogSheetProps) {
   const t = useTranslations("ActivityLog")
+  const [open, setOpen] = useState(false)
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useActivityLogs(groupId)
+  } = useActivityLogs(groupId, open)
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -176,7 +177,7 @@ export function ActivityLogSheet({ groupId }: ActivityLogSheetProps) {
   }
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground">
           <History className="h-3 w-3 mr-1" />
