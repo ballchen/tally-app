@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { sendPush } from "@tally/shared/lib/push"
+import { safeGetUser } from "@tally/shared/lib/auth-helpers"
+import { useSupabase } from "@tally/shared/supabase-context"
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
@@ -19,6 +21,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
+  const supabase = useSupabase()
   const [isSupported, setIsSupported] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
   const [isSubscribing, setIsSubscribing] = useState(false)
@@ -49,7 +52,6 @@ export function usePushNotifications() {
     setIsSubscribing(true)
 
     try {
-      // 1. Request Permission
       const result = await Notification.requestPermission()
       setPermission(result)
 
@@ -57,7 +59,6 @@ export function usePushNotifications() {
         throw new Error("Permission denied")
       }
 
-      // 2. Register with PushManager
       const registration = await navigator.serviceWorker.ready
       if (!VAPID_PUBLIC_KEY) throw new Error("VAPID Key missing")
 
@@ -68,13 +69,25 @@ export function usePushNotifications() {
 
       setSubscription(sub)
 
-      // 3. Send to Backend
-      await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub),
-      })
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
+      if (!user) throw new Error("Not authenticated")
 
+      const keys = sub.toJSON().keys
+      if (!keys?.p256dh || !keys?.auth) throw new Error("Subscription keys missing")
+
+      // Endpoint is unique, so it identifies the row across re-subscriptions.
+      const { error } = await supabase.from("push_subscriptions").upsert(
+        {
+          user_id: user.id,
+          endpoint: sub.endpoint,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "endpoint" }
+      )
+      if (error) throw error
     } catch (error) {
       console.error("Error subscribing:", error)
       alert("Failed to enable notifications. Please check your browser settings.")
@@ -83,21 +96,15 @@ export function usePushNotifications() {
     }
   }
 
-  // Debug function to manually send a test notification
   const sendTestNotification = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { user } = await safeGetUser(supabase)
     if (!user) return
 
-    await fetch("/api/push/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userIds: [user.id],
-        title: "Test Notification",
-        body: "This is a test notification from Tally!",
-        url: window.location.pathname
-      })
+    await sendPush(supabase, {
+      userIds: [user.id],
+      title: "Test Notification",
+      body: "This is a test notification from Tally!",
+      url: window.location.pathname,
     })
   }
 
@@ -107,6 +114,6 @@ export function usePushNotifications() {
     isSubscribing,
     permission,
     subscribe,
-    sendTestNotification
+    sendTestNotification,
   }
 }

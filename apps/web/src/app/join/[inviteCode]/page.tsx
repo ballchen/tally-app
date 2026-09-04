@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/useAuthStore"
-import { createClient } from "@/lib/supabase/client"
+import { useSupabase } from "@tally/shared/supabase-context"
+import { sendPush } from "@tally/shared/lib/push"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Users } from "lucide-react"
@@ -17,7 +18,7 @@ export default function JoinGroupPage() {
   const router = useRouter()
   const inviteCode = params.inviteCode as string
   const { user, isLoading: isAuthLoading } = useAuthStore()
-  const supabase = createClient()
+  const supabase = useSupabase()
   
   const t = useTranslations("JoinGroup")
   const [group, setGroup] = useState<InviteGroup | null>(null)
@@ -105,17 +106,13 @@ export default function JoinGroupPage() {
           if (existingMembers && existingMembers.length > 0) {
             const memberName = profile?.display_name || "Someone"
             
-            fetch("/api/push/send", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userIds: existingMembers.map(m => m.user_id),
-                groupId: group.id,
-                title: t("pushTitle"),
-                body: t("pushBody", { name: memberName, group: group.name }),
-                url: `/groups/${group.id}`
-              })
-            }).catch(err => console.error("Push notification failed", err))
+            sendPush(supabase, {
+              userIds: existingMembers.map(m => m.user_id),
+              groupId: group.id,
+              title: t("pushTitle"),
+              body: t("pushBody", { name: memberName, group: group.name }),
+              url: `/groups/${group.id}`
+            })
           }
           
           router.push(`/groups/${group.id}`)

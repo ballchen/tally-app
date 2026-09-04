@@ -1,4 +1,4 @@
-import type { GroupFilter } from "@/hooks/use-groups"
+export type GroupFilter = "active" | "archived" | "hidden" | "all"
 
 type GroupListItem = {
   archived_at: string | null

@@ -646,13 +646,7 @@ export default function GroupDetailsPage() {
                                 </span>
                               ) : (
                                 expense.expense_splits.map(
-                                  (split: {
-                                    user_id: string;
-                                    profiles?: {
-                                      display_name?: string;
-                                      avatar_url?: string;
-                                    };
-                                  }) => (
+                                  (split) => (
                                     <Avatar
                                       key={split.user_id}
                                       className="h-5 w-5 border-2 border-background"

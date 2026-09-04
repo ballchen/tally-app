@@ -1,4 +1,15 @@
-import type { CreateExpenseParams } from "@/hooks/use-add-expense"
+export type CreateExpenseParams = {
+  groupId: string
+  payerId: string
+  amount: number
+  currency: string
+  description: string
+  exchangeRate: number
+  split: {
+    userId: string
+    amount: number
+  }[]
+}
 
 export type GroupDetailsCache = {
   group: Record<string, unknown>

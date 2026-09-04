@@ -19,7 +19,6 @@ pure logic, types, and i18n messages shared with the upcoming Expo app live in
 apps/web/
 ├── src/
 │   ├── app/                    # Next.js App Router pages
-│   │   ├── api/                # API routes (currency rates, push notifications)
 │   │   ├── auth/callback/      # Supabase auth callback
 │   │   ├── groups/[groupId]/   # Group details page (main UI)
 │   │   ├── join/[inviteCode]/  # Join group via invite link
@@ -32,7 +31,7 @@ apps/web/
 │   │   ├── settlement/         # Settlement dialog components
 │   │   ├── groups/             # Group management components
 │   │   └── providers/          # React context providers
-│   ├── hooks/                  # React Query hooks (data fetching)
+│   ├── hooks/                  # Thin wrappers over @tally/shared/queries (toast + i18n + push)
 │   ├── lib/
 │   │   └── supabase/           # Supabase client (browser/server)
 │   └── i18n/                   # next-intl configuration (reads messages from @tally/shared)
@@ -41,11 +40,15 @@ apps/web/
 packages/shared/
 ├── src/
 │   ├── balances.ts, currency.ts, members.ts  # Pure functions shared with mobile
+│   ├── supabase-context.tsx                  # SupabaseProvider / useSupabase (client injection)
+│   ├── lib/                                  # auth-helpers, activity-log, push, split-form, ...
+│   ├── queries/                               # UI-free TanStack Query hooks shared with mobile
 │   ├── types/supabase.ts                     # Generated Supabase types
 │   └── i18n/messages/{en,zh-TW,ja}.json      # i18n translation files
 └── package.json                              # "@tally/shared" — exports raw TS, no build step
 
 supabase/migrations/        # Database migrations (SQL) — stays at repo root, unchanged
+supabase/functions/         # Deno Edge Functions (rates, push-send, delete-account)
 ```
 
 ## Database Schema (Supabase)
@@ -90,12 +93,28 @@ supabase/migrations/        # Database migrations (SQL) — stays at repo root, 
 ```
 
 ## Important Hooks
-- `useGroupDetails`: Fetches group with members, expenses, settlements
-- `useBalances`: Calculates net balances and simplified debts
-- `useSettleUp`: Calls `settle_group_expenses` RPC
-- `useGranularSettle`: Calls `settle_debt_rpc` for one-to-one
-- `useUndoSettlement`: Calls `undo_settlement` RPC
-- `useRealtimeSync`: Supabase realtime subscriptions
+All data-layer hooks live in `packages/shared/src/queries/` and are UI-free: they
+take their Supabase client from `useSupabase()` and never toast, translate, or
+call `fetch("/api/...")`. `apps/web/src/hooks/*.ts` are thin wrappers that add
+next-intl strings, sonner toasts and push notifications.
+- `queries/group-details.ts` — `useGroupDetails`, `fetchGroupDetails`
+- `queries/groups.ts` — `useGroups`, `useMyGroupBalances`, create/update/archive/delete/hide, `useLeaveGroup`, `useRemoveMember`
+- `queries/balances.ts` — `useBalances` (net balances + simplified debts)
+- `queries/expenses.ts` — `useExpense`, `useAddExpense` (optimistic), update/delete/restore
+- `queries/settlements.ts` — `useSettleUp`, `useGranularSettle`, `useUndoSettlement`
+- `queries/exchange-rates.ts` — `useExchangeRates` (invokes the `rates` Edge Function)
+- `queries/profile.ts`, `queries/activity-logs.ts`
+- `queries/realtime.ts` — `useRealtimeSync` / `useRealtimeGroups`, reporting changes through an `onEvent` callback
+
+## Edge Functions (`supabase/functions/`)
+The web app has no API routes; server-side work runs as Supabase Edge Functions,
+called with `supabase.functions.invoke(...)` so the mobile app can share them.
+- `rates`: cached daily exchange rates (auth required)
+- `push-send`: web-push + Expo push fan-out; group membership is enforced server-side
+- `delete-account`: App Store required in-app account deletion
+
+Deploy: `npx supabase functions deploy <name> --project-ref <ref>`.
+Secrets: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
 
 ## Common Commands
 Run from the repo root (pnpm workspaces + Turborepo). Node 22 is required (Next.js 16).

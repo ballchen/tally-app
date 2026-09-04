@@ -35,6 +35,8 @@ import { findExchangeRate } from "@tally/shared/currency";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useSupabase } from "@tally/shared/supabase-context";
+import { sendPush } from "@tally/shared/lib/push";
 
 // ... imports
 
@@ -81,6 +83,7 @@ export function AddExpenseDrawer({
   const drawerContentRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuthStore();
+  const supabase = useSupabase();
   const addExpense = useAddExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
@@ -95,7 +98,7 @@ export function AddExpenseDrawer({
   const handleDelete = () => {
     if (!expenseId) return;
     deleteExpense.mutate(
-      { expenseId, groupId, description: expenseData?.description, amount: expenseData?.amount ? Number(expenseData.amount) : undefined, currency: expenseData?.currency },
+      { expenseId, groupId, description: expenseData?.description ?? undefined, amount: expenseData?.amount ? Number(expenseData.amount) : undefined, currency: expenseData?.currency },
       {
         onSuccess: () => {
           toast.success(t("expenseDeleted"));
@@ -321,21 +324,17 @@ export function AddExpenseDrawer({
                 members.find((m) => m.user_id === user.id)?.profiles
                   ?.display_name || "Someone";
 
-              fetch("/api/push/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  userIds: targetUserIds,
-                  groupId,
-                  title: t("pushTitle"),
-                  body: t("pushBody", {
-                    name: payerName,
-                    description: form.description || "Expense",
-                    amount: `${selectedCurrency} ${amount}`
-                  }),
-                  url: `/groups/${groupId}`,
+              sendPush(supabase, {
+                userIds: targetUserIds,
+                groupId,
+                title: t("pushTitle"),
+                body: t("pushBody", {
+                  name: payerName,
+                  description: form.description || "Expense",
+                  amount: `${selectedCurrency} ${amount}`
                 }),
-              }).catch((err) => console.error("Push failed", err));
+                url: `/groups/${groupId}`,
+              });
             }
           }
         },

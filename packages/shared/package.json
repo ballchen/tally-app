@@ -24,13 +24,37 @@
       "types": "./src/types/supabase.ts",
       "default": "./src/types/supabase.ts"
     },
+    "./supabase-context": {
+      "types": "./src/supabase-context.tsx",
+      "default": "./src/supabase-context.tsx"
+    },
+    "./queries/*": {
+      "types": "./src/queries/*.ts",
+      "default": "./src/queries/*.ts"
+    },
+    "./lib/*": {
+      "types": "./src/lib/*.ts",
+      "default": "./src/lib/*.ts"
+    },
     "./messages/*": "./src/i18n/messages/*.json"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "nanoid": "^5.1.6"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "@tanstack/react-query": "^5.90.16",
+    "react": ">=18"
+  },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "@tanstack/react-query": "^5.90.16",
+    "@types/react": "^19",
+    "react": "19.2.3",
     "typescript": "^5",
     "vitest": "^3.2.7"
   }

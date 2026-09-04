@@ -7,7 +7,7 @@ import { fetchGroupDetails } from "@/hooks/use-group-details";
 import {
   filterUserGroups,
   getGroupFilterCounts,
-} from "@/lib/filter-user-groups";
+} from "@tally/shared/lib/filter-user-groups";
 import { createClient } from "@/lib/supabase/client";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
 import { ProfileSettingsDialog } from "@/components/profile/profile-settings-dialog";

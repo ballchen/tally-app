@@ -30,8 +30,31 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 ```bash
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
 ```
+
+推播的私鑰只存在 Edge Function secrets，不再需要放在 Vercel。
+
+## ⚡ Supabase Edge Functions
+
+伺服器端的工作（匯率快取、推播發送、刪除帳號）都在 `supabase/functions/`，
+web 與未來的 Expo app 透過 `supabase.functions.invoke()` 共用同一份實作。
+
+部署（每個 function 各一次，`_shared` 不需單獨部署）：
+
+```bash
+npx supabase functions deploy rates --project-ref <project-ref>
+npx supabase functions deploy push-send --project-ref <project-ref>
+npx supabase functions deploy delete-account --project-ref <project-ref>
+```
+
+需要設定的 secrets（`SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`
+由平台自動注入）：
+
+```bash
+npx supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:admin@tally.app --project-ref <project-ref>
+```
+
+未設定 VAPID 時 `push-send` 仍回 200，但 `web` 計數為 0（不發送）。
 
 ## 📦 部署步驟
 
