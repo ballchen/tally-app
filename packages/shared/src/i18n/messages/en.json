@@ -103,6 +103,7 @@
     "expenseDeleted": "Expense deleted",
     "deleteExpenseFailed": "Could not delete the expense",
     "undo": "Undo",
+    "undoAction": "Undo settlement",
     "retry": "Retry"
   },
   "InviteMember": {
@@ -267,7 +268,8 @@
   },
   "Common": {
     "language": "Language",
-    "done": "Done"
+    "done": "Done",
+    "back": "Back"
   },
   "ResetPassword": {
     "title": "Reset Password",

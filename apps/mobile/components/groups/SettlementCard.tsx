@@ -44,44 +44,27 @@ export function SettlementCard({
         gap: theme.spacing.sm,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
-        {/* The toggle is its own button so the undo control stays separately focusable. */}
-        <Pressable
-          accessibilityRole="button"
-          testID={`settlement-toggle-${settlement.id}`}
-          onPress={onToggle}
-          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}
-        >
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="headline" color="settlement" numberOfLines={1}>
-              {settledByLabel} {settlement.creator?.display_name ?? unknownName}
-            </Text>
-            <Text variant="footnote" color="textSecondary">
-              {formatFullDate(settlement.created_at)}
-              {total > 0 ? ` · ${formatMoney(total, baseCurrency)} ${totalLabel}` : ''}
-            </Text>
-          </View>
-          <Text variant="footnote" color="textSecondary">
-            {expanded ? '▴' : '▾'}
+      <Pressable
+        accessibilityRole="button"
+        testID={`settlement-toggle-${settlement.id}`}
+        onPress={onToggle}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}
+      >
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="headline" color="settlement" numberOfLines={1}>
+            {settledByLabel} {settlement.creator?.display_name ?? unknownName}
           </Text>
-        </Pressable>
+          <Text variant="footnote" color="textSecondary">
+            {formatFullDate(settlement.created_at)}
+            {total > 0 ? ` · ${formatMoney(total, baseCurrency)} ${totalLabel}` : ''}
+          </Text>
+        </View>
+        <Text variant="footnote" color="textSecondary">
+          {expanded ? '▴' : '▾'}
+        </Text>
+      </Pressable>
 
-        {undoLabel ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={undoLabel}
-            testID={`undo-settlement-${settlement.id}`}
-            hitSlop={12}
-            onPress={onUndo}
-          >
-            <Text variant="headline" color="negative">
-              🗑
-            </Text>
-          </Pressable>
-        ) : null}
-      </View>
-
-      {expanded && repayments.length > 0 ? (
+      {expanded ? (
         <View
           style={{
             gap: theme.spacing.xs,
@@ -105,6 +88,20 @@ export function SettlementCard({
               </Text>
             </View>
           ))}
+
+          {undoLabel ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={undoLabel}
+              testID={`undo-settlement-${settlement.id}`}
+              onPress={onUndo}
+              style={{ alignItems: 'center', paddingTop: theme.spacing.xs }}
+            >
+              <Text variant="subhead" color="negative">
+                {undoLabel}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
     </Surface>

@@ -103,6 +103,7 @@
     "expenseDeleted": "支出を削除しました",
     "deleteExpenseFailed": "支出を削除できませんでした",
     "undo": "元に戻す",
+    "undoAction": "精算を元に戻す",
     "retry": "再試行"
   },
   "InviteMember": {
@@ -267,7 +268,8 @@
   },
   "Common": {
     "language": "言語",
-    "done": "完了"
+    "done": "完了",
+    "back": "戻る"
   },
   "ResetPassword": {
     "title": "パスワードをリセット",

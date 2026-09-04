@@ -9,6 +9,8 @@ export type HeaderButtonProps = {
   testID?: string;
   disabled?: boolean;
   destructive?: boolean;
+  /** Overrides the a11y label when `title` is a glyph (e.g. "‹") rather than a word. */
+  accessibilityLabel?: string;
 };
 
 export function HeaderButton({
@@ -17,6 +19,7 @@ export function HeaderButton({
   testID,
   disabled = false,
   destructive = false,
+  accessibilityLabel,
 }: HeaderButtonProps) {
   const theme = useTheme();
   // Header buttons float over the group cover photo; the primary tint reads
@@ -27,7 +30,7 @@ export function HeaderButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled }}
       testID={testID}
       disabled={disabled}

@@ -43,13 +43,15 @@ env:
 - assertVisible:
     id: 'group-archived-badge'
 - assertVisible: 'NT\$ 400'
-# The settlement card must actually be on screen before the trash icon's
+# The settlement card must actually be expanded before the undo button's
 # absence proves anything — otherwise the next assertion passes vacuously.
 - assertVisible: '.*Settled by.*'
+- tapOn: '.*Settled by.*'
+- assertNotVisible:
+    id: 'undo-settlement-.*'
 - assertNotVisible:
     id: 'add-expense-fab'
 - assertNotVisible:
     id: 'settle-all'
 - assertNotVisible: 'Settle'
-- assertNotVisible: 'Undo'
 - takeScreenshot: d8-archived-read-only

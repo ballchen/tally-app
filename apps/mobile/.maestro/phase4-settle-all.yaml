@@ -73,10 +73,9 @@ env:
     notVisible: 'Settlement recorded!'
     timeout: 20000
 
-# D5 — the trash asks for confirmation and the pairings come back.
+# D5 — undo now lives at the bottom of the expanded card and asks for confirmation.
 - tapOn:
-    text: 'Undo'
-    index: 0
+    id: 'undo-settlement-.*'
 - assertVisible: 'Undo Settlement?'
 - takeScreenshot: d5-undo-confirmation
 - tapOn: 'Confirm Undo'

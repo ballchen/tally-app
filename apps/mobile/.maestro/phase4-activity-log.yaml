@@ -44,13 +44,13 @@ env:
 - extendedWaitUntil:
     visible: '.*Settled by Phase Three A.*'
     timeout: 20000
-# Let the toast's own undo action expire so only the card's trash matches.
+# Let the toast's own undo action expire, then expand the card for its own undo button.
 - extendedWaitUntil:
     notVisible: 'Settlement recorded!'
     timeout: 20000
+- tapOn: '.*Settled by Phase Three A.*'
 - tapOn:
-    text: 'Undo'
-    index: 0
+    id: 'undo-settlement-.*'
 - tapOn: 'Confirm Undo'
 - extendedWaitUntil:
     visible: 'NT\$ 11,688'

@@ -62,6 +62,7 @@ export default function GroupScreen() {
   const tSettleUp = useT('SettleUp');
   const tActivity = useT('ActivityLog');
   const tRealtime = useT('Realtime');
+  const tCommon = useT('Common');
   const { id } = useLocalSearchParams<{ id: string }>();
   const userId = useAuthStore((s) => s.session?.user.id) ?? '';
 
@@ -303,7 +304,12 @@ export default function GroupScreen() {
         headerBlurEffect: collapsed ? 'systemChromeMaterial' : undefined,
         headerStyle: { backgroundColor: 'transparent' },
         headerLeft: () => (
-          <HeaderButton testID="group-back" title="‹" onPress={() => router.back()} />
+          <HeaderButton
+            testID="group-back"
+            title="‹"
+            accessibilityLabel={tCommon('back')}
+            onPress={() => router.back()}
+          />
         ),
         headerRight: () => (
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
@@ -496,7 +502,7 @@ export default function GroupScreen() {
           unknownName={tSettleUp('someone')}
           expanded={expandedSettlements.has(item.settlement.id)}
           onToggle={() => toggleSettlement(item.settlement.id)}
-          undoLabel={isArchived ? null : t('undo')}
+          undoLabel={isArchived ? null : t('undoAction')}
           onUndo={() => confirmUndo(item.settlement.id)}
         />
       )}
