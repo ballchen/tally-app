@@ -37,7 +37,7 @@ export function useDeleteExpense() {
       if (error) throw error
 
       if (!data || data.length === 0) {
-        console.warn("No rows updated. Possible RLS policy blocking update.")
+        throw new Error("Expense not found or not permitted")
       }
 
       return { groupId, expenseId, description, amount, currency }

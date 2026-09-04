@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { useProfile } from "@/hooks/use-profile"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,18 +28,18 @@ export function ProfileSettingsDialog() {
   // Crop dialog state
   const [cropDialogOpen, setCropDialogOpen] = useState(false)
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null)
-  const [pendingFile, setPendingFile] = useState<File | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { data: profile, isLoading, updateProfile, uploadAvatar } = useProfile()
 
-  useEffect(() => {
-    if (profile) {
+  const handleOpenChange = (next: boolean) => {
+    if (next && profile) {
       setName(profile.display_name || "")
       setGender(profile.gender || "other")
       setPreviewUrl(profile.avatar_url || null)
     }
-  }, [profile])
+    setOpen(next)
+  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -48,7 +48,6 @@ export function ProfileSettingsDialog() {
     // Create object URL for cropping
     const objectUrl = URL.createObjectURL(file)
     setSelectedImageSrc(objectUrl)
-    setPendingFile(file)
     setCropDialogOpen(true)
 
     // Reset input so same file can be selected again
@@ -61,7 +60,6 @@ export function ProfileSettingsDialog() {
       URL.revokeObjectURL(selectedImageSrc)
     }
     setSelectedImageSrc(null)
-    setPendingFile(null)
 
     // Create a File from the Blob for upload
     const croppedFile = new File([croppedBlob], "avatar.jpg", {
@@ -73,9 +71,7 @@ export function ProfileSettingsDialog() {
     setPreviewUrl(previewObjectUrl)
 
     try {
-      console.log('Starting avatar upload...')
       const publicUrl = await uploadAvatar.mutateAsync(croppedFile)
-      console.log('Upload successful, new URL:', publicUrl)
       
       // Clean up preview URL
       URL.revokeObjectURL(previewObjectUrl)
@@ -99,7 +95,6 @@ export function ProfileSettingsDialog() {
     if (!open && selectedImageSrc) {
       URL.revokeObjectURL(selectedImageSrc)
       setSelectedImageSrc(null)
-      setPendingFile(null)
     }
   }
 
@@ -120,7 +115,7 @@ export function ProfileSettingsDialog() {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
             <UserCog className="h-5 w-5 text-muted-foreground" />
@@ -153,7 +148,6 @@ export function ProfileSettingsDialog() {
                         console.error('Image load error:', e)
                       }}
                       onLoad={() => {
-                        console.log('Image loaded successfully:', previewUrl)
                       }}
                     />
                     <AvatarFallback className="text-2xl bg-muted">

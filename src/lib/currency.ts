@@ -1,4 +1,3 @@
-
 // Type definition based on the JSON structure
 export type CurrencyData = Record<string, {
   Exrate: number
@@ -11,9 +10,6 @@ export const AVAILABLE_CURRENCIES = [
 
 export type CurrencyCode = typeof AVAILABLE_CURRENCIES[number]
 
-/**
- * Currency symbol mapping
- */
 export const CURRENCY_SYMBOLS: Record<string, string> = {
   TWD: "NT$",
   USD: "$",
@@ -29,51 +25,48 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   VND: "₫"
 }
 
-/**
- * Get currency symbol from currency code
- * Falls back to currency code if symbol not found
- */
+// Currencies that are conventionally shown without fractional units.
+const ZERO_DECIMAL_CURRENCIES = new Set(["TWD", "JPY", "KRW", "VND"])
+
 export function getCurrencySymbol(currencyCode: string): string {
   return CURRENCY_SYMBOLS[currencyCode] || currencyCode
 }
 
-/**
- * Get the exchange rate from Source Currency to Target Currency.
- * Logic: (Amount / Rate_USD_to_Source) * Rate_USD_to_Target
- *
- * Example: JPY to TWD
- * 1. JPY to USD: 1 / Rate(USDJPY)
- * 2. USD to TWD: * Rate(USDTWD)
- */
-export function getExchangeRate(from: string, to: string, rates?: CurrencyData | null): number {
-  if (from === to) return 1
-  if (!rates) return 1 // Fallback if rates not loaded
+export function getCurrencyDecimals(currencyCode: string): number {
+  return ZERO_DECIMAL_CURRENCIES.has(currencyCode) ? 0 : 2
+}
 
-  // Base case: USD to X
+export function formatAmount(amount: number, currencyCode: string, locale?: string): string {
+  const decimals = getCurrencyDecimals(currencyCode)
+  const formatted = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(amount)
+  return `${getCurrencySymbol(currencyCode)} ${formatted}`
+}
+
+/**
+ * Rate from `from` to `to`, via USD cross rate. Returns null when the
+ * rates table lacks either leg, so callers can refuse to persist a guess.
+ */
+export function findExchangeRate(from: string, to: string, rates?: CurrencyData | null): number | null {
+  if (from === to) return 1
+  if (!rates) return null
+
   const usdToFrom = rates[`USD${from}`]?.Exrate
   const usdToTo = rates[`USD${to}`]?.Exrate
 
-  // If "from" is USD, we just return the rate for "to" (which is USD->To)
-  if (from === "USD") {
-    return usdToTo || 1
-  }
+  if (from === "USD") return usdToTo ?? null
+  if (to === "USD") return usdToFrom ? 1 / usdToFrom : null
+  if (usdToFrom && usdToTo) return usdToTo / usdToFrom
+  return null
+}
 
-  // If "to" is USD, we return 1 / (USD->From)
-  if (to === "USD") {
-    return usdToFrom ? 1 / usdToFrom : 1
-  }
-
-  // Cross rate: From -> USD -> To
-  if (usdToFrom && usdToTo) {
-    // 1 From = (1 / usdToFrom) USD
-    // (1 / usdToFrom) USD = (1 / usdToFrom) * usdToTo To
-    return usdToTo / usdToFrom
-  }
-
-  return 1
+/** Display-only variant: falls back to 1 so previews never crash. */
+export function getExchangeRate(from: string, to: string, rates?: CurrencyData | null): number {
+  return findExchangeRate(from, to, rates) ?? 1
 }
 
 export function convertAmount(amount: number, from: string, to: string, rates?: CurrencyData | null): number {
-  const rate = getExchangeRate(from, to, rates)
-  return amount * rate
+  return amount * getExchangeRate(from, to, rates)
 }

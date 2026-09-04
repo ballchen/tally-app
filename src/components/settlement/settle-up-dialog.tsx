@@ -12,11 +12,11 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Debt } from "@/hooks/use-balances"
+import type { Debt } from "@/lib/balances"
 import { useSettleUp } from "@/hooks/use-settle-up"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { getCurrencySymbol } from "@/lib/currency"
+import { formatAmount } from "@/lib/currency"
 
 interface SettleUpDialogProps {
   groupId: string
@@ -84,7 +84,7 @@ export function SettleUpDialog({ groupId, debts, members, currency }: SettleUpDi
                         </div>
                         <div className="font-semibold text-right">
                             <div className="text-xs text-muted-foreground">{t("pays")}</div>
-                            {getCurrencySymbol(currency)} {debt.amount.toFixed(0)}
+                            {formatAmount(debt.amount, currency)}
                         </div>
                     </div>
                 )

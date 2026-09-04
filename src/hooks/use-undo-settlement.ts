@@ -2,9 +2,11 @@ import { createClient } from "@/lib/supabase/client"
 import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 export function useUndoSettlement() {
   const queryClient = useQueryClient()
+  const t = useTranslations("SettleUp")
   const supabase = createClient()
 
   return useMutation({
@@ -17,9 +19,8 @@ export function useUndoSettlement() {
       return { settlementId, groupId }
     },
     onSuccess: (data) => {
-      toast.success("Settlement undone")
+      toast.success(t("settlementUndone"))
       queryClient.invalidateQueries({ queryKey: ["group", data.groupId] })
-      queryClient.invalidateQueries({ queryKey: ["groups"] })
       logActivity(supabase, {
         groupId: data.groupId,
         action: "settlement.undo",
@@ -27,8 +28,8 @@ export function useUndoSettlement() {
         entityId: data.settlementId,
       })
     },
-    onError: (error: any) => {
-      toast.error("Failed to undo settlement", {
+    onError: (error: Error) => {
+      toast.error(t("undoFailed"), {
         description: error.message
       })
     }

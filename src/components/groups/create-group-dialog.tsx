@@ -25,8 +25,16 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useCreateGroup } from "@/hooks/use-groups"
 import { useTranslations } from "next-intl"
+import { AVAILABLE_CURRENCIES } from "@/lib/currency"
 
 export function CreateGroupDialog() {
   const [open, setOpen] = useState(false)
@@ -35,7 +43,7 @@ export function CreateGroupDialog() {
 
   const formSchema = z.object({
     name: z.string().min(1, t("nameRequired")),
-    baseCurrency: z.string().min(3, t("currencyLength")).max(3),
+    baseCurrency: z.enum(AVAILABLE_CURRENCIES, { message: t("currencyLength") }),
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -91,9 +99,18 @@ export function CreateGroupDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("baseCurrency")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("baseCurrencyPlaceholder")} {...field} />
-                  </FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("baseCurrencyPlaceholder")} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {AVAILABLE_CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

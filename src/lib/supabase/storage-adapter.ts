@@ -17,7 +17,7 @@ interface StorageItem {
 }
 
 // Memory fallback storage (does not persist across sessions)
-let memoryStorage: Map<string, StorageItem> = new Map()
+const memoryStorage: Map<string, StorageItem> = new Map()
 
 export const customStorageAdapter = {
   getAll(): StorageItem[] {

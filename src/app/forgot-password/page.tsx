@@ -27,12 +27,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
+import { useTranslations } from "next-intl";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("ForgotPassword");
+  const forgotPasswordSchema = z.object({
+    email: z.string().email(t("invalidEmail")),
+  });
   const supabase = createClient();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isEmailSent, setIsEmailSent] = React.useState(false);
@@ -54,7 +55,7 @@ export default function ForgotPasswordPage() {
     });
 
     if (error) {
-      toast.error("Failed to send reset email", {
+      toast.error(t("sendFailed"), {
         description: error.message,
       });
       setIsLoading(false);
@@ -62,8 +63,8 @@ export default function ForgotPasswordPage() {
     }
 
     setIsEmailSent(true);
-    toast.success("Reset email sent!", {
-      description: "Please check your inbox for the password reset link",
+    toast.success(t("sentTitle"), {
+      description: t("sentDescription"),
     });
     setIsLoading(false);
   }
@@ -85,12 +86,10 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
           <CardTitle className="text-2xl text-center">
-            {isEmailSent ? "Check Your Email" : "Forgot Password"}
+            {isEmailSent ? t("checkEmailTitle") : t("title")}
           </CardTitle>
           <CardDescription className="text-center">
-            {isEmailSent
-              ? "We've sent you a password reset link"
-              : "Enter your email to receive a reset link"}
+            {isEmailSent ? t("checkEmailDescription") : t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -102,22 +101,21 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
               <p className="text-center text-sm text-muted-foreground">
-                If an account exists for{" "}
-                <span className="font-medium">{form.getValues("email")}</span>,
-                you will receive an email with instructions to reset your
-                password.
+                {t.rich("sentBody", {
+                  email: () => <span className="font-medium">{form.getValues("email")}</span>,
+                })}
               </p>
               <Button
                 variant="outline"
                 className="w-full"
                 onClick={() => setIsEmailSent(false)}
               >
-                Send another email
+                {t("sendAnother")}
               </Button>
               <Link href="/login" className="block">
                 <Button variant="ghost" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
+                  {t("backToLogin")}
                 </Button>
               </Link>
             </div>
@@ -132,7 +130,7 @@ export default function ForgotPasswordPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("email")}</FormLabel>
                       <FormControl>
                         <Input placeholder="m@example.com" {...field} />
                       </FormControl>
@@ -144,12 +142,12 @@ export default function ForgotPasswordPage() {
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Send Reset Link
+                  {t("sendLink")}
                 </Button>
                 <Link href="/login" className="block">
                   <Button variant="ghost" className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Login
+                    {t("backToLogin")}
                   </Button>
                 </Link>
               </form>

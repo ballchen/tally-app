@@ -39,7 +39,9 @@ const REMEMBER_ME_KEY = "tally_remember_me";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next");
+  const rawNext = searchParams.get("next");
+  // Only same-origin paths; blocks /login?next=https://evil.com and //evil.com
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
   const supabase = createClient();
   const { setUser } = useAuthStore();
   const t = useTranslations("Auth");
@@ -72,9 +74,8 @@ export function LoginForm() {
     const saved = localStorage.getItem(REMEMBER_ME_KEY);
     if (saved) {
       try {
-        const { email, password } = JSON.parse(saved);
+        const { email } = JSON.parse(saved);
         loginForm.setValue("email", email || "");
-        loginForm.setValue("password", password || "");
         setRememberMe(true);
       } catch {
         localStorage.removeItem(REMEMBER_ME_KEY);
@@ -109,7 +110,7 @@ export function LoginForm() {
       if (rememberMe) {
         localStorage.setItem(
           REMEMBER_ME_KEY,
-          JSON.stringify({ email: values.email, password: values.password })
+          JSON.stringify({ email: values.email })
         );
       } else {
         localStorage.removeItem(REMEMBER_ME_KEY);

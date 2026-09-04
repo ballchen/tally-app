@@ -5,6 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react"
 
+function DiagnosticItem({
+  label,
+  status,
+  value,
+}: {
+  label: string
+  status: 'success' | 'error' | 'warning'
+  value: string
+}) {
+  return (
+    <div className="flex items-center justify-between py-2 border-b last:border-0">
+      <div className="flex items-center gap-2">
+        {status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
+        {status === 'error' && <XCircle className="h-4 w-4 text-destructive" />}
+        {status === 'warning' && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <Badge variant={status === 'success' ? 'default' : status === 'error' ? 'destructive' : 'secondary'}>
+        {value}
+      </Badge>
+    </div>
+  )
+}
+
 export function PushDiagnostics() {
   const [diagnostics, setDiagnostics] = useState({
     isIOS: false,
@@ -22,40 +46,20 @@ export function PushDiagnostics() {
     const isIOS = /iPad|iPhone|iPod/.test(ua)
     const match = ua.match(/OS (\d+)_(\d+)/)
     const iOSVersion = match ? `${match[1]}.${match[2]}` : "Unknown"
-    
+
+    // Browser-only APIs; read once after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDiagnostics({
       isIOS,
       iOSVersion,
-      isPWA: (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches,
+      isPWA: (window.navigator as Navigator & { standalone?: boolean }).standalone || window.matchMedia('(display-mode: standalone)').matches,
       serviceWorkerSupported: 'serviceWorker' in navigator,
       pushManagerSupported: 'PushManager' in window,
       notificationPermission: 'Notification' in window ? Notification.permission : 'default',
       vapidKeyPresent: !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-      isStandalone: (window.navigator as any).standalone || false,
+      isStandalone: (window.navigator as Navigator & { standalone?: boolean }).standalone || false,
     })
   }, [])
-
-  const DiagnosticItem = ({ 
-    label, 
-    status, 
-    value 
-  }: { 
-    label: string
-    status: 'success' | 'error' | 'warning'
-    value: string 
-  }) => (
-    <div className="flex items-center justify-between py-2 border-b last:border-0">
-      <div className="flex items-center gap-2">
-        {status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
-        {status === 'error' && <XCircle className="h-4 w-4 text-destructive" />}
-        {status === 'warning' && <AlertCircle className="h-4 w-4 text-yellow-500" />}
-        <span className="text-sm font-medium">{label}</span>
-      </div>
-      <Badge variant={status === 'success' ? 'default' : status === 'error' ? 'destructive' : 'secondary'}>
-        {value}
-      </Badge>
-    </div>
-  )
 
   return (
     <Card className="w-full max-w-md">

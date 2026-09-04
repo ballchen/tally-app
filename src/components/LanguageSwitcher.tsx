@@ -8,16 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export function LanguageSwitcher() {
   const t = useTranslations('Common');
-  const [locale, setLocale] = useState('en');
-
-  useEffect(() => {
-     const match = document.cookie.match(new RegExp('(^| )NEXT_LOCALE=([^;]+)'));
-     if (match) setLocale(match[2]);
-  }, []);
+  const [locale] = useState(() => {
+    if (typeof document === 'undefined') return 'en';
+    const match = document.cookie.match(new RegExp('(^| )NEXT_LOCALE=([^;]+)'));
+    return match ? match[2] : 'en';
+  });
 
   const handleValueChange = (value: string) => {
     // Set cookie for 1 year

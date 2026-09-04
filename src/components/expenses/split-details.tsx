@@ -6,7 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 // import { ScrollArea } from "@/components/ui/scroll-area" // Removed for better touch handling in Drawer
 import { cn } from "@/lib/utils"
-import { Check, User, ArrowRightLeft, Lock } from "lucide-react"
+import { User, ArrowRightLeft, Lock } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useExchangeRates } from "@/hooks/use-exchange-rates"
 import { getExchangeRate, getCurrencySymbol } from "@/lib/currency"
@@ -72,6 +73,7 @@ export function SplitDetails({
 }: SplitDetailsProps) {
   const descriptionInputRef = useRef<HTMLInputElement>(null);
   const { data: exchangeRates } = useExchangeRates();
+  const t = useTranslations("SplitDetails");
 
   // Calculate exchange rate if currencies differ
   const showExchangeRate = currency !== baseCurrency;
@@ -106,7 +108,7 @@ export function SplitDetails({
     <div className="flex flex-col h-full bg-background rounded-xl">
       <div className="p-4 bg-muted/20 border-b space-y-4">
          <div className="text-center">
-            <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Total Bill</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">{t("totalBill")}</div>
             <div
                 className={cn("text-4xl font-bold mt-1 text-primary animate-in zoom-in-50 duration-300", onEditAmount && "cursor-pointer hover:opacity-80 transition-opacity")}
                 onClick={onEditAmount}
@@ -133,21 +135,21 @@ export function SplitDetails({
             )}
              {splitMode === "EXACT" && (
                 <div className={cn("text-xs mt-1 font-medium", Math.abs(remainingExact) < 0.05 ? "text-green-500" : "text-destructive")}>
-                    {Math.abs(remainingExact) < 0.05 ? "Perfectly allocated" : `Remaining: ${remainingExact.toFixed(2)}`}
+                    {Math.abs(remainingExact) < 0.05 ? t("perfectlyAllocated") : t("remaining", { value: remainingExact.toFixed(2) })}
                 </div>
              )}
              {splitMode === "PERCENT" && (
                 <div className={cn("text-xs mt-1 font-medium", Math.abs(remainingPercent) < 0.1 ? "text-green-500" : "text-destructive")}>
-                     {Math.abs(remainingPercent) < 0.1 ? "Total 100%" : `Remaining: ${remainingPercent.toFixed(1)}%`}
+                     {Math.abs(remainingPercent) < 0.1 ? t("totalHundred") : t("remaining", { value: `${remainingPercent.toFixed(1)}%` })}
                 </div>
              )}
         </div>
 
         <Tabs value={splitMode} onValueChange={(v: string) => setSplitMode(v as "EQUAL" | "EXACT" | "PERCENT")} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="EQUAL">Equal</TabsTrigger>
-                <TabsTrigger value="EXACT">Exact</TabsTrigger>
-                <TabsTrigger value="PERCENT">Percent</TabsTrigger>
+                <TabsTrigger value="EQUAL">{t("equal")}</TabsTrigger>
+                <TabsTrigger value="EXACT">{t("exact")}</TabsTrigger>
+                <TabsTrigger value="PERCENT">{t("percent")}</TabsTrigger>
             </TabsList>
         </Tabs>
       </div>
@@ -157,7 +159,7 @@ export function SplitDetails({
             <div className="space-y-2">
                 <Input
                     ref={descriptionInputRef}
-                    placeholder="Description (e.g. Sushi)"
+                    placeholder={t("descriptionPlaceholder")}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     onFocus={() => handleInputFocus(descriptionInputRef.current)}
@@ -168,7 +170,7 @@ export function SplitDetails({
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground ml-1">Who paid?</label>
+                <label className="text-sm font-medium text-muted-foreground ml-1">{t("whoPaid")}</label>
                 <div className="flex gap-2 overflow-x-auto p-2 scrollbar-none">
                     {members.map(member => {
                         const isPayer = member.user_id === payerId
@@ -188,7 +190,7 @@ export function SplitDetails({
                                     <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
                                 </Avatar>
                                 <span className={cn("text-xs font-medium truncate w-full text-center", isPayer ? "text-primary" : "text-muted-foreground")}>
-                                    {member.user_id === currentUser?.id ? "You" : member.profiles?.display_name || "Member"}
+                                    {member.user_id === currentUser?.id ? t("you") : member.profiles?.display_name || t("member")}
                                 </span>
                              </button>
                         )
@@ -198,7 +200,7 @@ export function SplitDetails({
 
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-muted-foreground ml-1">Allocations</label>
+                    <label className="text-sm font-medium text-muted-foreground ml-1">{t("allocations")}</label>
                 </div>
                 
                 <div className="grid grid-cols-1 gap-2">
@@ -222,7 +224,7 @@ export function SplitDetails({
                                         <AvatarFallback>U</AvatarFallback>
                                     </Avatar>
                                     <span className="text-sm font-medium truncate max-w-[8rem]">
-                                        {member.user_id === currentUser?.id ? "You" : member.profiles?.display_name || "Unknown"}
+                                        {member.user_id === currentUser?.id ? t("you") : member.profiles?.display_name || t("member")}
                                     </span>
                                 </div>
                                 

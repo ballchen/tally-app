@@ -13,7 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { History, Loader2 } from "lucide-react"
 import { useActivityLogs, type ActivityLog } from "@/hooks/use-activity-logs"
 import { useTranslations } from "next-intl"
-import { format, isToday, isYesterday } from "date-fns"
+import { format, isToday, isYesterday, type Locale } from "date-fns"
+import { useDateLocale } from "@/hooks/use-date-locale"
 
 interface ActivityLogSheetProps {
   groupId: string
@@ -32,11 +33,11 @@ const ACTION_COLORS: Record<string, string> = {
   "group.unarchive": "bg-gray-400",
 }
 
-function getDateLabel(dateStr: string, t: (key: string) => string): string {
+function getDateLabel(dateStr: string, t: (key: string) => string, locale: Locale): string {
   const date = new Date(dateStr)
   if (isToday(date)) return t("today")
   if (isYesterday(date)) return t("yesterday")
-  return format(date, "MMM d, yyyy")
+  return format(date, "PP", { locale })
 }
 
 function ActionDescription({ log, t }: { log: ActivityLog; t: (key: string, values?: Record<string, string>) => string }) {
@@ -136,6 +137,7 @@ function ChangeDetails({ log, t }: { log: ActivityLog; t: (key: string, values?:
 
 export function ActivityLogSheet({ groupId }: ActivityLogSheetProps) {
   const t = useTranslations("ActivityLog")
+  const dateLocale = useDateLocale()
   const [open, setOpen] = useState(false)
   const {
     data,
@@ -168,7 +170,7 @@ export function ActivityLogSheet({ groupId }: ActivityLogSheetProps) {
   const groupedLogs: { label: string; logs: ActivityLog[] }[] = []
   let currentLabel = ""
   for (const log of allLogs) {
-    const label = getDateLabel(log.created_at, t)
+    const label = getDateLabel(log.created_at, t, dateLocale)
     if (label !== currentLabel) {
       currentLabel = label
       groupedLogs.push({ label, logs: [] })

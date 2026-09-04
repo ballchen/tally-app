@@ -2,24 +2,7 @@ import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useQuery } from "@tanstack/react-query"
 import type { SupabaseClient } from "@supabase/supabase-js"
-
-function transformMembers(membersData: unknown) {
-  return (
-    (membersData as Array<Record<string, unknown>>)?.map((m) => ({
-      group_id: m.group_id as string,
-      user_id: m.user_id as string,
-      group_nickname: m.group_nickname as string | null,
-      group_avatar_url: m.group_avatar_url as string | null,
-      joined_at: m.joined_at as string,
-      hidden_at: m.hidden_at as string | null,
-      profiles: {
-        id: m.profile_id as string,
-        display_name: m.profile_display_name as string | null,
-        avatar_url: m.profile_avatar_url as string | null,
-      },
-    })) || []
-  )
-}
+import { mapMemberRow, type GroupMemberRow } from "@/lib/members"
 
 export async function fetchGroupDetails(
   supabase: SupabaseClient,
@@ -80,7 +63,7 @@ export async function fetchGroupDetails(
 
   return {
     group: groupResult.data,
-    members: transformMembers(membersResult.data),
+    members: ((membersResult.data ?? []) as GroupMemberRow[]).map(mapMemberRow),
     expenses: expensesResult.data,
     settlements: settlementsResult.data,
   }

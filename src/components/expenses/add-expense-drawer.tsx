@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -31,7 +31,7 @@ import { useExpense } from "@/hooks/use-expense";
 import { useUpdateExpense } from "@/hooks/use-update-expense";
 import { useDeleteExpense } from "@/hooks/use-delete-expense";
 import { useExchangeRates } from "@/hooks/use-exchange-rates";
-import { getExchangeRate } from "@/lib/currency";
+import { findExchangeRate } from "@/lib/currency";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -254,11 +254,26 @@ export function AddExpenseDrawer({
     }
   };
 
+  const resolveExchangeRate = (): number | null => {
+    if (selectedCurrency === currency) return 1;
+    // Editing without changing currency keeps the rate locked at creation time.
+    const locked = expenseData?.exchange_rate;
+    if (expenseId && expenseData?.currency === selectedCurrency && locked && locked > 0) {
+      return Number(locked);
+    }
+    return findExchangeRate(selectedCurrency, currency, exchangeRates);
+  };
+
   const handleSave = () => {
     if (!form.isValid) return;
 
+    const exchangeRate = resolveExchangeRate();
+    if (exchangeRate == null) {
+      toast.error(t("ratesUnavailable"), { description: t("ratesUnavailableDesc") });
+      return;
+    }
+
     const splits = form.getSplits();
-    const exchangeRate = getExchangeRate(selectedCurrency, currency, exchangeRates);
     const commonData = {
       groupId,
       payerId: form.payerId,
@@ -311,6 +326,7 @@ export function AddExpenseDrawer({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   userIds: targetUserIds,
+                  groupId,
                   title: t("pushTitle"),
                   body: t("pushBody", {
                     name: payerName,
@@ -423,7 +439,7 @@ export function AddExpenseDrawer({
                     currentUser={user}
                     {...form}
                     onEditAmount={() => setStep("amount")}
-                    lockedExchangeRate={expenseId ? (expenseData?.exchange_rate ?? undefined) : undefined}
+                    lockedExchangeRate={expenseId && expenseData?.currency === selectedCurrency ? (expenseData?.exchange_rate ?? undefined) : undefined}
                   />
                 </div>
                 <DrawerFooter className="pt-2 pb-6 px-4">

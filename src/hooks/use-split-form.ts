@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useAuthStore } from "@/store/useAuthStore"
 
 interface Member {
@@ -14,33 +14,25 @@ export function useSplitForm(amount: number, members: Member[]) {
   const [percentAmounts, setPercentAmounts] = useState<Record<string, number>>({})
 
   const [description, setDescription] = useState("")
-  const [payerId, setPayerId] = useState("")
-  const [involvedIds, setInvolvedIds] = useState<string[]>([])
+  // null = "not chosen yet": defaults derive from user/members once they load.
+  const [chosenPayerId, setPayerId] = useState<string | null>(null)
+  const [chosenInvolvedIds, setInvolvedIds] = useState<string[] | null>(null)
 
-  // Initialize defaults
-  useEffect(() => {
-    if (user && !payerId) {
-      setPayerId(user.id)
-    }
-  }, [user])
-
-  useEffect(() => {
-    // Initialize involvedIds with everyone if empty
-    if (members.length > 0 && involvedIds.length === 0) {
-      setInvolvedIds(members.map(m => m.user_id))
-    }
-  }, [members])
+  const payerId = chosenPayerId ?? user?.id ?? ""
+  const involvedIds = useMemo(
+    () => chosenInvolvedIds ?? members.map(m => m.user_id),
+    [chosenInvolvedIds, members]
+  )
 
 
   const toggleInvolved = (userId: string) => {
     if (splitMode !== "EQUAL") return
 
     setInvolvedIds(prev => {
-      if (prev.includes(userId)) {
-        return prev.filter(id => id !== userId)
-      } else {
-        return [...prev, userId]
-      }
+      const current = prev ?? members.map(m => m.user_id)
+      return current.includes(userId)
+        ? current.filter(id => id !== userId)
+        : [...current, userId]
     })
   }
 
@@ -114,8 +106,8 @@ export function useSplitForm(amount: number, members: Member[]) {
       setExactAmounts({})
       setPercentAmounts({})
       setDescription("")
-      setPayerId(user?.id || "")
-      if (members.length > 0) setInvolvedIds(members.map(m => m.user_id))
+      setPayerId(null)
+      setInvolvedIds(null)
     },
 
     setValues: (data: {

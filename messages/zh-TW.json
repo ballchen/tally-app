@@ -82,7 +82,14 @@
     "expense": "費用",
     "activity": "動態",
     "noExpensesYet": "尚無費用紀錄",
-    "total": "總計"
+    "total": "總計",
+    "yourBalance": "你的餘額",
+    "youAreSettled": "已結清",
+    "youAreOwed": "別人欠你 {amount}",
+    "youOwe": "你欠 {amount}",
+    "confirmSettleTitle": "記錄付款？",
+    "confirmSettleDesc": "這會記錄 {from} 已付給 {to} {amount}。之後可以在時間軸復原。",
+    "confirmSettle": "記錄付款"
   },
   "InviteMember": {
     "invite": "邀請",
@@ -144,7 +151,8 @@
     "validation": {
       "nameRequired": "群組名稱為必填",
       "currencyLength": "貨幣代號必須為3個字符"
-    }
+    },
+    "currencyLocked": "群組已有費用，基準幣別已鎖定"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "查看餘額並結清",
@@ -153,7 +161,15 @@
     "pays": "支付",
     "marksAsSettled": "將所有費用標記為已結清",
     "settling": "正在結清...",
-    "settleAll": "全部結清"
+    "settleAll": "全部結清",
+    "allSettled": "所有債務已結清！",
+    "settlementFailed": "結清失敗",
+    "settlementRecorded": "已記錄結清！",
+    "settlementUndone": "已復原結清",
+    "undoFailed": "復原結清失敗",
+    "pushTitle": "收到付款",
+    "pushBody": "{name} 已付給你 {amount}",
+    "someone": "有人"
   },
   "Calculator": {
     "ok": "OK"
@@ -178,7 +194,9 @@
     "failedToUpdate": "更新費用失敗",
     "failedToAdd": "新增費用失敗",
     "pushTitle": "新增費用",
-    "pushBody": "{name} 新增了：{description} ({amount})"
+    "pushBody": "{name} 新增了：{description} ({amount})",
+    "ratesUnavailable": "無法取得匯率",
+    "ratesUnavailableDesc": "目前無法換算此幣別，請稍後再試或改用群組幣別。"
   },
   "ActivityLog": {
     "title": "活動記錄",
@@ -226,5 +244,57 @@
     "sessionErrorInvalid": "無效的重設連結。請重新申請重設密碼。",
     "errorToastTitle": "重設密碼失敗",
     "successToastTitle": "密碼重設成功！"
+  },
+  "SplitDetails": {
+    "totalBill": "總金額",
+    "perfectlyAllocated": "分配完成",
+    "totalHundred": "合計 100%",
+    "remaining": "剩餘：{value}",
+    "equal": "平分",
+    "exact": "金額",
+    "percent": "百分比",
+    "descriptionPlaceholder": "描述（例如：壽司）",
+    "whoPaid": "誰付的？",
+    "allocations": "分攤",
+    "you": "你",
+    "member": "成員"
+  },
+  "JoinGroup": {
+    "title": "加入群組",
+    "invited": "你受邀加入",
+    "baseCurrency": "基準幣別",
+    "join": "加入群組",
+    "oops": "糟糕！",
+    "goHome": "回首頁",
+    "notFound": "找不到群組或連結無效。",
+    "alreadyMember": "你已經是成員了！",
+    "joinFailed": "加入群組失敗",
+    "joined": "已加入 {name}！",
+    "pushTitle": "新成員加入",
+    "pushBody": "{name} 加入了 {group}"
+  },
+  "ForgotPassword": {
+    "title": "忘記密碼",
+    "description": "輸入 Email 以收取重設連結",
+    "checkEmailTitle": "請查看你的信箱",
+    "checkEmailDescription": "我們已寄出密碼重設連結",
+    "email": "Email",
+    "invalidEmail": "請輸入有效的 Email",
+    "sendLink": "寄送重設連結",
+    "sendAnother": "再寄一次",
+    "backToLogin": "返回登入",
+    "sendFailed": "寄送重設信失敗",
+    "sentTitle": "重設信已寄出！",
+    "sentDescription": "請到收件匣查看密碼重設連結",
+    "sentBody": "如果 <email></email> 有對應的帳號，你會收到一封含重設密碼說明的信。"
+  },
+  "Realtime": {
+    "memberJoined": "有新成員加入群組！",
+    "joinedGroup": "你加入了新群組！",
+    "expenseAdded": "新增了一筆費用！",
+    "expenseUpdated": "有一筆費用被更新！",
+    "expenseDeleted": "有一筆費用被刪除！",
+    "settlementRecorded": "新增了一筆結清紀錄",
+    "settlementUndone": "有一筆結清被復原"
   }
 }
