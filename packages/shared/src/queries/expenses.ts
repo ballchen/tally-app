@@ -6,6 +6,7 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query"
+import { nanoid } from "nanoid"
 import { logActivity } from "../lib/activity-log"
 import { safeGetUser } from "../lib/auth-helpers"
 import {
@@ -159,7 +160,7 @@ export function useAddExpense(): UseMutationResult<
       const { user } = await safeGetUser(supabase)
 
       if (previous && user) {
-        const tempId = `optimistic-${crypto.randomUUID()}`
+        const tempId = `optimistic-${nanoid()}`
         const optimisticExpense = buildOptimisticExpense(
           variables,
           user,
