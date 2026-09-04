@@ -1,48 +1,31 @@
 import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useQuery } from "@tanstack/react-query"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { mapMemberRow, type GroupMemberRow } from "@/lib/members"
 
-export function useGroupDetails(groupId: string) {
-  const supabase = createClient()
+export async function fetchGroupDetails(
+  supabase: SupabaseClient,
+  groupId: string
+) {
+  const { user, error: authError } = await safeGetUser(supabase)
+  if (authError) throw authError
+  if (!user) throw new Error("Not authenticated")
 
-  return useQuery({
-    queryKey: ["group", groupId],
-    queryFn: async () => {
-      // Verify authentication
-      const { user, error: authError } = await safeGetUser(supabase)
-      if (authError) throw authError
-      if (!user) throw new Error("Not authenticated")
-
-      // 1. Fetch Group Info
-      const { data: group, error: groupError } = await supabase
-        .from("groups")
-        .select("*")
-        .eq("id", groupId)
-        .single()
-
-      if (groupError) throw groupError
-
-      // 2. Fetch Members using RPC (bypasses RLS restrictions)
-      const { data: membersData, error: membersError } = await supabase
-        .rpc('get_group_members_batch', { p_group_ids: [groupId] })
-
-      if (membersError) throw membersError
-
-      const members = ((membersData ?? []) as GroupMemberRow[]).map(mapMemberRow)
-
-      // 3. Fetch Expenses (exclude soft-deleted)
-      const { data: expenses, error: expensesError } = await supabase
+  const [groupResult, membersResult, expensesResult, settlementsResult] =
+    await Promise.all([
+      supabase.from("groups").select("*").eq("id", groupId).single(),
+      supabase.rpc("get_group_members_batch", { p_group_ids: [groupId] }),
+      supabase
         .from("expenses")
-        .select(`
+        .select(
+          `
           *,
           payer:payer_id (
             display_name,
             avatar_url
           ),
-
           type,
-
           expense_splits (
             user_id,
             owed_amount,
@@ -53,35 +36,45 @@ export function useGroupDetails(groupId: string) {
                avatar_url
             )
           )
-        `)
+        `
+        )
         .eq("group_id", groupId)
         .is("deleted_at", null)
-        .order("date", { ascending: false })
-
-      if (expensesError) throw expensesError
-
-      // 4. Fetch Settlements
-      const { data: settlements, error: settlementsError } = await supabase
+        .order("date", { ascending: false }),
+      supabase
         .from("settlements")
-        .select(`
+        .select(
+          `
             *,
             creator:created_by (
                 display_name,
                 avatar_url
             )
-        `)
+        `
+        )
         .eq("group_id", groupId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false }),
+    ])
 
-      if (settlementsError) throw settlementsError
+  if (groupResult.error) throw groupResult.error
+  if (membersResult.error) throw membersResult.error
+  if (expensesResult.error) throw expensesResult.error
+  if (settlementsResult.error) throw settlementsResult.error
 
-      return {
-        group,
-        members,
-        expenses,
-        settlements
-      }
-    },
-    enabled: !!groupId
+  return {
+    group: groupResult.data,
+    members: ((membersResult.data ?? []) as GroupMemberRow[]).map(mapMemberRow),
+    expenses: expensesResult.data,
+    settlements: settlementsResult.data,
+  }
+}
+
+export function useGroupDetails(groupId: string) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ["group", groupId],
+    queryFn: () => fetchGroupDetails(supabase, groupId),
+    enabled: !!groupId,
   })
 }

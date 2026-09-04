@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import { useGroups, type GroupFilter } from "@/hooks/use-groups";
+import { fetchGroupDetails } from "@/hooks/use-group-details";
+import {
+  filterUserGroups,
+  getGroupFilterCounts,
+} from "@/lib/filter-user-groups";
+import { createClient } from "@/lib/supabase/client";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
 import { ProfileSettingsDialog } from "@/components/profile/profile-settings-dialog";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, LogOut, Users, Archive, EyeOff } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PushNotificationManager } from "@/components/pwa/push-notification-manager";
@@ -21,8 +26,15 @@ import { useTranslations } from "next-intl";
 
 export default function GroupsPage() {
   const [filter, setFilter] = useState<GroupFilter>("active");
-  const { data: groups, isLoading, refetch } = useGroups(filter);
-  const { data: allGroups } = useGroups("all"); // Fetch all groups to check counts
+  const { data: allGroups, isLoading } = useGroups("all");
+  const groups = useMemo(
+    () => filterUserGroups(allGroups, filter),
+    [allGroups, filter]
+  );
+  const { archivedCount, hiddenCount } = useMemo(
+    () => getGroupFilterCounts(allGroups),
+    [allGroups]
+  );
   const supabase = createClient();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -38,18 +50,16 @@ export default function GroupsPage() {
   // Pull-to-refresh
   const { pullDistance, isRefreshing, containerRef } = usePullToRefresh({
     onRefresh: async () => {
-      // Invalidate and refetch groups data
-      await queryClient.invalidateQueries({ queryKey: ["groups", filter] });
       await queryClient.invalidateQueries({ queryKey: ["groups", "all"] });
-      await refetch();
     },
   });
 
-  // Calculate counts for each filter
-  const archivedCount = allGroups?.filter((g) => !!g.archived_at).length || 0;
-  const hiddenCount =
-    allGroups?.filter((g: { group_members?: { hidden_at: string | null }[] | null }) => g.group_members?.some((m) => m.hidden_at))
-      .length || 0;
+  const prefetchGroup = (groupId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ["group", groupId],
+      queryFn: () => fetchGroupDetails(supabase, groupId),
+    });
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -215,7 +225,9 @@ export default function GroupsPage() {
                       : ""
                   }`}
                   onClick={() => handleGroupClick(group.id)}
+                  onMouseEnter={() => prefetchGroup(group.id)}
                   onTouchStart={(e) => {
+                    prefetchGroup(group.id);
                     // Add haptic feedback on touch devices
                     e.currentTarget.style.transform = "scale(0.98)";
                     e.currentTarget.style.opacity = "0.8";

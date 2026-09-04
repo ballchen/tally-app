@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useTranslations } from 'next-intl'
+import { useDebouncedInvalidate } from '@/hooks/use-debounced-invalidate'
 
 /**
  * Hook to subscribe to realtime changes for a specific group.
@@ -11,7 +11,7 @@ import { useTranslations } from 'next-intl'
  * and shows toast notifications.
  */
 export function useRealtimeSync(groupId: string) {
-  const queryClient = useQueryClient()
+  const debouncedInvalidate = useDebouncedInvalidate()
   const supabase = createClient()
   const { user } = useAuthStore()
   const t = useTranslations('Realtime')
@@ -29,7 +29,7 @@ export function useRealtimeSync(groupId: string) {
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
         // Invalidate queries to refetch
-        queryClient.invalidateQueries({ queryKey: ['group', groupId] })
+        debouncedInvalidate(['group', groupId])
 
         // Show toast for INSERT events from other users
         if (payload.eventType === 'INSERT' && payload.new.user_id !== user?.id) {
@@ -46,7 +46,7 @@ export function useRealtimeSync(groupId: string) {
         table: 'expenses',
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
-        queryClient.invalidateQueries({ queryKey: ['group', groupId] })
+        debouncedInvalidate(['group', groupId])
 
         const row = payload.new as { created_by?: string; payer_id?: string; type?: string; deleted_at?: string | null } | undefined
         const isOwnChange = row?.created_by === user?.id || row?.payer_id === user?.id
@@ -69,7 +69,7 @@ export function useRealtimeSync(groupId: string) {
         table: 'settlements',
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
-        queryClient.invalidateQueries({ queryKey: ['group', groupId] })
+        debouncedInvalidate(['group', groupId])
 
         const row = (payload.eventType === 'DELETE' ? payload.old : payload.new) as { created_by?: string } | undefined
         if (row?.created_by === user?.id) return
@@ -88,7 +88,7 @@ export function useRealtimeSync(groupId: string) {
       supabase.removeChannel(expensesChannel)
       supabase.removeChannel(settlementsChannel)
     }
-  }, [groupId, queryClient, supabase, user?.id, t])
+  }, [groupId, debouncedInvalidate, supabase, user?.id, t])
 }
 
 /**
@@ -96,7 +96,7 @@ export function useRealtimeSync(groupId: string) {
  * Used on the groups list page to detect when user is added to new groups.
  */
 export function useRealtimeGroups() {
-  const queryClient = useQueryClient()
+  const debouncedInvalidate = useDebouncedInvalidate()
   const supabase = createClient()
   const { user } = useAuthStore()
   const t = useTranslations('Realtime')
@@ -114,7 +114,7 @@ export function useRealtimeGroups() {
         filter: `user_id=eq.${user.id}`
       }, () => {
         // Invalidate groups list to refetch
-        queryClient.invalidateQueries({ queryKey: ['groups'] })
+        debouncedInvalidate(['groups'])
         toast.success(t('joinedGroup'))
       })
       .subscribe()
@@ -122,5 +122,5 @@ export function useRealtimeGroups() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, queryClient, supabase, t])
+  }, [user?.id, debouncedInvalidate, supabase, t])
 }
