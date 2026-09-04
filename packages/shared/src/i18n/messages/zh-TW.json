@@ -37,7 +37,8 @@
     "archivedDesc": "已封存的群組將顯示於此",
     "hiddenDesc": "已隱藏的群組將顯示於此",
     "member": "成員",
-    "members": "成員"
+    "members": "成員",
+    "openProfile": "個人設定"
   },
   "CreateGroup": {
     "newGroup": "新群組",
@@ -135,7 +136,9 @@
       "unhidden": "群組已重新顯示！",
       "deleted": "群組已刪除！",
       "coverUpdated": "封面圖片已更新！",
-      "coverRemoved": "封面圖片已移除！"
+      "coverRemoved": "封面圖片已移除！",
+      "left": "已離開群組",
+      "memberRemoved": "已移除成員"
     },
     "error": {
       "update": "更新群組失敗",
@@ -146,13 +149,33 @@
       "unhide": "取消隱藏群組失敗",
       "delete": "刪除群組失敗",
       "uploadCover": "上傳封面圖片失敗",
-      "removeCover": "移除封面圖片失敗"
+      "removeCover": "移除封面圖片失敗",
+      "leave": "離開群組失敗",
+      "removeMember": "移除成員失敗"
     },
     "validation": {
       "nameRequired": "群組名稱為必填",
       "currencyLength": "貨幣代號必須為3個字符"
     },
-    "currencyLocked": "群組已有費用，基準幣別已鎖定"
+    "currencyLocked": "群組已有費用，基準幣別已鎖定",
+    "members": "成員",
+    "owner": "建立者",
+    "remove": "移除",
+    "removeTitle": "移除 {name}？",
+    "removeConfirmDesc": "他將無法再存取這個群組。",
+    "leave": "離開群組",
+    "leaveDesc": "將自己從這個群組移除",
+    "leaveTitle": "確定要離開嗎？",
+    "leaveConfirmDesc": "之後可以再用邀請連結加入。",
+    "settleFirst": "請先結清餘額，才能離開或移除成員。",
+    "ownerOnly": "只有群組建立者可以修改這些設定。",
+    "removeCover": "移除封面",
+    "copy": "複製",
+    "share": "分享",
+    "regenerate": "重新產生",
+    "deleteConfirmPrompt": "輸入「{name}」以確認",
+    "confirmLeave": "確定離開",
+    "confirmRemove": "確定移除"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "查看餘額並結清",

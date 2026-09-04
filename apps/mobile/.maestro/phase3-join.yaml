@@ -1,0 +1,98 @@
+appId: com.ballchen.tally
+name: Phase 3 — join by invite code (valid, already a member, invalid)
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts. The joined group is
+# left again at the end so the flow can be re-run without re-seeding.
+env:
+  EMAIL: phase3-test-b@example.com
+  PASSWORD: Phase3TestB!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+
+# Valid code that B is not a member of yet.
+- openLink: 'tally://join/phase3jn'
+# Safari asks for confirmation before handing a custom scheme to the app.
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    text: 'Open'
+    optional: true
+- extendedWaitUntil:
+    visible: 'Join Group'
+    timeout: 20000
+- assertVisible: 'Join Test'
+- assertVisible: 'Base Currency: TWD'
+- takeScreenshot: c5-invite
+- tapOn:
+    id: 'join-submit'
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-heading'
+      text: 'Join Test'
+    timeout: 20000
+- takeScreenshot: c5-joined
+
+# Already a member: straight to the group, no join button.
+- openLink: 'tally://join/phase3jp'
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    text: 'Open'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-heading'
+      text: 'Japan Trip'
+    timeout: 20000
+- assertNotVisible:
+    id: 'join-submit'
+- takeScreenshot: c5-already-member
+
+# Invalid code.
+- openLink: 'tally://join/invalidcode'
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    text: 'Open'
+    optional: true
+- extendedWaitUntil:
+    visible: 'Oops!'
+    timeout: 20000
+- assertVisible: 'Group not found or invalid link.'
+- takeScreenshot: c5-invalid
+- tapOn: 'Go Home'
+- assertVisible: 'Tally'
+
+# Leave the group joined above so the fixtures are unchanged.
+- tapOn: '.*Join Test.*'
+- tapOn:
+    id: 'open-group-settings'
+- scrollUntilVisible:
+    element:
+      id: 'leave-group'
+- tapOn:
+    id: 'leave-group'
+- tapOn: 'Yes, leave'
+- extendedWaitUntil:
+    notVisible: '.*Join Test.*'
+    timeout: 20000

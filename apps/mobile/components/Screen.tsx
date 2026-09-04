@@ -1,11 +1,4 @@
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  type StyleProp,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { ScrollView, type StyleProp, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
@@ -21,32 +14,44 @@ export function Screen({ children, scroll = true, center = false, contentStyle }
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const padding: ViewStyle = {
+  const root: ViewStyle = { flex: 1, backgroundColor: theme.colors.background };
+  const horizontal: ViewStyle = {
     paddingHorizontal: theme.screenPadding,
-    paddingTop: insets.top + theme.spacing.lg,
-    paddingBottom: insets.bottom + theme.spacing.xl,
     gap: theme.spacing.lg,
   };
 
-  const body = scroll ? (
+  if (!scroll) {
+    return (
+      <View
+        style={[
+          root,
+          horizontal,
+          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.xl },
+          center && { justifyContent: 'center' },
+          contentStyle,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  return (
     <ScrollView
+      style={root}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[padding, center && { flexGrow: 1, justifyContent: 'center' }, contentStyle]}
+      // Lets iOS inset for the navigation bar and safe area; a KeyboardAvoidingView
+      // would collapse to zero height inside a form sheet.
+      contentInsetAdjustmentBehavior="automatic"
+      automaticallyAdjustKeyboardInsets
+      contentContainerStyle={[
+        horizontal,
+        { paddingTop: theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.xl },
+        center && { flexGrow: 1, justifyContent: 'center' },
+        contentStyle,
+      ]}
     >
       {children}
     </ScrollView>
-  ) : (
-    <View style={[{ flex: 1 }, padding, center && { justifyContent: 'center' }, contentStyle]}>
-      {children}
-    </View>
-  );
-
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-    >
-      {body}
-    </KeyboardAvoidingView>
   );
 }

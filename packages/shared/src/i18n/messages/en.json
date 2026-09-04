@@ -37,7 +37,8 @@
     "archivedDesc": "Archived groups will appear here",
     "hiddenDesc": "Hidden groups will appear here",
     "member": "member",
-    "members": "members"
+    "members": "members",
+    "openProfile": "Profile"
   },
   "CreateGroup": {
     "newGroup": "New Group",
@@ -135,7 +136,9 @@
       "unhidden": "Group unhidden!",
       "deleted": "Group deleted!",
       "coverUpdated": "Cover image updated!",
-      "coverRemoved": "Cover image removed!"
+      "coverRemoved": "Cover image removed!",
+      "left": "You left the group",
+      "memberRemoved": "Member removed"
     },
     "error": {
       "update": "Failed to update group",
@@ -146,13 +149,33 @@
       "unhide": "Failed to unhide group",
       "delete": "Failed to delete group",
       "uploadCover": "Failed to upload cover image",
-      "removeCover": "Failed to remove cover image"
+      "removeCover": "Failed to remove cover image",
+      "leave": "Failed to leave group",
+      "removeMember": "Failed to remove member"
     },
     "validation": {
       "nameRequired": "Group name is required",
       "currencyLength": "Currency code must be 3 characters"
     },
-    "currencyLocked": "Base currency is locked because this group already has expenses"
+    "currencyLocked": "Base currency is locked because this group already has expenses",
+    "members": "Members",
+    "owner": "Owner",
+    "remove": "Remove",
+    "removeTitle": "Remove {name}?",
+    "removeConfirmDesc": "They will lose access to this group.",
+    "leave": "Leave Group",
+    "leaveDesc": "Remove yourself from this group",
+    "leaveTitle": "Leave this group?",
+    "leaveConfirmDesc": "You can rejoin later with an invite link.",
+    "settleFirst": "Settle up before leaving or removing a member.",
+    "ownerOnly": "Only the group owner can change these settings.",
+    "removeCover": "Remove cover",
+    "copy": "Copy",
+    "share": "Share",
+    "regenerate": "Regenerate",
+    "deleteConfirmPrompt": "Type {name} to confirm",
+    "confirmLeave": "Yes, leave",
+    "confirmRemove": "Yes, remove"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "View Balances & Settle",

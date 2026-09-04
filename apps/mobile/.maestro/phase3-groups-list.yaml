@@ -1,0 +1,91 @@
+appId: com.ballchen.tally
+name: Phase 3 — groups list filters and balance summary
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts.
+# Cards are single accessibility elements, so their text is matched with `.*...*`.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain; dismiss it so the app is visible again.
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- assertVisible: 'Tally'
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*You are owed NT\$ 300.*'
+    timeout: 20000
+- assertVisible: '.*Weekend Brunch.*All settled.*'
+- assertNotVisible: '.*Old Ski Trip.*'
+- assertNotVisible: '.*Secret Santa.*'
+- takeScreenshot: c1-active
+
+- tapOn: 'Archived'
+- extendedWaitUntil:
+    visible: '.*Old Ski Trip.*'
+    timeout: 20000
+- assertNotVisible: '.*Japan Trip.*'
+- takeScreenshot: c1-archived
+
+- tapOn: 'Hidden'
+- extendedWaitUntil:
+    visible: '.*Secret Santa.*'
+    timeout: 20000
+- assertNotVisible: '.*Japan Trip.*'
+- takeScreenshot: c1-hidden
+
+- tapOn: 'Active'
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 20000
+- swipe:
+    from:
+      id: 'groups-list'
+    direction: DOWN
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 20000
+- takeScreenshot: c3-refreshed
+
+# Swipe actions hide a group and put it back (Weekend Brunch is owned by B, so
+# only the hide action is offered here).
+- swipe:
+    from:
+      text: '.*Weekend Brunch.*'
+    direction: LEFT
+- tapOn: 'Hide Group'
+- extendedWaitUntil:
+    notVisible: '.*Weekend Brunch.*'
+    timeout: 20000
+- takeScreenshot: c1-swipe-hidden
+- tapOn: 'Hidden'
+- extendedWaitUntil:
+    visible: '.*Weekend Brunch.*'
+    timeout: 20000
+- swipe:
+    from:
+      text: '.*Weekend Brunch.*'
+    direction: LEFT
+- tapOn: 'Unhide Group'
+- extendedWaitUntil:
+    notVisible: '.*Weekend Brunch.*'
+    timeout: 20000
+- tapOn: 'Active'
+- extendedWaitUntil:
+    visible: '.*Weekend Brunch.*'
+    timeout: 20000

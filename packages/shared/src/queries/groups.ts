@@ -370,3 +370,119 @@ export function useRemoveMember(): UseMutationResult<
     },
   })
 }
+
+export type InviteGroup = { id: string; name: string; base_currency: string }
+
+/** Invite links are public, so the lookup goes through the security-definer RPC. */
+export function useGroupByInviteCode(
+  code: string | undefined
+): UseQueryResult<InviteGroup | null, Error> {
+  const supabase = useSupabase()
+
+  return useQuery<InviteGroup | null, Error>({
+    queryKey: ["invite", code],
+    enabled: !!code,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_group_by_invite_code", {
+        code,
+      })
+      if (error) throw error
+      return (data as InviteGroup | null) ?? null
+    },
+  })
+}
+
+export type JoinGroupResult = {
+  groupId: string
+  alreadyMember: boolean
+  /** Members present before the join, for the caller to notify. */
+  existingMemberIds: string[]
+  joinerName: string
+}
+
+export function useJoinGroup(): UseMutationResult<
+  JoinGroupResult,
+  Error,
+  { groupId: string }
+> {
+  const supabase = useSupabase()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ groupId }) => {
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
+      if (!user) throw new Error("Not authenticated")
+
+      const { data: membersData, error: membersError } = await supabase.rpc(
+        "get_group_members_batch",
+        { p_group_ids: [groupId] }
+      )
+      if (membersError) throw membersError
+
+      const members = (membersData ?? []) as GroupMemberRow[]
+      const existingMemberIds = members
+        .map((m) => m.user_id)
+        .filter((id) => id !== user.id)
+
+      if (members.some((m) => m.user_id === user.id)) {
+        return { groupId, alreadyMember: true, existingMemberIds, joinerName: "" }
+      }
+
+      const { error: joinError } = await supabase
+        .from("group_members")
+        .insert({ group_id: groupId, user_id: user.id })
+      if (joinError) throw joinError
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user.id)
+        .single()
+
+      return {
+        groupId,
+        alreadyMember: false,
+        existingMemberIds,
+        joinerName:
+          (profile as { display_name: string | null } | null)?.display_name ?? "",
+      }
+    },
+    onSuccess: ({ groupId, alreadyMember }) => {
+      if (alreadyMember) return
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] })
+    },
+  })
+}
+
+/**
+ * React Native has no `File`, so the cover is uploaded as raw binary with an
+ * explicit content type instead of the multipart body `useUploadGroupCover` builds.
+ */
+export function useUploadGroupCoverBinary(): UseMutationResult<
+  string,
+  Error,
+  { groupId: string; body: ArrayBuffer; extension: string; contentType: string }
+> {
+  const supabase = useSupabase()
+
+  return useMutation({
+    mutationFn: async ({ groupId, body, extension, contentType }) => {
+      const filePath = `${groupId}/${Date.now()}.${extension}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("group-covers")
+        .upload(filePath, body, { cacheControl: "0", upsert: true, contentType })
+
+      if (uploadError) throw uploadError
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("group-covers").getPublicUrl(filePath)
+
+      return `${publicUrl}?t=${Date.now()}`
+    },
+  })
+}

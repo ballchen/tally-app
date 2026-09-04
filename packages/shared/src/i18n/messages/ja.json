@@ -37,7 +37,8 @@
     "archivedDesc": "アーカイブされたグループがここに表示されます",
     "hiddenDesc": "非表示のグループがここに表示されます",
     "member": "メンバー",
-    "members": "メンバー"
+    "members": "メンバー",
+    "openProfile": "プロフィール"
   },
   "CreateGroup": {
     "newGroup": "新規グループ",
@@ -135,7 +136,9 @@
       "unhidden": "グループを再表示しました！",
       "deleted": "グループを削除しました！",
       "coverUpdated": "カバー画像を更新しました！",
-      "coverRemoved": "カバー画像を削除しました！"
+      "coverRemoved": "カバー画像を削除しました！",
+      "left": "グループを退出しました",
+      "memberRemoved": "メンバーを削除しました"
     },
     "error": {
       "update": "グループの更新に失敗しました",
@@ -146,13 +149,33 @@
       "unhide": "グループの再表示に失敗しました",
       "delete": "グループの削除に失敗しました",
       "uploadCover": "カバー画像のアップロードに失敗しました",
-      "removeCover": "カバー画像の削除に失敗しました"
+      "removeCover": "カバー画像の削除に失敗しました",
+      "leave": "グループの退出に失敗しました",
+      "removeMember": "メンバーの削除に失敗しました"
     },
     "validation": {
       "nameRequired": "グループ名は必須です",
       "currencyLength": "通貨コードは3文字である必要があります"
     },
-    "currencyLocked": "経費が登録済みのため基準通貨はロックされています"
+    "currencyLocked": "経費が登録済みのため基準通貨はロックされています",
+    "members": "メンバー",
+    "owner": "オーナー",
+    "remove": "削除",
+    "removeTitle": "{name} を削除しますか？",
+    "removeConfirmDesc": "このグループにアクセスできなくなります。",
+    "leave": "グループを退出",
+    "leaveDesc": "自分をこのグループから外します",
+    "leaveTitle": "グループを退出しますか？",
+    "leaveConfirmDesc": "招待リンクでいつでも再参加できます。",
+    "settleFirst": "残高を精算してから退出・削除してください。",
+    "ownerOnly": "これらの設定はオーナーのみ変更できます。",
+    "removeCover": "カバーを削除",
+    "copy": "コピー",
+    "share": "共有",
+    "regenerate": "再生成",
+    "deleteConfirmPrompt": "確認のため「{name}」と入力してください",
+    "confirmLeave": "退出する",
+    "confirmRemove": "削除する"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "残高表示 & 精算",

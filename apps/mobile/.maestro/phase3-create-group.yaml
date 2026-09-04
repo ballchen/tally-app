@@ -1,0 +1,92 @@
+appId: com.ballchen.tally
+name: Phase 3 — create group validation, currency options, delete confirmation
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+  GROUP: Maestro Group
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+
+- tapOn:
+    id: 'new-group-fab'
+- assertVisible:
+    id: 'create-group-submit'
+    enabled: false
+- takeScreenshot: c4-empty-name
+
+# The currency sheet offers exactly the 12 supported codes and nothing else.
+- tapOn:
+    id: 'group-currency'
+- assertVisible: 'TWD'
+- assertVisible: 'USD'
+- assertVisible: 'JPY'
+- assertVisible: 'VND'
+- assertNotVisible: 'CHF'
+- takeScreenshot: c4-currency-options
+- tapOn: 'TWD'
+
+- tapOn:
+    id: 'group-name'
+- inputText: ${GROUP}
+# Return dismisses the keyboard so the submit button is on screen.
+- pressKey: Enter
+- assertVisible:
+    id: 'create-group-submit'
+    enabled: true
+- tapOn:
+    id: 'create-group-submit'
+- extendedWaitUntil:
+    visible: '.*${GROUP}.*'
+    timeout: 20000
+- takeScreenshot: c4-created
+
+# C8 — deleting needs the exact group name typed in, which also cleans up this run.
+- tapOn: '.*${GROUP}.*'
+- tapOn:
+    id: 'open-group-settings'
+- scrollUntilVisible:
+    element:
+      id: 'delete-group'
+- assertVisible:
+    id: 'delete-group'
+    enabled: false
+- tapOn:
+    id: 'delete-confirmation'
+- inputText: 'Maestro'
+- pressKey: Enter
+- assertVisible:
+    id: 'delete-group'
+    enabled: false
+- takeScreenshot: c8-mismatch
+- tapOn:
+    id: 'delete-confirmation'
+- eraseText
+- inputText: ${GROUP}
+- pressKey: Enter
+- assertVisible:
+    id: 'delete-group'
+    enabled: true
+- takeScreenshot: c8-match
+- tapOn:
+    id: 'delete-group'
+- extendedWaitUntil:
+    notVisible: '.*${GROUP}.*'
+    timeout: 20000

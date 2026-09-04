@@ -34,6 +34,5 @@ env:
 - tapOn:
     text: 'Not Now'
     optional: true
-- assertVisible: 'Groups'
-- assertVisible: ".*phase2-test@example.com.*"
+- assertVisible: 'Tally'
 - takeScreenshot: b3-signed-in

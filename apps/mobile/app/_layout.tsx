@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthGate } from '@/components/AuthGate';
@@ -38,26 +39,28 @@ export default function RootLayout() {
   }, [initialized]);
 
   return (
-    <SafeAreaProvider>
-      <SupabaseProvider client={supabase}>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="auto" />
-          <AuthGate />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: theme.colors.background },
-            }}
-          >
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(app)" />
-            <Stack.Screen name="reset-password" />
-            <Stack.Screen name="auth/callback" />
-            <Stack.Screen name="join/[code]" />
-          </Stack>
-          <ToastMessage config={toastConfig} topOffset={64} />
-        </QueryClientProvider>
-      </SupabaseProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <SupabaseProvider client={supabase}>
+          <QueryClientProvider client={queryClient}>
+            <StatusBar style="auto" />
+            <AuthGate />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.background },
+              }}
+            >
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(app)" />
+              <Stack.Screen name="reset-password" />
+              <Stack.Screen name="auth/callback" />
+              <Stack.Screen name="join/[code]" />
+            </Stack>
+            <ToastMessage config={toastConfig} topOffset={64} />
+          </QueryClientProvider>
+        </SupabaseProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -1,0 +1,200 @@
+appId: com.ballchen.tally
+name: Phase 3 — non-owner settings, leaving a group, removing a member
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts. B rejoins every group
+# it leaves, so the flow can be re-run without re-seeding.
+env:
+  EMAIL_B: phase3-test-b@example.com
+  PASSWORD_B: Phase3TestB!2026
+  EMAIL_A: phase2-test@example.com
+  PASSWORD_A: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL_B}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD_B}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 20000
+
+# C6 — a non-owner cannot edit the group, and gets a leave button instead.
+- tapOn: '.*Japan Trip.*'
+- tapOn:
+    id: 'open-group-settings'
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-input'
+    timeout: 20000
+- assertVisible:
+    id: 'group-name-input'
+    enabled: false
+- assertVisible:
+    id: 'group-currency-field'
+    enabled: false
+- assertVisible:
+    id: 'pick-cover'
+    enabled: false
+- assertVisible: 'Only the group owner can change these settings.'
+- scrollUntilVisible:
+    element:
+      id: 'regenerate-invite'
+- assertVisible:
+    id: 'regenerate-invite'
+    enabled: false
+- assertNotVisible:
+    id: 'delete-group'
+- takeScreenshot: c6-non-owner
+
+# C7 — B owes 300 in this group, so leaving is refused.
+- scrollUntilVisible:
+    element:
+      id: 'leave-group'
+- tapOn:
+    id: 'leave-group'
+- tapOn: 'Yes, leave'
+- extendedWaitUntil:
+    visible: 'Settle up before leaving or removing a member.'
+    timeout: 20000
+- takeScreenshot: c7-leave-blocked
+- tapOn:
+    id: 'sheet-close'
+# Relaunching is the reliable way back to the list: the stack resets to the root.
+- launchApp
+- extendedWaitUntil:
+    visible: 'Active'
+    timeout: 20000
+
+# C7 — a settled group can be left, and the card disappears.
+- extendedWaitUntil:
+    visible: '.*Leave Test.*'
+    timeout: 20000
+- tapOn: '.*Leave Test.*'
+- tapOn:
+    id: 'open-group-settings'
+- scrollUntilVisible:
+    element:
+      id: 'leave-group'
+- tapOn:
+    id: 'leave-group'
+- tapOn: 'Yes, leave'
+- extendedWaitUntil:
+    notVisible: '.*Leave Test.*'
+    timeout: 20000
+- takeScreenshot: c7-left
+
+# Restore the fixture membership before switching accounts.
+- openLink: 'tally://join/phase3lv'
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    id: 'join-submit'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-heading'
+      text: 'Leave Test'
+    timeout: 20000
+# Relaunching is the reliable way back to the list: the stack resets to the root.
+- launchApp
+- extendedWaitUntil:
+    visible: 'Active'
+    timeout: 20000
+
+# C7 — the owner removes a settled member.
+# Switching accounts through a clean launch avoids iOS password autofill
+# refilling the previous account's credentials.
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL_A}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD_A}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- extendedWaitUntil:
+    visible: '.*Remove Test.*'
+    timeout: 20000
+- tapOn: '.*Remove Test.*'
+- tapOn:
+    id: 'open-group-settings'
+- scrollUntilVisible:
+    element:
+      text: 'Remove'
+- tapOn: 'Remove'
+- tapOn: 'Yes, remove'
+- extendedWaitUntil:
+    visible: 'Member removed'
+    timeout: 20000
+- takeScreenshot: c7-member-removed
+- assertNotVisible: 'Phase Three B'
+
+# Put B back into Remove Test so the fixtures survive the run.
+- tapOn:
+    id: 'sheet-close'
+# Relaunching is the reliable way back to the list: the stack resets to the root.
+- launchApp
+- extendedWaitUntil:
+    visible: 'Active'
+    timeout: 20000
+# Switching accounts through a clean launch avoids iOS password autofill
+# refilling the previous account's credentials.
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL_B}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD_B}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- openLink: 'tally://join/phase3rm'
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    id: 'join-submit'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-heading'
+      text: 'Remove Test'
+    timeout: 20000

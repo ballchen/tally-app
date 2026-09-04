@@ -1,5 +1,7 @@
 appId: com.ballchen.tally
 name: Phase 2 — invite deep link is replayed after sign-in
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts: phase3in is a group
+# the signed-in account is not a member of, so the join screen stays on screen.
 env:
   EMAIL: phase2-test@example.com
   PASSWORD: Phase2Test!2026
@@ -7,7 +9,7 @@ env:
 - clearKeychain
 - launchApp:
     clearState: true
-- openLink: 'tally://join/abc123'
+- openLink: 'tally://join/phase3in'
 # Safari asks for confirmation before handing a custom scheme to the app.
 - tapOn:
     text: 'Open'
@@ -32,17 +34,21 @@ env:
 - tapOn:
     text: 'Not Now'
     optional: true
-- assertVisible: 'Join Group'
-- assertVisible: '.*abc123.*'
+- extendedWaitUntil:
+    visible: 'Join Group'
+    timeout: 20000
+- assertVisible: 'Invite Only'
 - takeScreenshot: b6-join
 
-# Already signed in: the same link goes straight to the join screen.
-- openLink: 'tally://join/xyz789'
+# Already signed in: the same kind of link goes straight to the join screen.
+- openLink: 'tally://join/unknowncode'
 - tapOn:
     text: 'Open'
     optional: true
 - tapOn:
     text: 'Open'
     optional: true
-- assertVisible: 'Join Group'
-- assertVisible: '.*xyz789.*'
+- extendedWaitUntil:
+    visible: 'Oops!'
+    timeout: 20000
+- assertVisible: 'Group not found or invalid link.'
