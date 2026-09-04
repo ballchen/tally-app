@@ -12,31 +12,40 @@ Tally is a bill-splitting PWA for sharing expenses with friends. Users create gr
 - **PWA**: @ducanh2912/next-pwa with web-push notifications
 
 ## Project Structure
+This is a pnpm workspaces + Turborepo monorepo. The web app lives in `apps/web`;
+pure logic, types, and i18n messages shared with the upcoming Expo app live in
+`packages/shared`.
 ```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── api/                # API routes (currency rates, push notifications)
-│   ├── auth/callback/      # Supabase auth callback
-│   ├── groups/[groupId]/   # Group details page (main UI)
-│   ├── join/[inviteCode]/  # Join group via invite link
-│   ├── login/              # Login page
-│   ├── reset-password/     # Password reset flow
-│   └── forgot-password/    # Forgot password page
-├── components/
-│   ├── ui/                 # shadcn/ui components
-│   ├── expenses/           # Expense-related components
-│   ├── settlement/         # Settlement dialog components
-│   ├── groups/             # Group management components
-│   └── providers/          # React context providers
-├── hooks/                  # React Query hooks (data fetching)
-├── lib/
-│   ├── supabase/           # Supabase client (browser/server)
-│   └── currency.ts         # Currency conversion utilities
-├── i18n/                   # next-intl configuration
-└── types/                  # TypeScript type definitions
+apps/web/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── api/                # API routes (currency rates, push notifications)
+│   │   ├── auth/callback/      # Supabase auth callback
+│   │   ├── groups/[groupId]/   # Group details page (main UI)
+│   │   ├── join/[inviteCode]/  # Join group via invite link
+│   │   ├── login/              # Login page
+│   │   ├── reset-password/     # Password reset flow
+│   │   └── forgot-password/    # Forgot password page
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui components
+│   │   ├── expenses/           # Expense-related components
+│   │   ├── settlement/         # Settlement dialog components
+│   │   ├── groups/             # Group management components
+│   │   └── providers/          # React context providers
+│   ├── hooks/                  # React Query hooks (data fetching)
+│   ├── lib/
+│   │   └── supabase/           # Supabase client (browser/server)
+│   └── i18n/                   # next-intl configuration (reads messages from @tally/shared)
+└── public/
 
-messages/                   # i18n translation files (en.json, zh-TW.json, ja.json)
-supabase/migrations/        # Database migrations (SQL)
+packages/shared/
+├── src/
+│   ├── balances.ts, currency.ts, members.ts  # Pure functions shared with mobile
+│   ├── types/supabase.ts                     # Generated Supabase types
+│   └── i18n/messages/{en,zh-TW,ja}.json      # i18n translation files
+└── package.json                              # "@tally/shared" — exports raw TS, no build step
+
+supabase/migrations/        # Database migrations (SQL) — stays at repo root, unchanged
 ```
 
 ## Database Schema (Supabase)
@@ -89,12 +98,14 @@ supabase/migrations/        # Database migrations (SQL)
 - `useRealtimeSync`: Supabase realtime subscriptions
 
 ## Common Commands
+Run from the repo root (pnpm workspaces + Turborepo). Node 22 is required (Next.js 16).
 ```bash
-npm run dev          # Start dev server
-npm run build        # Production build
-npm run lint         # ESLint
-npx tsc --noEmit     # Type check
-npm test             # Vitest unit tests (src/**/*.test.ts)
+pnpm install              # Install all workspace deps
+pnpm dev                  # Start web dev server (apps/web)
+pnpm build                # Production build (turbo run build)
+pnpm lint                 # ESLint (turbo run lint)
+pnpm typecheck            # tsc --noEmit for every package (turbo run typecheck)
+pnpm test                 # Vitest unit tests in packages/shared (turbo run test)
 
 # Supabase
 supabase db push     # Push migrations to remote
@@ -102,7 +113,7 @@ supabase db reset    # Reset local database
 ```
 
 ## i18n Keys Location
-Translation keys are organized by feature in `messages/*.json`:
+Translation keys live in `packages/shared/src/i18n/messages/*.json` and are organized by feature:
 - `Auth`: Login/signup related
 - `Groups`: Group list page
 - `GroupDetails`: Main group page (expenses, settlements, balances)

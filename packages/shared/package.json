@@ -1,0 +1,37 @@
+{
+  "name": "@tally/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./balances": {
+      "types": "./src/balances.ts",
+      "default": "./src/balances.ts"
+    },
+    "./currency": {
+      "types": "./src/currency.ts",
+      "default": "./src/currency.ts"
+    },
+    "./members": {
+      "types": "./src/members.ts",
+      "default": "./src/members.ts"
+    },
+    "./types": {
+      "types": "./src/types/supabase.ts",
+      "default": "./src/types/supabase.ts"
+    },
+    "./messages/*": "./src/i18n/messages/*.json"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  }
+}
