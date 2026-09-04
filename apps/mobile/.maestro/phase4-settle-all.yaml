@@ -48,6 +48,12 @@ env:
 - tapOn:
     id: 'confirm-settle-all'
 
+# The confirmation alert names how many payments this is about to record.
+- assertVisible: 'Settle all balances?'
+- assertVisible: '.*This will record 2 payments.*'
+- takeScreenshot: d4-settle-all-confirm
+- tapOn: 'Confirm'
+
 - extendedWaitUntil:
     visible: 'All settled up!'
     timeout: 20000
@@ -61,6 +67,11 @@ env:
     timeout: 20000
 - assertVisible: 'Phase Three A → Phase Three B'
 - takeScreenshot: d4-expanded-repayments
+
+# Let the toast's own undo action expire so only the card's trash matches.
+- extendedWaitUntil:
+    notVisible: 'Settlement recorded!'
+    timeout: 20000
 
 # D5 — the trash asks for confirmation and the pairings come back.
 - tapOn:

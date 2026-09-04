@@ -54,9 +54,12 @@ describe('buildTimeline', () => {
     }
   });
 
-  it('drops repayments that lost their settlement', () => {
-    const orphan = expense('r1', '2026-09-05', { type: 'repayment', settlement_id: null });
-    expect(buildTimeline([orphan], [])).toEqual([]);
+  it('shows repayments that lost their settlement as their own card instead of dropping them', () => {
+    const orphan = expense('r1', '2026-09-05', { type: 'repayment', settlement_id: null, amount: 300 });
+    const items = buildTimeline([orphan], []);
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'repayment', key: 'repayment-r1', expense: orphan });
   });
 });
 

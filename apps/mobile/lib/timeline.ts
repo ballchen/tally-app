@@ -2,6 +2,7 @@ import type { GroupExpense, GroupSettlement } from '@tally/shared/queries/group-
 
 export type TimelineItem =
   | { kind: 'expense'; key: string; date: string; expense: GroupExpense }
+  | { kind: 'repayment'; key: string; date: string; expense: GroupExpense }
   | {
       kind: 'settlement';
       key: string;
@@ -15,8 +16,9 @@ export type TimelineSection = { key: string; title: string; data: TimelineItem[]
 
 /**
  * Merges expenses and settlements into one newest-first list. Repayment
- * expenses are folded into the settlement they belong to rather than shown
- * as their own cards.
+ * expenses are folded into the settlement they belong to; a repayment whose
+ * settlement was deleted (or never linked) still represents money that moved,
+ * so it surfaces as its own card rather than disappearing from the timeline.
  */
 export function buildTimeline(
   expenses: GroupExpense[] | undefined,
@@ -32,7 +34,10 @@ export function buildTimeline(
       repaymentsBySettlement.set(expense.settlement_id, bucket);
       continue;
     }
-    if (expense.type === 'repayment') continue;
+    if (expense.type === 'repayment') {
+      items.push({ kind: 'repayment', key: `repayment-${expense.id}`, date: expense.date, expense });
+      continue;
+    }
     items.push({ kind: 'expense', key: `expense-${expense.id}`, date: expense.date, expense });
   }
 

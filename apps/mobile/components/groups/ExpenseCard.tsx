@@ -12,6 +12,8 @@ export type ExpenseCardProps = {
   expense: GroupExpense;
   fallbackTitle: string;
   paidByLabel: string;
+  /** Marks a standalone repayment card (e.g. one whose settlement was undone). */
+  badgeLabel?: string;
   onPress: () => void;
   onLongPress?: () => void;
 };
@@ -20,6 +22,7 @@ export function ExpenseCard({
   expense,
   fallbackTitle,
   paidByLabel,
+  badgeLabel,
   onPress,
   onLongPress,
 }: ExpenseCardProps) {
@@ -54,6 +57,7 @@ export function ExpenseCard({
             {expense.description || fallbackTitle}
           </Text>
           <Text variant="footnote" color="textSecondary" numberOfLines={1}>
+            {badgeLabel ? `${badgeLabel} · ` : ''}
             {paidByLabel}
           </Text>
         </View>

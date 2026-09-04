@@ -74,6 +74,7 @@ export default function GroupScreen() {
   const [visibleCount, setVisibleCount] = useState(TIMELINE_PAGE_SIZE);
   const [expandedSettlements, setExpandedSettlements] = useState<ReadonlySet<string>>(new Set());
   const [scrollY] = useState(() => new Animated.Value(0));
+  const [fabScale] = useState(() => new Animated.Value(1));
 
   const group = details.data?.group;
   const members = useMemo(() => details.data?.members ?? [], [details.data?.members]);
@@ -275,6 +276,14 @@ export default function GroupScreen() {
     Share.share({ message: `${INVITE_BASE_URL}/${group.invite_code}` });
   }, [group]);
 
+  const collapseFab = useCallback(() => {
+    Animated.spring(fabScale, { toValue: 0, useNativeDriver: true, speed: 40 }).start();
+  }, [fabScale]);
+
+  const expandFab = useCallback(() => {
+    Animated.spring(fabScale, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
+  }, [fabScale]);
+
   const onScroll = useMemo(
     () =>
       Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
@@ -293,6 +302,9 @@ export default function GroupScreen() {
         headerTransparent: true,
         headerBlurEffect: collapsed ? 'systemChromeMaterial' : undefined,
         headerStyle: { backgroundColor: 'transparent' },
+        headerLeft: () => (
+          <HeaderButton testID="group-back" title="‹" onPress={() => router.back()} />
+        ),
         headerRight: () => (
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
             <HeaderButton
@@ -429,7 +441,11 @@ export default function GroupScreen() {
                         ? t('settle')
                         : null
                     }
-                    settling={granularSettle.isPending}
+                    settling={
+                      granularSettle.isPending &&
+                      granularSettle.variables?.debtorId === debt.from &&
+                      granularSettle.variables?.creditorId === debt.to
+                    }
                     onSettle={() => confirmSettle(debt)}
                   />
                 ))}
@@ -463,6 +479,14 @@ export default function GroupScreen() {
           onPress={() => router.push(`/groups/${id}/expense/${item.expense.id}`)}
           onLongPress={() => openExpenseMenu(item.expense)}
         />
+      ) : item.kind === 'repayment' ? (
+        <ExpenseCard
+          expense={item.expense}
+          fallbackTitle={t('repayment')}
+          badgeLabel={t('repayment')}
+          paidByLabel={t('paidBy', { name: item.expense.payer?.display_name ?? '' })}
+          onPress={() => {}}
+        />
       ) : (
         <SettlementCard
           item={item}
@@ -488,6 +512,11 @@ export default function GroupScreen() {
         keyExtractor={(item) => item.key}
         contentInsetAdjustmentBehavior="never"
         onScroll={onScroll}
+        onScrollBeginDrag={collapseFab}
+        // Not onScrollEndDrag: a released finger can still leave the list
+        // coasting on momentum, and the FAB re-expanding mid-coast is the
+        // exact "covers the card underneath" bug this collapse exists to fix.
+        onMomentumScrollEnd={expandFab}
         scrollEventThrottle={16}
         stickySectionHeadersEnabled
         ListHeaderComponent={listHeader}
@@ -535,6 +564,7 @@ export default function GroupScreen() {
         <Fab
           testID="add-expense-fab"
           accessibilityLabel={t('expense')}
+          collapseScale={fabScale}
           onPress={() => router.push(`/groups/${id}/expense/new`)}
         />
       )}

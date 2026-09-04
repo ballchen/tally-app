@@ -19,6 +19,10 @@ export function HeaderButton({
   destructive = false,
 }: HeaderButtonProps) {
   const theme = useTheme();
+  // Header buttons float over the group cover photo; the primary tint reads
+  // fine on light artwork but loses contrast against dark photos and the
+  // dark theme's background, so dark mode gets an opaque capsule instead.
+  const isDark = theme.scheme === 'dark';
 
   return (
     <Pressable
@@ -29,9 +33,15 @@ export function HeaderButton({
       disabled={disabled}
       onPress={onPress}
       hitSlop={12}
-      style={{ opacity: disabled ? 0.4 : 1, paddingHorizontal: theme.spacing.xs }}
+      style={{
+        opacity: disabled ? 0.4 : 1,
+        paddingHorizontal: isDark ? theme.spacing.md : theme.spacing.xs,
+        paddingVertical: isDark ? theme.spacing.xs : 0,
+        borderRadius: theme.radius.full,
+        backgroundColor: isDark ? theme.colors.surfaceElevated : 'transparent',
+      }}
     >
-      <Text variant="body" color={destructive ? 'negative' : 'primary'}>
+      <Text variant="body" color={destructive ? 'negative' : isDark ? 'text' : 'primary'}>
         {title}
       </Text>
     </Pressable>

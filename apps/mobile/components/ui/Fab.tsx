@@ -11,19 +11,34 @@ export type FabProps = {
   accessibilityLabel: string;
   testID?: string;
   icon?: string;
+  /** 1 = full size, shrinks toward 0 while the caller's list is actively scrolling, so the FAB stops covering card content mid-scroll. */
+  collapseScale?: Animated.Value;
 };
 
-const SIZE = 60;
+const SIZE = 56;
+const COLLAPSED_SCALE = 0.62;
 
-export function Fab({ onPress, accessibilityLabel, testID, icon = '+' }: FabProps) {
+export function Fab({ onPress, accessibilityLabel, testID, icon = '+', collapseScale }: FabProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const [scale] = useState(() => new Animated.Value(1));
+  const [pressScale] = useState(() => new Animated.Value(1));
 
   const animate = useCallback(
-    (to: number) => Animated.spring(scale, { toValue: to, useNativeDriver: true, speed: 40 }).start(),
-    [scale],
+    (to: number) =>
+      Animated.spring(pressScale, { toValue: to, useNativeDriver: true, speed: 40 }).start(),
+    [pressScale],
   );
+
+  const scale = collapseScale
+    ? Animated.multiply(
+        pressScale,
+        collapseScale.interpolate({
+          inputRange: [0, 1],
+          outputRange: [COLLAPSED_SCALE, 1],
+          extrapolate: 'clamp',
+        }),
+      )
+    : pressScale;
 
   return (
     <Animated.View

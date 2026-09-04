@@ -195,7 +195,13 @@ const SEEDS: Seed[] = [
     owner: 'a',
     members: ['a', 'b'],
     archived: true,
-    expenses: [{ description: 'Cable car', payer: 'a', amount: 800, splits: ['a', 'b'] }],
+    // Two expenses bracket a completed settlement so the timeline shows a
+    // real "Settled by" card while the outstanding balance still nets to 400.
+    expenses: [
+      { description: 'Cable car', payer: 'a', amount: 800, splits: ['a', 'b'] },
+      { description: 'Return cable car', payer: 'a', amount: 800, splits: ['a', 'b'] },
+    ],
+    settlement: { from: 'b', to: 'a', amount: 400 },
   },
 ];
 

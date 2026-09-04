@@ -29,11 +29,8 @@ export function DebtRow({
 }: DebtRowProps) {
   const theme = useTheme();
 
-  return (
-    <View
-      testID={`debt-${from.id}-${to.id}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}
-    >
+  const parties = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Avatar uri={from.avatarUrl} name={from.name} size={28} />
         <Text variant="footnote" color="textSecondary" style={{ marginHorizontal: 2 }}>
@@ -50,12 +47,29 @@ export function DebtRow({
           {owesLabel} {to.name}
         </Text>
       </View>
+    </View>
+  );
 
-      <Text variant="amountM" testID={`debt-amount-${from.id}-${to.id}`}>
-        {amount}
-      </Text>
+  // With no settle button the row fits on one line; adding the button
+  // squeezes names too narrow to read, so it drops to a second, right-aligned line.
+  if (!settleLabel) {
+    return (
+      <View testID={`debt-${from.id}-${to.id}`} style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {parties}
+        <Text variant="amountM" testID={`debt-amount-${from.id}-${to.id}`}>
+          {amount}
+        </Text>
+      </View>
+    );
+  }
 
-      {settleLabel ? (
+  return (
+    <View testID={`debt-${from.id}-${to.id}`} style={{ gap: theme.spacing.sm }}>
+      {parties}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: theme.spacing.md }}>
+        <Text variant="amountM" testID={`debt-amount-${from.id}-${to.id}`}>
+          {amount}
+        </Text>
         <Button
           testID={`settle-${from.id}-${to.id}`}
           variant="secondary"
@@ -63,7 +77,7 @@ export function DebtRow({
           loading={settling}
           onPress={onSettle}
         />
-      ) : null}
+      </View>
     </View>
   );
 }

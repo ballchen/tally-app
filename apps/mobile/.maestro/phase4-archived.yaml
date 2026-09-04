@@ -43,6 +43,9 @@ env:
 - assertVisible:
     id: 'group-archived-badge'
 - assertVisible: 'NT\$ 400'
+# The settlement card must actually be on screen before the trash icon's
+# absence proves anything — otherwise the next assertion passes vacuously.
+- assertVisible: '.*Settled by.*'
 - assertNotVisible:
     id: 'add-expense-fab'
 - assertNotVisible:
