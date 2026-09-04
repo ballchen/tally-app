@@ -1,0 +1,52 @@
+appId: com.ballchen.tally
+name: Phase 4 — archived group is read-only
+# Uses the archived fixture `phase4ar`, which still has an open pairing.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- tapOn: 'Archived'
+# The list has no deterministic order, so the card can be below the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Archived Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Archived Trip.*'
+
+# D8 — read-only banner, archived badge, and no write affordances anywhere.
+- extendedWaitUntil:
+    visible: 'This group is archived and read-only.'
+    timeout: 20000
+- assertVisible:
+    id: 'group-archived-badge'
+- assertVisible: 'NT\$ 400'
+- assertNotVisible:
+    id: 'add-expense-fab'
+- assertNotVisible:
+    id: 'settle-all'
+- assertNotVisible: 'Settle'
+- assertNotVisible: 'Undo'
+- takeScreenshot: d8-archived-read-only

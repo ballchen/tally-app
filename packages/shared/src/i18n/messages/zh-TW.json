@@ -90,7 +90,19 @@
     "youOwe": "你欠 {amount}",
     "confirmSettleTitle": "記錄付款？",
     "confirmSettleDesc": "這會記錄 {from} 已付給 {to} {amount}。之後可以在時間軸復原。",
-    "confirmSettle": "記錄付款"
+    "confirmSettle": "記錄付款",
+    "membersTitle": "成員",
+    "invite": "邀請",
+    "readOnlyBanner": "此群組已封存，僅供檢視。",
+    "expenseOptions": "支出選項",
+    "edit": "編輯",
+    "delete": "刪除",
+    "deleteExpenseTitle": "刪除支出？",
+    "deleteExpenseDesc": "「{description}」將從時間軸移除。",
+    "expenseDeleted": "已刪除支出",
+    "deleteExpenseFailed": "無法刪除支出",
+    "undo": "復原",
+    "retry": "重試"
   },
   "InviteMember": {
     "invite": "邀請",
@@ -175,7 +187,11 @@
     "regenerate": "重新產生",
     "deleteConfirmPrompt": "輸入「{name}」以確認",
     "confirmLeave": "確定離開",
-    "confirmRemove": "確定移除"
+    "confirmRemove": "確定移除",
+    "confirmHide": "確定隱藏",
+    "confirmUnhide": "確定取消隱藏",
+    "confirmArchive": "確定封存",
+    "confirmUnarchive": "確定取消封存"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "查看餘額並結清",

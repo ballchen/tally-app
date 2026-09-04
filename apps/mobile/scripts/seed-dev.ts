@@ -1,6 +1,7 @@
 /**
- * Seeds the Phase 3 fixtures (two test accounts and a set of groups covering every
- * list filter and membership case) into the remote Supabase project.
+ * Seeds the Phase 3 and Phase 4 fixtures (three test accounts and a set of groups
+ * covering every list filter, membership case, and group-detail state) into the
+ * remote Supabase project.
  *
  * Usage: SUPABASE_SERVICE_ROLE_KEY=... node --experimental-strip-types apps/mobile/scripts/seed-dev.ts
  *
@@ -59,6 +60,7 @@ const db: SupabaseClient = createClient(url, serviceRoleKey, {
 export const ACCOUNTS = {
   a: { email: 'phase2-test@example.com', password: 'Phase2Test!2026', displayName: 'Phase Three A' },
   b: { email: 'phase3-test-b@example.com', password: 'Phase3TestB!2026', displayName: 'Phase Three B' },
+  c: { email: 'phase4-test-c@example.com', password: 'Phase4TestC!2026', displayName: 'Phase Four C' },
 } as const;
 
 async function findUserByEmail(email: string): Promise<string | null> {
@@ -89,7 +91,22 @@ async function ensureAccount(account: { email: string; password: string; display
   return id;
 }
 
-type Who = 'a' | 'b';
+type Who = 'a' | 'b' | 'c';
+
+type SeedExpense = {
+  description: string;
+  payer: Who;
+  amount: number;
+  splits: Who[];
+  /** Defaults to the group's TWD base currency. */
+  currency?: string;
+  /** Rate into the base currency; the seeded owed_amount_base is locked with it. */
+  exchangeRate?: number;
+  date?: string;
+};
+
+/** A completed settlement, so the timeline has a settlement card to expand and undo. */
+type SeedSettlement = { from: Who; to: Who; amount: number };
 
 type Seed = {
   code: string;
@@ -98,8 +115,22 @@ type Seed = {
   members: Who[];
   archived?: boolean;
   hiddenFor?: Who[];
-  expense?: { payer: Who; amount: number; splits: Who[] };
+  expenses?: SeedExpense[];
+  settlement?: SeedSettlement;
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** 60 expenses three days apart, so the timeline spans six month sections. */
+function paginationExpenses(): SeedExpense[] {
+  return Array.from({ length: 60 }, (_, index) => ({
+    description: `Expense ${String(index + 1).padStart(2, '0')}`,
+    payer: index % 2 === 0 ? ('a' as Who) : ('b' as Who),
+    amount: 100 + index,
+    splits: ['a', 'b'] as Who[],
+    date: new Date(Date.now() - index * 3 * DAY_MS).toISOString(),
+  }));
+}
 
 const SEEDS: Seed[] = [
   {
@@ -107,7 +138,7 @@ const SEEDS: Seed[] = [
     name: 'Japan Trip',
     owner: 'a',
     members: ['a', 'b'],
-    expense: { payer: 'a', amount: 600, splits: ['a', 'b'] },
+    expenses: [{ description: 'Ramen dinner', payer: 'a', amount: 600, splits: ['a', 'b'] }],
   },
   { code: 'phase3br', name: 'Weekend Brunch', owner: 'b', members: ['a', 'b'] },
   { code: 'phase3sk', name: 'Old Ski Trip', owner: 'a', members: ['a', 'b'], archived: true },
@@ -116,12 +147,63 @@ const SEEDS: Seed[] = [
   { code: 'phase3rm', name: 'Remove Test', owner: 'a', members: ['a', 'b'] },
   { code: 'phase3jn', name: 'Join Test', owner: 'a', members: ['a'] },
   { code: 'phase3in', name: 'Invite Only', owner: 'b', members: ['b'] },
+
+  // Phase 4 fixtures.
+  {
+    code: 'phase4kt',
+    name: 'Kyoto Trip',
+    owner: 'a',
+    members: ['a', 'b', 'c'],
+    expenses: [
+      {
+        description: 'Sushi omakase',
+        payer: 'a',
+        amount: 12000,
+        currency: 'JPY',
+        exchangeRate: 0.21,
+        splits: ['a', 'b', 'c'],
+      },
+      {
+        description: 'Hotel booking',
+        payer: 'b',
+        amount: 1234.5,
+        currency: 'USD',
+        exchangeRate: 32,
+        splits: ['a', 'b', 'c'],
+      },
+      { description: 'Airport bus', payer: 'c', amount: 600, splits: ['a', 'b', 'c'] },
+    ],
+    settlement: { from: 'c', to: 'b', amount: 1000 },
+  },
+  {
+    code: 'phase4dt',
+    name: 'Debt Test',
+    owner: 'b',
+    members: ['a', 'b'],
+    expenses: [{ description: 'Concert tickets', payer: 'b', amount: 900, splits: ['a', 'b'] }],
+  },
+  {
+    code: 'phase4pg',
+    name: 'Sixty Expenses',
+    owner: 'a',
+    members: ['a', 'b'],
+    expenses: paginationExpenses(),
+  },
+  {
+    code: 'phase4ar',
+    name: 'Archived Trip',
+    owner: 'a',
+    members: ['a', 'b'],
+    archived: true,
+    expenses: [{ description: 'Cable car', payer: 'a', amount: 800, splits: ['a', 'b'] }],
+  },
 ];
 
 async function main() {
   const ids: Record<Who, string> = {
     a: await ensureAccount(ACCOUNTS.a),
     b: await ensureAccount(ACCOUNTS.b),
+    c: await ensureAccount(ACCOUNTS.c),
   };
 
   const codes = SEEDS.map((s) => s.code);
@@ -151,33 +233,70 @@ async function main() {
     );
     if (memberError) throw memberError;
 
-    if (seed.expense) {
-      const share = seed.expense.amount / seed.expense.splits.length;
+    for (const seedExpense of seed.expenses ?? []) {
+      const rate = seedExpense.exchangeRate ?? 1;
+      const share = seedExpense.amount / seedExpense.splits.length;
       const { data: expense, error: expenseError } = await db
         .from('expenses')
         .insert({
           group_id: group.id,
-          payer_id: ids[seed.expense.payer],
-          created_by: ids[seed.expense.payer],
-          description: 'Ramen dinner',
-          amount: seed.expense.amount,
-          currency: 'TWD',
-          exchange_rate: 1,
+          payer_id: ids[seedExpense.payer],
+          created_by: ids[seedExpense.payer],
+          description: seedExpense.description,
+          amount: seedExpense.amount,
+          currency: seedExpense.currency ?? 'TWD',
+          exchange_rate: rate,
           type: 'expense',
+          date: seedExpense.date ?? new Date().toISOString(),
         })
         .select('id')
         .single();
       if (expenseError) throw expenseError;
 
       const { error: splitError } = await db.from('expense_splits').insert(
-        seed.expense.splits.map((m) => ({
+        seedExpense.splits.map((m) => ({
           expense_id: expense.id,
           user_id: ids[m],
           owed_amount: share,
-          owed_amount_base: share,
+          owed_amount_base: share * rate,
         })),
       );
       if (splitError) throw splitError;
+    }
+
+    if (seed.settlement) {
+      const { from, to, amount } = seed.settlement;
+      const { data: settlement, error: settlementError } = await db
+        .from('settlements')
+        .insert({ group_id: group.id, created_by: ids[from] })
+        .select('id')
+        .single();
+      if (settlementError) throw settlementError;
+
+      const { data: repayment, error: repaymentError } = await db
+        .from('expenses')
+        .insert({
+          group_id: group.id,
+          payer_id: ids[from],
+          created_by: ids[from],
+          description: 'Settlement',
+          amount,
+          currency: 'TWD',
+          exchange_rate: 1,
+          type: 'repayment',
+          settlement_id: settlement.id,
+        })
+        .select('id')
+        .single();
+      if (repaymentError) throw repaymentError;
+
+      const { error: repaymentSplitError } = await db.from('expense_splits').insert({
+        expense_id: repayment.id,
+        user_id: ids[to],
+        owed_amount: amount,
+        owed_amount_base: amount,
+      });
+      if (repaymentSplitError) throw repaymentSplitError;
     }
 
     console.log(`seeded ${seed.name} (${seed.code}) -> ${group.id}`);

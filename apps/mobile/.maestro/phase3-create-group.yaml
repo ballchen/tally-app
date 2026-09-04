@@ -53,9 +53,12 @@ env:
     enabled: true
 - tapOn:
     id: 'create-group-submit'
-- extendedWaitUntil:
-    visible: '.*${GROUP}.*'
-    timeout: 20000
+# The list has no deterministic order, so the new card can be below the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*${GROUP}.*'
+    direction: DOWN
+    timeout: 30000
 - takeScreenshot: c4-created
 
 # C8 — deleting needs the exact group name typed in, which also cleans up this run.

@@ -83,8 +83,20 @@ env:
 - tapOn: 'Go Home'
 - assertVisible: 'Tally'
 
-# Leave the group joined above so the fixtures are unchanged.
-- tapOn: '.*Join Test.*'
+# Leave the group joined above so the fixtures are unchanged. The invite link is
+# a deterministic way back into it now that the list has many cards.
+- openLink: 'tally://join/phase3jn'
+- tapOn:
+    text: 'Open'
+    optional: true
+- tapOn:
+    text: 'Open'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-heading'
+      text: 'Join Test'
+    timeout: 20000
 - tapOn:
     id: 'open-group-settings'
 - scrollUntilVisible:

@@ -39,7 +39,8 @@ pnpm --filter @tally/mobile start              # Metro only, once the app is ins
 
 `apps/mobile/ios` is Continuous Native Generation output — `expo prebuild`
 recreates it, so it is not committed. UI checks live in `apps/mobile/.maestro`
-and run with `maestro test apps/mobile/.maestro/` against a booted Simulator.
+and run against a booted Simulator — see `apps/mobile/.maestro/README.md` for
+how to invoke Maestro and how to seed the fixtures the flows expect.
 
 ## Deploying
 

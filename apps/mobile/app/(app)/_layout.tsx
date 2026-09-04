@@ -32,6 +32,16 @@ export default function AppLayout() {
         name="groups/[id]/settings"
         options={{ ...sheetOptions, sheetAllowedDetents: [0.95] }}
       />
+      <Stack.Screen
+        name="groups/[id]/activity"
+        options={{ ...sheetOptions, sheetAllowedDetents: [0.5, 0.92] }}
+      />
+      <Stack.Screen
+        name="groups/[id]/settle"
+        options={{ ...sheetOptions, sheetAllowedDetents: [0.6, 0.92] }}
+      />
+      <Stack.Screen name="groups/[id]/expense/new" options={{ presentation: 'modal', title: '' }} />
+      <Stack.Screen name="groups/[id]/expense/[expenseId]" options={{ title: '' }} />
     </Stack>
   );
 }

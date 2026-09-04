@@ -1,0 +1,76 @@
+appId: com.ballchen.tally
+name: Phase 4 — settle all, expand the settlement card, then undo it
+# Settles every pairing in Kyoto Trip and undoes the settlement again, so the
+# fixture is left exactly as seed-dev.ts created it.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# The list has no deterministic order, so the card can be below the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Kyoto Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Kyoto Trip.*'
+- extendedWaitUntil:
+    visible: 'NT\$ 11,688'
+    timeout: 20000
+
+# D4 — the plan sheet lists every pairing before anything is written.
+- tapOn:
+    id: 'settle-all'
+- extendedWaitUntil:
+    visible: 'Settlement Plan'
+    timeout: 20000
+- assertVisible: 'NT\$ 12,608'
+- assertVisible: 'NT\$ 11,688'
+- takeScreenshot: d4-settle-plan
+- tapOn:
+    id: 'confirm-settle-all'
+
+- extendedWaitUntil:
+    visible: 'All settled up!'
+    timeout: 20000
+- assertVisible: '.*Settled by Phase Three A.*'
+- takeScreenshot: d4-settlement-card
+
+# The card expands into one row per repayment.
+- tapOn: '.*Settled by Phase Three A.*'
+- extendedWaitUntil:
+    visible: 'Phase Four C → Phase Three B'
+    timeout: 20000
+- assertVisible: 'Phase Three A → Phase Three B'
+- takeScreenshot: d4-expanded-repayments
+
+# D5 — the trash asks for confirmation and the pairings come back.
+- tapOn:
+    text: 'Undo'
+    index: 0
+- assertVisible: 'Undo Settlement?'
+- takeScreenshot: d5-undo-confirmation
+- tapOn: 'Confirm Undo'
+- extendedWaitUntil:
+    visible: 'NT\$ 11,688'
+    timeout: 20000
+- assertVisible: 'NT\$ 12,608'
+- takeScreenshot: d5-after-undo

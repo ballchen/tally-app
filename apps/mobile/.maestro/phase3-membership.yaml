@@ -31,6 +31,12 @@ env:
     timeout: 20000
 
 # C6 — a non-owner cannot edit the group, and gets a leave button instead.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+
 - tapOn: '.*Japan Trip.*'
 - tapOn:
     id: 'open-group-settings'
@@ -81,6 +87,12 @@ env:
 - extendedWaitUntil:
     visible: '.*Leave Test.*'
     timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Leave Test.*'
+    direction: DOWN
+    timeout: 30000
+
 - tapOn: '.*Leave Test.*'
 - tapOn:
     id: 'open-group-settings'
@@ -141,6 +153,12 @@ env:
 - extendedWaitUntil:
     visible: '.*Remove Test.*'
     timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Remove Test.*'
+    direction: DOWN
+    timeout: 30000
+
 - tapOn: '.*Remove Test.*'
 - tapOn:
     id: 'open-group-settings'

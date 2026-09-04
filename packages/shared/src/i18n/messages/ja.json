@@ -90,7 +90,19 @@
     "youOwe": "{amount} 支払い予定",
     "confirmSettleTitle": "支払いを記録しますか？",
     "confirmSettleDesc": "{from} が {to} に {amount} 支払ったと記録します。タイムラインから取り消せます。",
-    "confirmSettle": "支払いを記録"
+    "confirmSettle": "支払いを記録",
+    "membersTitle": "メンバー",
+    "invite": "招待",
+    "readOnlyBanner": "このグループはアーカイブ済みで、閲覧のみです。",
+    "expenseOptions": "支出の操作",
+    "edit": "編集",
+    "delete": "削除",
+    "deleteExpenseTitle": "支出を削除しますか？",
+    "deleteExpenseDesc": "「{description}」をタイムラインから削除します。",
+    "expenseDeleted": "支出を削除しました",
+    "deleteExpenseFailed": "支出を削除できませんでした",
+    "undo": "元に戻す",
+    "retry": "再試行"
   },
   "InviteMember": {
     "invite": "招待",
@@ -175,7 +187,11 @@
     "regenerate": "再生成",
     "deleteConfirmPrompt": "確認のため「{name}」と入力してください",
     "confirmLeave": "退出する",
-    "confirmRemove": "削除する"
+    "confirmRemove": "削除する",
+    "confirmHide": "非表示にする",
+    "confirmUnhide": "再表示する",
+    "confirmArchive": "アーカイブする",
+    "confirmUnarchive": "アーカイブを解除"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "残高表示 & 精算",

@@ -69,6 +69,8 @@ env:
       text: '.*Weekend Brunch.*'
     direction: LEFT
 - tapOn: 'Hide Group'
+- assertVisible: 'Hide this group from your list (personal)'
+- tapOn: 'Yes, hide'
 - extendedWaitUntil:
     notVisible: '.*Weekend Brunch.*'
     timeout: 20000
@@ -82,6 +84,8 @@ env:
       text: '.*Weekend Brunch.*'
     direction: LEFT
 - tapOn: 'Unhide Group'
+- assertVisible: 'Show this group in your active list'
+- tapOn: 'Yes, unhide'
 - extendedWaitUntil:
     notVisible: '.*Weekend Brunch.*'
     timeout: 20000

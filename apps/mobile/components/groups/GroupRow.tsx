@@ -1,7 +1,7 @@
 import type { GroupListItem } from '@tally/shared/queries/groups';
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 
 import { GroupCard } from './GroupCard';
@@ -13,6 +13,8 @@ export type SwipeAction = {
   key: string;
   label: string;
   color: ColorToken;
+  /** Swipe actions are one tap away from an irreversible-looking change, so each confirms. */
+  confirm: { message: string; confirmLabel: string; cancelLabel: string };
   onPress: () => void;
 };
 
@@ -40,7 +42,10 @@ export function GroupRow({ group, balance, actions, onPress }: GroupRowProps) {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             swipeable.current?.close();
-            action.onPress();
+            Alert.alert(group.name, action.confirm.message, [
+              { text: action.confirm.cancelLabel, style: 'cancel' },
+              { text: action.confirm.confirmLabel, onPress: action.onPress },
+            ]);
           }}
           style={{
             width: ACTION_WIDTH,

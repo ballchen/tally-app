@@ -139,6 +139,8 @@ pnpm --filter @tally/mobile ios        # expo prebuild output + build + install 
 pnpm --filter @tally/mobile start      # Metro bundler only
 pnpm --filter @tally/mobile test       # theme token tests
 maestro test apps/mobile/.maestro/     # UI flows against a booted Simulator
+                                       # (Maestro is machine-local, not a repo dep;
+                                       #  see apps/mobile/.maestro/README.md)
 
 # Supabase
 supabase db push     # Push migrations to remote

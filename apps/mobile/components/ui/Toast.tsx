@@ -18,6 +18,8 @@ export type ShowToastOptions = {
   title: string;
   message?: string;
   action?: { label: string; onPress: () => void };
+  /** Overrides the library default; an undo affordance needs to outlive it. */
+  durationMs?: number;
 };
 
 const ACCENT: Record<ToastType, ColorToken> = {
@@ -58,7 +60,16 @@ function TallyToast({
         ) : null}
       </View>
       {action ? (
-        <Pressable accessibilityRole="button" onPress={action.onPress} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={action.label}
+          testID="toast-action"
+          hitSlop={8}
+          onPress={() => {
+            ToastMessage.hide();
+            action.onPress();
+          }}
+        >
           <Text variant="headline" color="primary">
             {action.label}
           </Text>
@@ -74,7 +85,7 @@ export const toastConfig: ToastConfig = {
   info: (props) => <TallyToast {...props} type="info" />,
 };
 
-export function showToast({ type = 'info', title, message, action }: ShowToastOptions) {
+export function showToast({ type = 'info', title, message, action, durationMs }: ShowToastOptions) {
   Haptics.notificationAsync(
     type === 'error'
       ? Haptics.NotificationFeedbackType.Error
@@ -88,6 +99,7 @@ export function showToast({ type = 'info', title, message, action }: ShowToastOp
     text1: title,
     text2: message,
     props: { action } satisfies ToastPayload,
+    visibilityTime: durationMs,
   };
   ToastMessage.show(params);
 }

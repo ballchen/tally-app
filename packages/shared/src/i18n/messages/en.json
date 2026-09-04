@@ -90,7 +90,19 @@
     "youOwe": "You owe {amount}",
     "confirmSettleTitle": "Record payment?",
     "confirmSettleDesc": "This records that {from} paid {to} {amount}. You can undo it from the timeline.",
-    "confirmSettle": "Record payment"
+    "confirmSettle": "Record payment",
+    "membersTitle": "Members",
+    "invite": "Invite",
+    "readOnlyBanner": "This group is archived and read-only.",
+    "expenseOptions": "Expense options",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteExpenseTitle": "Delete expense?",
+    "deleteExpenseDesc": "“{description}” will be removed from the timeline.",
+    "expenseDeleted": "Expense deleted",
+    "deleteExpenseFailed": "Could not delete the expense",
+    "undo": "Undo",
+    "retry": "Retry"
   },
   "InviteMember": {
     "invite": "Invite",
@@ -175,7 +187,11 @@
     "regenerate": "Regenerate",
     "deleteConfirmPrompt": "Type {name} to confirm",
     "confirmLeave": "Yes, leave",
-    "confirmRemove": "Yes, remove"
+    "confirmRemove": "Yes, remove",
+    "confirmHide": "Yes, hide",
+    "confirmUnhide": "Yes, unhide",
+    "confirmArchive": "Yes, archive",
+    "confirmUnarchive": "Yes, unarchive"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "View Balances & Settle",

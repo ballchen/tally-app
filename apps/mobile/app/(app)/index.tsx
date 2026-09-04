@@ -82,6 +82,11 @@ export default function GroupsScreen() {
           key: hidden ? 'unhide' : 'hide',
           label: hidden ? tEdit('unhide') : tEdit('hide'),
           color: 'warning',
+          confirm: {
+            message: hidden ? tEdit('unhideDesc') : tEdit('hideDesc'),
+            confirmLabel: hidden ? tEdit('confirmUnhide') : tEdit('confirmHide'),
+            cancelLabel: tEdit('cancel'),
+          },
           onPress: () =>
             runAction(
               hideGroup.mutateAsync({ groupId: group.id, hide: !hidden }),
@@ -96,6 +101,11 @@ export default function GroupsScreen() {
           key: archived ? 'unarchive' : 'archive',
           label: archived ? tEdit('unarchive') : tEdit('archive'),
           color: 'settlement',
+          confirm: {
+            message: archived ? tEdit('unarchiveDesc') : tEdit('archiveDesc'),
+            confirmLabel: archived ? tEdit('confirmUnarchive') : tEdit('confirmArchive'),
+            cancelLabel: tEdit('cancel'),
+          },
           onPress: () =>
             runAction(
               archiveGroup.mutateAsync({ groupId: group.id, archive: !archived }),

@@ -28,6 +28,12 @@ env:
     timeout: 20000
 
 # Japan Trip has an expense, so the base currency is locked for the owner too.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+
 - tapOn: '.*Japan Trip.*'
 - tapOn:
     id: 'open-group-settings'
@@ -75,6 +81,12 @@ env:
     timeout: 20000
 
 # Leave Test has no expenses, so the currency is editable.
+- scrollUntilVisible:
+    element:
+      text: '.*Leave Test.*'
+    direction: DOWN
+    timeout: 30000
+
 - tapOn: '.*Leave Test.*'
 - tapOn:
     id: 'open-group-settings'
