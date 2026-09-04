@@ -73,7 +73,6 @@ export function useProfile() {
       // Add timestamp to prevent caching issues
       const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`
       
-      console.log('Upload successful:', urlWithCacheBust)
       return urlWithCacheBust
     }
   })

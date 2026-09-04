@@ -94,6 +94,7 @@ npm run dev          # Start dev server
 npm run build        # Production build
 npm run lint         # ESLint
 npx tsc --noEmit     # Type check
+npm test             # Vitest unit tests (src/**/*.test.ts)
 
 # Supabase
 supabase db push     # Push migrations to remote
@@ -123,9 +124,9 @@ Translation keys are organized by feature in `messages/*.json`:
 - Delete button triggers undo confirmation dialog
 
 ## Known Considerations
-1. **RLS on groups table is disabled** due to auth.uid() issues with anonymous key
+1. **RLS is enabled on all tables** (groups since migration 20260203000005). `group_members` SELECT only exposes your own row, so member lists must go through `get_group_members_batch`. Server routes that need cross-user rows use `createAdminClient()` (service role)
 2. **Exchange rates** are cached in `exchange_rates` table, fetched from external API
-3. **Realtime** is enabled for group_members, expenses, expense_splits
+3. **Realtime** is enabled for group_members, expenses, expense_splits, settlements (REPLICA IDENTITY FULL so DELETE payloads carry group_id)
 4. **Group archive/hide** are separate concepts (archive = read-only for all, hide = personal)
 
 ## Git Conventions

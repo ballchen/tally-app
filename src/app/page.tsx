@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 
 export default function Home() {
-  const { user, isLoading, session } = useAuthStore()
+  const { isLoading, session } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {

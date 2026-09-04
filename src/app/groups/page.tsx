@@ -200,7 +200,7 @@ export default function GroupsPage() {
               const isHidden = group.group_members?.some(
                 (m: { hidden_at: string | null }) => m.hidden_at,
               );
-              const allMembers = (group as { all_members?: any[] }).all_members || [];
+              const allMembers = group.all_members || [];
               const memberCount = allMembers.length;
               const displayMembers = allMembers.slice(0, 3); // Show max 3 avatars
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { useQuery } from "@tanstack/react-query"
+import { mapMemberRow, type GroupMemberRow } from "@/lib/members"
 
 export function useGroupDetails(groupId: string) {
   const supabase = createClient()
@@ -28,20 +29,7 @@ export function useGroupDetails(groupId: string) {
 
       if (membersError) throw membersError
 
-      // Transform RPC response to match expected format
-      const members = (membersData as any[])?.map((m: any) => ({
-        group_id: m.group_id,
-        user_id: m.user_id,
-        group_nickname: m.group_nickname,
-        group_avatar_url: m.group_avatar_url,
-        joined_at: m.joined_at,
-        hidden_at: m.hidden_at,
-        profiles: {
-          id: m.profile_id,
-          display_name: m.profile_display_name,
-          avatar_url: m.profile_avatar_url
-        }
-      })) || []
+      const members = ((membersData ?? []) as GroupMemberRow[]).map(mapMemberRow)
 
       // 3. Fetch Expenses (exclude soft-deleted)
       const { data: expenses, error: expensesError } = await supabase

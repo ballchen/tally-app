@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useTranslations } from 'next-intl'
 
 /**
  * Hook to subscribe to realtime changes for a specific group.
@@ -13,6 +14,7 @@ export function useRealtimeSync(groupId: string) {
   const queryClient = useQueryClient()
   const supabase = createClient()
   const { user } = useAuthStore()
+  const t = useTranslations('Realtime')
 
   useEffect(() => {
     if (!groupId) return
@@ -31,12 +33,11 @@ export function useRealtimeSync(groupId: string) {
 
         // Show toast for INSERT events from other users
         if (payload.eventType === 'INSERT' && payload.new.user_id !== user?.id) {
-          toast.info('A new member joined the group!')
+          toast.info(t('memberJoined'))
         }
       })
       .subscribe()
 
-    // Subscribe to expenses changes
     const expensesChannel = supabase
       .channel(`expenses-${groupId}`)
       .on('postgres_changes', {
@@ -47,18 +48,36 @@ export function useRealtimeSync(groupId: string) {
       }, (payload) => {
         queryClient.invalidateQueries({ queryKey: ['group', groupId] })
 
-        // Show toast for changes from other users
-        const isOwnChange = (payload.new as any)?.created_by === user?.id ||
-          (payload.new as any)?.payer_id === user?.id
+        const row = payload.new as { created_by?: string; payer_id?: string; type?: string; deleted_at?: string | null } | undefined
+        const isOwnChange = row?.created_by === user?.id || row?.payer_id === user?.id
+        // Repayments are announced by the settlements channel.
+        if (isOwnChange || row?.type === 'repayment') return
 
-        if (!isOwnChange) {
-          if (payload.eventType === 'INSERT') {
-            toast.info('New expense added!')
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('An expense was updated!')
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('An expense was deleted!')
-          }
+        if (payload.eventType === 'INSERT') {
+          toast.info(t('expenseAdded'))
+        } else if (payload.eventType === 'UPDATE') {
+          toast.info(row?.deleted_at ? t('expenseDeleted') : t('expenseUpdated'))
+        }
+      })
+      .subscribe()
+
+    const settlementsChannel = supabase
+      .channel(`settlements-${groupId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'settlements',
+        filter: `group_id=eq.${groupId}`
+      }, (payload) => {
+        queryClient.invalidateQueries({ queryKey: ['group', groupId] })
+
+        const row = (payload.eventType === 'DELETE' ? payload.old : payload.new) as { created_by?: string } | undefined
+        if (row?.created_by === user?.id) return
+
+        if (payload.eventType === 'INSERT') {
+          toast.info(t('settlementRecorded'))
+        } else if (payload.eventType === 'DELETE') {
+          toast.info(t('settlementUndone'))
         }
       })
       .subscribe()
@@ -67,8 +86,9 @@ export function useRealtimeSync(groupId: string) {
     return () => {
       supabase.removeChannel(membersChannel)
       supabase.removeChannel(expensesChannel)
+      supabase.removeChannel(settlementsChannel)
     }
-  }, [groupId, queryClient, supabase, user?.id])
+  }, [groupId, queryClient, supabase, user?.id, t])
 }
 
 /**
@@ -79,6 +99,7 @@ export function useRealtimeGroups() {
   const queryClient = useQueryClient()
   const supabase = createClient()
   const { user } = useAuthStore()
+  const t = useTranslations('Realtime')
 
   useEffect(() => {
     if (!user?.id) return
@@ -94,12 +115,12 @@ export function useRealtimeGroups() {
       }, () => {
         // Invalidate groups list to refetch
         queryClient.invalidateQueries({ queryKey: ['groups'] })
-        toast.success('You joined a new group!')
+        toast.success(t('joinedGroup'))
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, queryClient, supabase])
+  }, [user?.id, queryClient, supabase, t])
 }

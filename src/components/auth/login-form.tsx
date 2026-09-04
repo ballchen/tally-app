@@ -72,9 +72,8 @@ export function LoginForm() {
     const saved = localStorage.getItem(REMEMBER_ME_KEY);
     if (saved) {
       try {
-        const { email, password } = JSON.parse(saved);
+        const { email } = JSON.parse(saved);
         loginForm.setValue("email", email || "");
-        loginForm.setValue("password", password || "");
         setRememberMe(true);
       } catch {
         localStorage.removeItem(REMEMBER_ME_KEY);
@@ -109,7 +108,7 @@ export function LoginForm() {
       if (rememberMe) {
         localStorage.setItem(
           REMEMBER_ME_KEY,
-          JSON.stringify({ email: values.email, password: values.password })
+          JSON.stringify({ email: values.email })
         );
       } else {
         localStorage.removeItem(REMEMBER_ME_KEY);

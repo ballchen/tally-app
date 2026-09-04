@@ -82,7 +82,14 @@
     "expense": "Expense",
     "activity": "Activity",
     "noExpensesYet": "No expenses yet",
-    "total": "total"
+    "total": "total",
+    "yourBalance": "Your balance",
+    "youAreSettled": "All settled",
+    "youAreOwed": "You are owed {amount}",
+    "youOwe": "You owe {amount}",
+    "confirmSettleTitle": "Record payment?",
+    "confirmSettleDesc": "This records that {from} paid {to} {amount}. You can undo it from the timeline.",
+    "confirmSettle": "Record payment"
   },
   "InviteMember": {
     "invite": "Invite",
@@ -144,7 +151,8 @@
     "validation": {
       "nameRequired": "Group name is required",
       "currencyLength": "Currency code must be 3 characters"
-    }
+    },
+    "currencyLocked": "Base currency is locked because this group already has expenses"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "View Balances & Settle",
@@ -153,7 +161,15 @@
     "pays": "pays",
     "marksAsSettled": "Marks all expenses as settled",
     "settling": "Settling...",
-    "settleAll": "Settle All"
+    "settleAll": "Settle All",
+    "allSettled": "All balances settled!",
+    "settlementFailed": "Settlement failed",
+    "settlementRecorded": "Settlement recorded!",
+    "settlementUndone": "Settlement undone",
+    "undoFailed": "Failed to undo settlement",
+    "pushTitle": "Payment Received",
+    "pushBody": "{name} settled {amount} with you",
+    "someone": "Someone"
   },
   "Calculator": {
     "ok": "OK"
@@ -178,7 +194,9 @@
     "failedToUpdate": "Failed to update expense",
     "failedToAdd": "Failed to add expense",
     "pushTitle": "New Expense Added",
-    "pushBody": "{name} added: {description} ({amount})"
+    "pushBody": "{name} added: {description} ({amount})",
+    "ratesUnavailable": "Exchange rates unavailable",
+    "ratesUnavailableDesc": "Can't convert this currency right now. Try again later or use the group currency."
   },
   "ActivityLog": {
     "title": "Activity Log",
@@ -226,5 +244,57 @@
     "sessionErrorInvalid": "Invalid reset link. Please request a new password reset.",
     "errorToastTitle": "Failed to reset password",
     "successToastTitle": "Password reset successfully!"
+  },
+  "SplitDetails": {
+    "totalBill": "Total Bill",
+    "perfectlyAllocated": "Perfectly allocated",
+    "totalHundred": "Total 100%",
+    "remaining": "Remaining: {value}",
+    "equal": "Equal",
+    "exact": "Exact",
+    "percent": "Percent",
+    "descriptionPlaceholder": "Description (e.g. Sushi)",
+    "whoPaid": "Who paid?",
+    "allocations": "Allocations",
+    "you": "You",
+    "member": "Member"
+  },
+  "JoinGroup": {
+    "title": "Join Group",
+    "invited": "You've been invited to join",
+    "baseCurrency": "Base Currency",
+    "join": "Join Group",
+    "oops": "Oops!",
+    "goHome": "Go Home",
+    "notFound": "Group not found or invalid link.",
+    "alreadyMember": "You're already a member!",
+    "joinFailed": "Failed to join group",
+    "joined": "Joined {name}!",
+    "pushTitle": "New Member Joined",
+    "pushBody": "{name} joined {group}"
+  },
+  "ForgotPassword": {
+    "title": "Forgot Password",
+    "description": "Enter your email to receive a reset link",
+    "checkEmailTitle": "Check Your Email",
+    "checkEmailDescription": "We've sent you a password reset link",
+    "email": "Email",
+    "invalidEmail": "Please enter a valid email address",
+    "sendLink": "Send Reset Link",
+    "sendAnother": "Send another email",
+    "backToLogin": "Back to Login",
+    "sendFailed": "Failed to send reset email",
+    "sentTitle": "Reset email sent!",
+    "sentDescription": "Please check your inbox for the password reset link",
+    "sentBody": "If an account exists for <email></email>, you will receive an email with instructions to reset your password."
+  },
+  "Realtime": {
+    "memberJoined": "A new member joined the group!",
+    "joinedGroup": "You joined a new group!",
+    "expenseAdded": "New expense added!",
+    "expenseUpdated": "An expense was updated!",
+    "expenseDeleted": "An expense was deleted!",
+    "settlementRecorded": "A settlement was recorded",
+    "settlementUndone": "A settlement was undone"
   }
 }

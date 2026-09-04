@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 
 import { useGroupDetails } from "@/hooks/use-group-details";
@@ -31,7 +31,8 @@ import { useUndoSettlement } from "@/hooks/use-undo-settlement";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { useProfile } from "@/hooks/use-profile";
 import { toast } from "sonner";
-import { getCurrencySymbol } from "@/lib/currency";
+import { formatAmount } from "@/lib/currency";
+import { useDateLocale } from "@/hooks/use-date-locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -73,6 +74,13 @@ export default function GroupDetailsPage() {
   const { data, isLoading, error, refetch } = useGroupDetails(groupId);
   const queryClient = useQueryClient();
 
+  const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
+    onRefresh: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      await refetch();
+    },
+  });
+
   // Handle scroll for sticky header effects
   useEffect(() => {
     const handleScroll = () => {
@@ -86,24 +94,69 @@ export default function GroupDetailsPage() {
       container.addEventListener("scroll", handleScroll, { passive: true });
       return () => container.removeEventListener("scroll", handleScroll);
     }
-  }, []);
+  }, [scrollContainerRef]);
 
-  const { debts, isLoading: isBalancesLoading } = useBalances(
+  const { balances, debts, isLoading: isBalancesLoading } = useBalances(
     data?.expenses || [],
     data?.members || [],
     data?.group?.base_currency || "TWD"
   );
   const { mutate: settle, isPending: isSettling } = useGranularSettle();
   const { mutate: undoSettlement, isPending: isUndoing } = useUndoSettlement();
+  const [pendingSettle, setPendingSettle] = useState<{ from: string; to: string; amount: number } | null>(null);
+  const dateLocale = useDateLocale();
 
-  // Pull-to-refresh
-  const { pullDistance, isRefreshing, containerRef: scrollContainerRef } = usePullToRefresh({
-    onRefresh: async () => {
-      // Invalidate and refetch group details
-      await queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      await refetch();
-    },
-  });
+  // Build timeline: merge expenses and settlements, sorted by date
+  // Group repayment expenses with their settlement
+  type Expense = NonNullable<typeof data>["expenses"][number];
+  type Settlement = NonNullable<typeof data>["settlements"][number];
+  type TimelineItem =
+    | { type: 'expense'; data: Expense; date: Date }
+    | { type: 'settlement'; data: Settlement; repayments: Expense[]; totalAmount: number; date: Date };
+
+  const timelineItems: TimelineItem[] = useMemo(() => {
+    const items: TimelineItem[] = [];
+    const expenses = data?.expenses;
+
+    // Group repayments by settlement_id
+    const repaymentsBySettlement = new Map<string, Expense[]>();
+    expenses?.forEach(expense => {
+      if (expense.type === 'repayment' && expense.settlement_id) {
+        const existing = repaymentsBySettlement.get(expense.settlement_id) || [];
+        existing.push(expense);
+        repaymentsBySettlement.set(expense.settlement_id, existing);
+      }
+    });
+
+    // Add non-repayment expenses to timeline
+    expenses?.forEach(expense => {
+      if (expense.type !== 'repayment') {
+        items.push({
+          type: 'expense',
+          data: expense,
+          date: new Date(expense.date)
+        });
+      }
+    });
+
+    // Add settlements with their repayments
+    data?.settlements?.forEach(settlement => {
+      const repayments = repaymentsBySettlement.get(settlement.id) || [];
+      const totalAmount = repayments.reduce((sum, r) => sum + Number(r.amount), 0);
+      items.push({
+        type: 'settlement',
+        data: settlement,
+        repayments,
+        totalAmount,
+        date: new Date(settlement.created_at)
+      });
+    });
+
+    // Sort by date descending (newest first)
+    items.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return items;
+  }, [data?.expenses, data?.settlements]);
+
 
   if (isLoading) {
     return (
@@ -128,51 +181,9 @@ export default function GroupDetailsPage() {
   const isArchived = !!group.archived_at;
   const currentMember = members?.find((m: { user_id: string }) => m.user_id === currentUserId);
   const isHidden = !!currentMember?.hidden_at;
-
-  // Build timeline: merge expenses and settlements, sorted by date
-  // Group repayment expenses with their settlement
-  type TimelineItem =
-    | { type: 'expense'; data: typeof expenses[0]; date: Date }
-    | { type: 'settlement'; data: typeof data.settlements[0]; repayments: typeof expenses; totalAmount: number; date: Date };
-
-  const timelineItems: TimelineItem[] = [];
-
-  // Group repayments by settlement_id
-  const repaymentsBySettlement = new Map<string, typeof expenses>();
-  expenses?.forEach(expense => {
-    if (expense.type === 'repayment' && expense.settlement_id) {
-      const existing = repaymentsBySettlement.get(expense.settlement_id) || [];
-      existing.push(expense);
-      repaymentsBySettlement.set(expense.settlement_id, existing);
-    }
-  });
-
-  // Add non-repayment expenses to timeline
-  expenses?.forEach(expense => {
-    if (expense.type !== 'repayment') {
-      timelineItems.push({
-        type: 'expense',
-        data: expense,
-        date: new Date(expense.date)
-      });
-    }
-  });
-
-  // Add settlements with their repayments
-  data?.settlements?.forEach(settlement => {
-    const repayments = repaymentsBySettlement.get(settlement.id) || [];
-    const totalAmount = repayments.reduce((sum, r) => sum + Number(r.amount), 0);
-    timelineItems.push({
-      type: 'settlement',
-      data: settlement,
-      repayments,
-      totalAmount,
-      date: new Date(settlement.created_at)
-    });
-  });
-
-  // Sort by date descending (newest first)
-  timelineItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+  const myBalance = balances[currentUserId] ?? 0;
+  const memberName = (userId: string) =>
+    members?.find((m: { user_id: string }) => m.user_id === userId)?.profiles?.display_name ?? "";
 
   // Toggle settlement expansion
   const toggleSettlement = (settlementId: string) => {
@@ -230,6 +241,7 @@ export default function GroupDetailsPage() {
               group={group}
               currentUserId={currentUserId}
               isHidden={isHidden}
+              hasExpenses={expenses.some((e) => e.type !== "repayment")}
             />
           </div>
         </div>
@@ -295,6 +307,7 @@ export default function GroupDetailsPage() {
               group={group}
               currentUserId={currentUserId}
               isHidden={isHidden}
+              hasExpenses={expenses.some((e) => e.type !== "repayment")}
             />
           </div>
 
@@ -357,6 +370,22 @@ export default function GroupDetailsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {currentUserId && (
+                  <div className="rounded-lg bg-background/60 px-3 py-2 text-sm flex items-center justify-between">
+                    <span className="text-muted-foreground">{t("yourBalance")}</span>
+                    {Math.abs(myBalance) < 0.01 ? (
+                      <span className="font-semibold">{t("youAreSettled")}</span>
+                    ) : myBalance > 0 ? (
+                      <span className="font-semibold text-green-600 dark:text-green-400">
+                        {t("youAreOwed", { amount: formatAmount(myBalance, group.base_currency) })}
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-destructive">
+                        {t("youOwe", { amount: formatAmount(-myBalance, group.base_currency) })}
+                      </span>
+                    )}
+                  </div>
+                )}
                 {debts.map((debt, i) => {
                   // Helper to find member profile safely
                   const fromUser = members?.find(
@@ -396,7 +425,7 @@ export default function GroupDetailsPage() {
                       <div className="flex items-center gap-3">
                         <div className="font-bold text-right">
                           <div className="text-sm">
-                            {getCurrencySymbol(group.base_currency)} {debt.amount.toFixed(0)}
+                            {formatAmount(debt.amount, group.base_currency)}
                           </div>
                         </div>
                         <Button
@@ -404,17 +433,7 @@ export default function GroupDetailsPage() {
                           variant="secondary"
                           className="h-8 text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
                           disabled={isSettling || isArchived}
-                          onClick={() =>
-                            settle({
-                              groupId,
-                              debtorId: debt.from,
-                              creditorId: debt.to,
-                              amount: debt.amount,
-                              currency: group.base_currency,
-                              debtorName: fromUser?.display_name ?? undefined,
-                              creditorName: toUser?.display_name ?? undefined,
-                            })
-                          }
+                          onClick={() => setPendingSettle(debt)}
                         >
                           {t("settle")}
                         </Button>
@@ -491,13 +510,10 @@ export default function GroupDetailsPage() {
                                   {settlement.creator?.display_name || "Unknown"}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  {format(
-                                    new Date(settlement.created_at),
-                                    "MMM d, yyyy"
-                                  )}
+                                  {format(new Date(settlement.created_at), "PP", { locale: dateLocale })}
                                   {totalAmount > 0 && (
                                     <span className="ml-2">
-                                      • {getCurrencySymbol(group.base_currency)} {totalAmount.toFixed(0)} {t("total")}
+                                      • {formatAmount(totalAmount, group.base_currency)} {t("total")}
                                     </span>
                                   )}
                                 </div>
@@ -568,7 +584,7 @@ export default function GroupDetailsPage() {
                                     {repayment.payer?.display_name || ""} → {repayment.expense_splits?.[0]?.profiles?.display_name || ""}
                                   </span>
                                   <span className="font-medium">
-                                    {getCurrencySymbol(repayment.currency)} {repayment.amount}
+                                    {formatAmount(Number(repayment.amount), repayment.currency)}
                                   </span>
                                 </div>
                               ))}
@@ -605,7 +621,7 @@ export default function GroupDetailsPage() {
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="text-center min-w-[3rem] shrink-0">
                             <div className="text-xs text-muted-foreground">
-                              {format(new Date(expense.date), "MMM")}
+                              {format(new Date(expense.date), "MMM", { locale: dateLocale })}
                             </div>
                             <div className="font-bold text-lg">
                               {format(new Date(expense.date), "dd")}
@@ -624,7 +640,7 @@ export default function GroupDetailsPage() {
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <div className="font-bold whitespace-nowrap">
-                            {getCurrencySymbol(expense.currency)} {expense.amount}
+                            {formatAmount(Number(expense.amount), expense.currency)}
                           </div>
                           {expense.type !== "repayment" && (
                             <div className="flex items-center -space-x-1.5 pt-1">
@@ -698,6 +714,42 @@ export default function GroupDetailsPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={!!pendingSettle} onOpenChange={(open) => !open && setPendingSettle(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("confirmSettleTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingSettle &&
+                t("confirmSettleDesc", {
+                  from: memberName(pendingSettle.from),
+                  to: memberName(pendingSettle.to),
+                  amount: formatAmount(pendingSettle.amount, group.base_currency),
+                })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingSettle) return;
+                settle({
+                  groupId,
+                  debtorId: pendingSettle.from,
+                  creditorId: pendingSettle.to,
+                  amount: pendingSettle.amount,
+                  currency: group.base_currency,
+                  debtorName: memberName(pendingSettle.from) || undefined,
+                  creditorName: memberName(pendingSettle.to) || undefined,
+                });
+                setPendingSettle(null);
+              }}
+            >
+              {t("confirmSettle")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Floating Add Button & Drawers */}
       {members && !isArchived && (

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client"
 import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 type SettleUpParams = {
   groupId: string
@@ -16,6 +17,7 @@ type SettleUpParams = {
 export function useSettleUp() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const t = useTranslations("SettleUp")
 
   return useMutation({
     mutationFn: async ({ groupId, repayments }: SettleUpParams) => {
@@ -27,9 +29,8 @@ export function useSettleUp() {
       if (error) throw error
     },
     onSuccess: (_, { groupId, repaymentNames }) => {
-      toast.success("All balances settled!")
+      toast.success(t("allSettled"))
       queryClient.invalidateQueries({ queryKey: ["group", groupId] })
-      queryClient.invalidateQueries({ queryKey: ["groups"] })
       logActivity(supabase, {
         groupId,
         action: "settlement.create",
@@ -41,7 +42,7 @@ export function useSettleUp() {
       })
     },
     onError: (error: Error) => {
-      toast.error("Settlement failed", {
+      toast.error(t("settlementFailed"), {
         description: error.message
       })
     }

@@ -3,6 +3,7 @@ import { safeGetUser } from "@/lib/supabase/auth-helpers"
 import { logActivity } from "@/lib/activity-log"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { nanoid } from "nanoid"
+import { mapMemberRow, type GroupMemberRow } from "@/lib/members"
 
 export type GroupFilter = "active" | "archived" | "hidden" | "all"
 
@@ -46,40 +47,27 @@ export function useGroups(filter: GroupFilter = "active") {
 
       if (membersError) throw membersError
 
-      // Transform RPC response to match expected format
-      const allMembers = (membersData as any[])?.map((m: any) => ({
-        group_id: m.group_id,
-        user_id: m.user_id,
-        group_nickname: m.group_nickname,
-        group_avatar_url: m.group_avatar_url,
-        joined_at: m.joined_at,
-        hidden_at: m.hidden_at,
-        profiles: {
-          id: m.profile_id,
-          display_name: m.profile_display_name,
-          avatar_url: m.profile_avatar_url
-        }
-      })) || []
+      const allMembers = ((membersData ?? []) as GroupMemberRow[]).map(mapMemberRow)
 
       // Filter to only groups where user is a member
       const userGroupIds = new Set(
         allMembers
-          .filter((m: any) => m.user_id === user.id)
-          .map((m: any) => m.group_id)
+          .filter(m => m.user_id === user.id)
+          .map(m => m.group_id)
       )
 
       const userGroups = allGroups.filter(g => userGroupIds.has(g.id))
 
       // Attach members and member info to each group
       const enrichedData = userGroups.map(group => {
-        const groupMembers = allMembers.filter((m: any) => m.group_id === group.id)
+        const groupMembers = allMembers.filter(m => m.group_id === group.id)
 
         return {
           ...group,
           all_members: groupMembers,
           group_members: [{
             user_id: user.id,
-            hidden_at: groupMembers.find((m: any) => m.user_id === user.id)?.hidden_at
+            hidden_at: groupMembers.find(m => m.user_id === user.id)?.hidden_at ?? null
           }]
         }
       })
@@ -87,11 +75,11 @@ export function useGroups(filter: GroupFilter = "active") {
       // Apply hidden filter in JS
       if (filter === "active") {
         return enrichedData.filter(g =>
-          !g.group_members.some((m: any) => m.user_id === user.id && m.hidden_at)
+          !g.group_members.some((m: { user_id: string; hidden_at: string | null }) => m.user_id === user.id && m.hidden_at)
         )
       } else if (filter === "hidden") {
         return enrichedData.filter(g =>
-          g.group_members.some((m: any) => m.user_id === user.id && m.hidden_at)
+          g.group_members.some((m: { user_id: string; hidden_at: string | null }) => m.user_id === user.id && m.hidden_at)
         )
       }
 
@@ -228,7 +216,6 @@ export function useUploadGroupCover() {
       // Add timestamp to prevent caching issues
       const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`
       
-      console.log('Group cover upload successful:', urlWithCacheBust)
       return urlWithCacheBust
     }
   })

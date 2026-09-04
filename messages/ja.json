@@ -82,7 +82,14 @@
     "expense": "経費",
     "activity": "アクティビティ",
     "noExpensesYet": "経費はまだありません",
-    "total": "合計"
+    "total": "合計",
+    "yourBalance": "あなたの残高",
+    "youAreSettled": "精算済み",
+    "youAreOwed": "{amount} 受け取り予定",
+    "youOwe": "{amount} 支払い予定",
+    "confirmSettleTitle": "支払いを記録しますか？",
+    "confirmSettleDesc": "{from} が {to} に {amount} 支払ったと記録します。タイムラインから取り消せます。",
+    "confirmSettle": "支払いを記録"
   },
   "InviteMember": {
     "invite": "招待",
@@ -144,7 +151,8 @@
     "validation": {
       "nameRequired": "グループ名は必須です",
       "currencyLength": "通貨コードは3文字である必要があります"
-    }
+    },
+    "currencyLocked": "経費が登録済みのため基準通貨はロックされています"
   },
   "SettleUp": {
     "viewBalancesAndSettle": "残高表示 & 精算",
@@ -153,7 +161,15 @@
     "pays": "支払い",
     "marksAsSettled": "すべての経費を精算済みとしてマークします",
     "settling": "精算中...",
-    "settleAll": "すべて精算"
+    "settleAll": "すべて精算",
+    "allSettled": "すべての残高を精算しました！",
+    "settlementFailed": "精算に失敗しました",
+    "settlementRecorded": "精算を記録しました！",
+    "settlementUndone": "精算を取り消しました",
+    "undoFailed": "精算の取り消しに失敗しました",
+    "pushTitle": "支払いを受け取りました",
+    "pushBody": "{name} があなたに {amount} 支払いました",
+    "someone": "誰か"
   },
   "Calculator": {
     "ok": "OK"
@@ -178,7 +194,9 @@
     "failedToUpdate": "経費の更新に失敗しました",
     "failedToAdd": "経費の追加に失敗しました",
     "pushTitle": "新しい経費が追加されました",
-    "pushBody": "{name} が追加: {description} ({amount})"
+    "pushBody": "{name} が追加: {description} ({amount})",
+    "ratesUnavailable": "為替レートを取得できません",
+    "ratesUnavailableDesc": "現在この通貨を換算できません。後でもう一度試すか、グループ通貨を使用してください。"
   },
   "ActivityLog": {
     "title": "アクティビティログ",
@@ -226,5 +244,57 @@
     "sessionErrorInvalid": "無効なリセットリンクです。パスワードのリセットを再度リクエストしてください。",
     "errorToastTitle": "パスワードのリセットに失敗しました",
     "successToastTitle": "パスワードをリセットしました！"
+  },
+  "SplitDetails": {
+    "totalBill": "合計金額",
+    "perfectlyAllocated": "配分完了",
+    "totalHundred": "合計 100%",
+    "remaining": "残り：{value}",
+    "equal": "均等",
+    "exact": "金額",
+    "percent": "割合",
+    "descriptionPlaceholder": "内容（例：寿司）",
+    "whoPaid": "支払った人",
+    "allocations": "配分",
+    "you": "あなた",
+    "member": "メンバー"
+  },
+  "JoinGroup": {
+    "title": "グループに参加",
+    "invited": "グループに招待されています",
+    "baseCurrency": "基準通貨",
+    "join": "参加する",
+    "oops": "エラー",
+    "goHome": "ホームへ",
+    "notFound": "グループが見つからないか、リンクが無効です。",
+    "alreadyMember": "すでにメンバーです！",
+    "joinFailed": "参加に失敗しました",
+    "joined": "{name} に参加しました！",
+    "pushTitle": "新しいメンバーが参加",
+    "pushBody": "{name} が {group} に参加しました"
+  },
+  "ForgotPassword": {
+    "title": "パスワードをお忘れですか",
+    "description": "メールアドレスを入力するとリセットリンクを送信します",
+    "checkEmailTitle": "メールを確認してください",
+    "checkEmailDescription": "パスワードリセットリンクを送信しました",
+    "email": "メール",
+    "invalidEmail": "有効なメールアドレスを入力してください",
+    "sendLink": "リセットリンクを送信",
+    "sendAnother": "もう一度送信",
+    "backToLogin": "ログインに戻る",
+    "sendFailed": "リセットメールの送信に失敗しました",
+    "sentTitle": "リセットメールを送信しました！",
+    "sentDescription": "受信箱でパスワードリセットリンクを確認してください",
+    "sentBody": "<email></email> のアカウントが存在する場合、パスワード再設定の案内メールが届きます。"
+  },
+  "Realtime": {
+    "memberJoined": "新しいメンバーが参加しました！",
+    "joinedGroup": "新しいグループに参加しました！",
+    "expenseAdded": "経費が追加されました！",
+    "expenseUpdated": "経費が更新されました！",
+    "expenseDeleted": "経費が削除されました！",
+    "settlementRecorded": "精算が記録されました",
+    "settlementUndone": "精算が取り消されました"
   }
 }

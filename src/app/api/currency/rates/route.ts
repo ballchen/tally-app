@@ -1,19 +1,11 @@
-import { createClient } from "@supabase/supabase-js"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 
 const EXTERNAL_API_URL = "https://tw.rter.info/capi.php"
 
-// Lazy initialize Supabase Admin client
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
-
 export async function GET() {
   try {
-    const supabaseAdmin = getSupabaseAdmin()
+    const supabaseAdmin = createAdminClient()
 
     // 1. Get today's date (formatted as YYYY-MM-DD for uniqueness)
     const today = new Date().toISOString().split("T")[0]

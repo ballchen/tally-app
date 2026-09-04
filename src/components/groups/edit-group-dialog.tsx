@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -38,6 +38,14 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { AVAILABLE_CURRENCIES } from "@/lib/currency"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ImageCropDialog } from "@/components/ui/image-crop-dialog"
@@ -57,9 +65,10 @@ interface EditGroupDialogProps {
   }
   currentUserId: string
   isHidden?: boolean
+  hasExpenses?: boolean
 }
 
-export function EditGroupDialog({ group, currentUserId, isHidden = false }: EditGroupDialogProps) {
+export function EditGroupDialog({ group, currentUserId, isHidden = false, hasExpenses = false }: EditGroupDialogProps) {
   const [open, setOpen] = useState(false)
   const [coverPreview, setCoverPreview] = useState<string | null>(group.cover_image_url)
   const [cropDialogOpen, setCropDialogOpen] = useState(false)
@@ -76,24 +85,22 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
 
   const formSchema = z.object({
     name: z.string().min(1, t("validation.nameRequired")),
-    baseCurrency: z.string().min(3, t("validation.currencyLength")).max(3),
+    baseCurrency: z.enum(AVAILABLE_CURRENCIES, { message: t("validation.currencyLength") }),
   })
 
   const isOwner = group.created_by === currentUserId
   const isArchived = !!group.archived_at
 
-  // Reset cover preview when dialog opens
-  useEffect(() => {
-    if (open) {
-      setCoverPreview(group.cover_image_url)
-    }
-  }, [open, group.cover_image_url])
+  const handleOpenChange = (next: boolean) => {
+    if (next) setCoverPreview(group.cover_image_url)
+    setOpen(next)
+  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: group.name,
-      baseCurrency: group.base_currency,
+      baseCurrency: group.base_currency as (typeof AVAILABLE_CURRENCIES)[number],
     },
   })
 
@@ -118,9 +125,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
     setCoverPreview(previewUrl)
 
     try {
-      console.log('Starting group cover upload...')
       const publicUrl = await uploadCover.mutateAsync({ groupId: group.id, file: croppedFile })
-      console.log('Group cover upload successful, new URL:', publicUrl)
       
       // Clean up preview URL
       URL.revokeObjectURL(previewUrl)
@@ -253,7 +258,7 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
             <Settings className="h-5 w-5" />
@@ -288,7 +293,6 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                         console.error('Cover image load error:', e)
                       }}
                       onLoad={() => {
-                        console.log('Cover image loaded successfully:', coverPreview)
                       }}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -361,11 +365,24 @@ export function EditGroupDialog({ group, currentUserId, isHidden = false }: Edit
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("baseCurrency")}</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={isArchived || !isOwner} />
-                    </FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isArchived || !isOwner || hasExpenses}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {AVAILABLE_CURRENCIES.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormDescription>
-                      {t("currencyDesc")}
+                      {hasExpenses ? t("currencyLocked") : t("currencyDesc")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Users } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
+
+type InviteGroup = { id: string; name: string; base_currency: string }
 
 export default function JoinGroupPage() {
   const params = useParams()
@@ -16,7 +19,8 @@ export default function JoinGroupPage() {
   const { user, isLoading: isAuthLoading } = useAuthStore()
   const supabase = createClient()
   
-  const [group, setGroup] = useState<any>(null)
+  const t = useTranslations("JoinGroup")
+  const [group, setGroup] = useState<InviteGroup | null>(null)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,18 +36,19 @@ export default function JoinGroupPage() {
             .single()
 
         if (error || !data) {
-            setError("Group not found or invalid link.")
+            setError(t("notFound"))
         } else {
-            setGroup(data)
+            setGroup(data as InviteGroup)
         }
         setLoading(false)
     }
     fetchGroup()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inviteCode])
 
   // 2. Handle Join
   const handleJoin = async () => {
-      if (!user) {
+      if (!user || !group) {
           router.push(`/login?next=/join/${inviteCode}`)
           return
       }
@@ -56,10 +61,10 @@ export default function JoinGroupPage() {
         .select("*")
         .eq("group_id", group.id)
         .eq("user_id", user.id)
-        .single()
-        
+        .maybeSingle()
+
       if (member) {
-          toast.info("You're already a member!")
+          toast.info(t("alreadyMember"))
           router.push(`/groups/${group.id}`)
           return
       }
@@ -73,12 +78,12 @@ export default function JoinGroupPage() {
         })
 
       if (joinError) {
-          toast.error("Failed to join group", {
+          toast.error(t("joinFailed"), {
             description: joinError.message
           })
           setJoining(false)
       } else {
-          toast.success(`Joined ${group.name}!`)
+          toast.success(t("joined", { name: group.name }))
           
           // Get current user's profile for notification
           const { data: profile } = await supabase
@@ -105,8 +110,9 @@ export default function JoinGroupPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 userIds: existingMembers.map(m => m.user_id),
-                title: "New Member Joined",
-                body: `${memberName} joined ${group.name}`,
+                groupId: group.id,
+                title: t("pushTitle"),
+                body: t("pushBody", { name: memberName, group: group.name }),
                 url: `/groups/${group.id}`
               })
             }).catch(err => console.error("Push notification failed", err))
@@ -123,9 +129,9 @@ export default function JoinGroupPage() {
   if (error || !group) {
       return (
           <div className="h-screen flex flex-col items-center justify-center gap-4 p-4 text-center">
-              <h1 className="text-2xl font-bold">Oops!</h1>
+              <h1 className="text-2xl font-bold">{t("oops")}</h1>
               <p className="text-muted-foreground">{error}</p>
-              <Button onClick={() => router.push("/")}>Go Home</Button>
+              <Button onClick={() => router.push("/")}>{t("goHome")}</Button>
           </div>
       )
   }
@@ -137,18 +143,18 @@ export default function JoinGroupPage() {
                 <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
                     <Users className="h-8 w-8" />
                 </div>
-                <CardTitle className="text-2xl">Join Group</CardTitle>
-                <CardDescription>You've been invited to join</CardDescription>
+                <CardTitle className="text-2xl">{t("title")}</CardTitle>
+                <CardDescription>{t("invited")}</CardDescription>
             </CardHeader>
             <CardContent className="text-center space-y-4">
                 <div className="text-xl font-bold">{group.name}</div>
                 <div className="text-sm text-muted-foreground bg-muted/50 py-2 px-4 rounded-full inline-block">
-                    Base Currency: {group.base_currency}
+                    {t("baseCurrency")}: {group.base_currency}
                 </div>
             </CardContent>
             <CardFooter>
                 <Button className="w-full text-lg h-12" onClick={handleJoin} disabled={joining}>
-                    {joining ? <Loader2 className="mr-2 animate-spin" /> : "Join Group"}
+                    {joining ? <Loader2 className="mr-2 animate-spin" /> : t("join")}
                 </Button>
             </CardFooter>
         </Card>

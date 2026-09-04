@@ -22,7 +22,7 @@ export function useUpdateExpense() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ expenseId, groupId, payerId, amount, currency, description, exchangeRate, split }: UpdateExpenseParams) => {
+    mutationFn: async ({ expenseId, payerId, amount, currency, description, exchangeRate, split }: UpdateExpenseParams) => {
       // Fetch old values for diff logging
       const { data: oldExpense } = await supabase
         .from("expenses")

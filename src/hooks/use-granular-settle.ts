@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/client"
 import { logActivity } from "@/lib/activity-log"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
+import { formatAmount } from "@/lib/currency"
 
 type GranularSettleParams = {
   groupId: string
@@ -15,6 +17,7 @@ type GranularSettleParams = {
 
 export function useGranularSettle() {
   const queryClient = useQueryClient()
+  const t = useTranslations("SettleUp")
   const supabase = createClient()
 
   return useMutation({
@@ -30,10 +33,9 @@ export function useGranularSettle() {
       if (error) throw error
       return data
     },
-    onSuccess: async (_, variables) => {
-      toast.success("Settlement recorded!")
+    onSuccess: (_, variables) => {
+      toast.success(t("settlementRecorded"))
       queryClient.invalidateQueries({ queryKey: ["group", variables.groupId] })
-      queryClient.invalidateQueries({ queryKey: ["groups"] })
 
       logActivity(supabase, {
         groupId: variables.groupId,
@@ -50,34 +52,23 @@ export function useGranularSettle() {
         },
       })
 
-      // Send push notification to the creditor
-      try {
-        // Get debtor's name for notification
-        const { data: debtorProfile } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", variables.debtorId)
-          .single()
-        
-        const debtorName = debtorProfile?.display_name || "Someone"
-        
-        // Send notification to creditor
-        fetch("/api/push/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userIds: [variables.creditorId],
-            title: "Payment Received",
-            body: `${debtorName} settled ${variables.currency} ${variables.amount.toFixed(2)} with you`,
-            url: `/groups/${variables.groupId}`
-          })
-        }).catch(err => console.error("Push notification failed", err))
-      } catch (error) {
-        console.error("Failed to send settlement notification", error)
-      }
+      fetch("/api/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userIds: [variables.creditorId],
+          groupId: variables.groupId,
+          title: t("pushTitle"),
+          body: t("pushBody", {
+            name: variables.debtorName || t("someone"),
+            amount: formatAmount(variables.amount, variables.currency),
+          }),
+          url: `/groups/${variables.groupId}`
+        })
+      }).catch(err => console.error("Push notification failed", err))
     },
     onError: (error: Error) => {
-      toast.error("Settlement failed", {
+      toast.error(t("settlementFailed"), {
         description: error.message
       })
     }
