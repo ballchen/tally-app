@@ -241,7 +241,7 @@ export default function GroupDetailsPage() {
               group={group}
               currentUserId={currentUserId}
               isHidden={isHidden}
-              hasExpenses={expenses.some((e) => e.type !== "repayment")}
+              hasExpenses={expenses.length > 0}
             />
           </div>
         </div>
@@ -307,7 +307,7 @@ export default function GroupDetailsPage() {
               group={group}
               currentUserId={currentUserId}
               isHidden={isHidden}
-              hasExpenses={expenses.some((e) => e.type !== "repayment")}
+              hasExpenses={expenses.length > 0}
             />
           </div>
 

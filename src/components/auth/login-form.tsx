@@ -39,7 +39,9 @@ const REMEMBER_ME_KEY = "tally_remember_me";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next");
+  const rawNext = searchParams.get("next");
+  // Only same-origin paths; blocks /login?next=https://evil.com and //evil.com
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
   const supabase = createClient();
   const { setUser } = useAuthStore();
   const t = useTranslations("Auth");
