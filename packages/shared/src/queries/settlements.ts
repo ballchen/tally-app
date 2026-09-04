@@ -19,18 +19,20 @@ export type SettleUpParams = {
   repaymentNames?: RepaymentName[]
 }
 
-export function useSettleUp(): UseMutationResult<void, Error, SettleUpParams> {
+/** Resolves to the new settlement id so callers can offer undo. */
+export function useSettleUp(): UseMutationResult<string, Error, SettleUpParams> {
   const supabase = useSupabase()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async ({ groupId, repayments }: SettleUpParams) => {
-      const { error } = await supabase.rpc("settle_group_expenses", {
+      const { data, error } = await supabase.rpc("settle_group_expenses", {
         p_group_id: groupId,
         p_repayments: repayments,
       })
 
       if (error) throw error
+      return data as string
     },
     onSuccess: (_, { groupId, repaymentNames }) => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] })

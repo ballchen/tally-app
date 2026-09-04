@@ -58,7 +58,9 @@ export default function SettleAllScreen() {
 
   const submit = async (freshDebts: Debt[]) => {
     try {
-      await settleUp.mutateAsync({
+      // The RPC returns the settlement it created; never infer it from the
+      // cache, another member's settlement could be newer.
+      const settlementId = await settleUp.mutateAsync({
         groupId: id,
         repayments: freshDebts.map((debt) => ({ from: debt.from, to: debt.to, amount: debt.amount })),
         repaymentNames: freshDebts.map((debt) => ({
@@ -68,13 +70,6 @@ export default function SettleAllScreen() {
           currency: baseCurrency,
         })),
       });
-
-      // settleUp's onSuccess invalidates and awaits the refetch, so the newest
-      // settlement (the one this call just created) is already in the cache.
-      const latest = queryClient.getQueryData<GroupDetails>(['group', id]);
-      const settlementId = latest?.settlements
-        .slice()
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.id;
 
       router.back();
       showToast({
