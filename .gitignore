@@ -46,3 +46,7 @@ next-env.d.ts
 
 # database backups
 /backups
+
+# next-pwa build output
+apps/web/public/sw.js
+apps/web/public/workbox-*.js
