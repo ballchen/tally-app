@@ -12,9 +12,9 @@ Tally is a bill-splitting PWA for sharing expenses with friends. Users create gr
 - **PWA**: @ducanh2912/next-pwa with web-push notifications
 
 ## Project Structure
-This is a pnpm workspaces + Turborepo monorepo. The web app lives in `apps/web`;
-pure logic, types, and i18n messages shared with the upcoming Expo app live in
-`packages/shared`.
+This is a pnpm workspaces + Turborepo monorepo. The web app lives in `apps/web`,
+the Expo/React Native iOS app in `apps/mobile`; pure logic, types, and i18n
+messages shared by both live in `packages/shared`.
 ```
 apps/web/
 ├── src/
@@ -36,6 +36,14 @@ apps/web/
 │   │   └── supabase/           # Supabase client (browser/server)
 │   └── i18n/                   # next-intl configuration (reads messages from @tally/shared)
 └── public/
+
+apps/mobile/                   # Expo SDK 57 + expo-router (iOS); native ios/ dir is CNG output, not committed
+├── app/                       # expo-router routes: (auth), (app), (dev), join/[code], reset-password, auth/callback
+├── components/                # AuthGate, Screen, AppleSignInButton, ui/ (Button, Input, Text, Surface, Avatar, Skeleton, Toast)
+├── theme/                     # tokens.ts (light/dark palettes) + useTheme()
+├── lib/                       # supabase client (SecureStore-encrypted session), i18n (i18n-js), auth-link
+├── stores/                    # zustand auth store (session + pending deep-link route)
+└── .maestro/                  # Maestro UI flows, one set per phase
 
 packages/shared/
 ├── src/
@@ -124,7 +132,13 @@ pnpm dev                  # Start web dev server (apps/web)
 pnpm build                # Production build (turbo run build)
 pnpm lint                 # ESLint (turbo run lint)
 pnpm typecheck            # tsc --noEmit for every package (turbo run typecheck)
-pnpm test                 # Vitest unit tests in packages/shared (turbo run test)
+pnpm test                 # Vitest unit tests (turbo run test)
+
+# Mobile (apps/mobile) — requires Xcode; the ios/ dir is regenerated, never committed
+pnpm --filter @tally/mobile ios        # expo prebuild output + build + install on a Simulator
+pnpm --filter @tally/mobile start      # Metro bundler only
+pnpm --filter @tally/mobile test       # theme token tests
+maestro test apps/mobile/.maestro/     # UI flows against a booted Simulator
 
 # Supabase
 supabase db push     # Push migrations to remote

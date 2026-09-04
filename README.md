@@ -8,7 +8,8 @@ and i18n messages.
 ## Structure
 
 ```
-apps/web/         # Next.js web app — see apps/web/README.md and apps/web/DEPLOYMENT.md
+apps/web/          # Next.js web app — see apps/web/README.md and apps/web/DEPLOYMENT.md
+apps/mobile/       # Expo (SDK 57) iOS app — expo-router, shares the data layer with web
 packages/shared/   # @tally/shared — pure functions, types, i18n messages shared with mobile
 supabase/          # Database migrations (path unchanged, shared by web and future functions)
 ```
@@ -25,6 +26,20 @@ pnpm lint          # lint all packages
 pnpm typecheck     # tsc --noEmit for every package
 pnpm test          # run @tally/shared's vitest suite
 ```
+
+### Running the iOS app
+
+Requires Xcode and an iOS Simulator.
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env   # fill in the Supabase URL + anon key
+pnpm --filter @tally/mobile ios                # prebuild, compile and launch on a Simulator
+pnpm --filter @tally/mobile start              # Metro only, once the app is installed
+```
+
+`apps/mobile/ios` is Continuous Native Generation output — `expo prebuild`
+recreates it, so it is not committed. UI checks live in `apps/mobile/.maestro`
+and run with `maestro test apps/mobile/.maestro/` against a booted Simulator.
 
 ## Deploying
 

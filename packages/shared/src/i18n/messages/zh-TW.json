@@ -222,7 +222,8 @@
     "changedTo": "{field}：{old} → {new}"
   },
   "Common": {
-    "language": "語言"
+    "language": "語言",
+    "done": "完成"
   },
   "ResetPassword": {
     "title": "重設密碼",

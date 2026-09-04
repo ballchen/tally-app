@@ -222,7 +222,8 @@
     "changedTo": "{field}：{old} → {new}"
   },
   "Common": {
-    "language": "言語"
+    "language": "言語",
+    "done": "完了"
   },
   "ResetPassword": {
     "title": "パスワードをリセット",

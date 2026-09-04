@@ -222,7 +222,8 @@
     "changedTo": "{field}: {old} → {new}"
   },
   "Common": {
-    "language": "Language"
+    "language": "Language",
+    "done": "Done"
   },
   "ResetPassword": {
     "title": "Reset Password",

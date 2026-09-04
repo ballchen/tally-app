@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Tally",
+    "slug": "tally",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "tally",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.ballchen.tally",
+      "supportsTablet": false,
+      "usesAppleSignIn": true,
+      "associatedDomains": ["applinks:tally.app"],
+      "infoPlist": {
+        "NSCameraUsageDescription": "Tally uses the camera so you can take a photo for your profile picture or a group cover image.",
+        "NSPhotoLibraryUsageDescription": "Tally needs access to your photos so you can pick a profile picture or a group cover image."
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-apple-authentication",
+      "expo-secure-store",
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F7FB",
+          "dark": {
+            "backgroundColor": "#0F0F17"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
