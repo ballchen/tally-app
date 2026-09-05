@@ -35,7 +35,13 @@ export function useGroups(
       if (authError) throw authError
       if (!user) throw new Error("Not authenticated")
 
-      let query = supabase.from("groups").select("*").is("deleted_at", null)
+      // Newest first; without an ORDER BY Postgres returns rows in storage order,
+      // which changes as rows are updated and made list positions flap.
+      let query = supabase
+        .from("groups")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
 
       if (filter === "active") {
         query = query.is("archived_at", null)
