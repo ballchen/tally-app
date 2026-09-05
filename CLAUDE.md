@@ -138,9 +138,17 @@ pnpm test                 # Vitest unit tests (turbo run test)
 pnpm --filter @tally/mobile ios        # expo prebuild output + build + install on a Simulator
 pnpm --filter @tally/mobile start      # Metro bundler only
 pnpm --filter @tally/mobile test       # theme token tests
-maestro test apps/mobile/.maestro/     # UI flows against a booted Simulator
-                                       # (Maestro is machine-local, not a repo dep;
-                                       #  see apps/mobile/.maestro/README.md)
+maestro test --exclude-tags=docs apps/mobile/.maestro/
+                                       # UI flows against a booted Simulator; the `docs`
+                                       # tag marks screenshot-only flows (Maestro is
+                                       # machine-local, not a repo dep — see
+                                       # apps/mobile/.maestro/README.md)
+
+# Mobile release (run from apps/mobile; profiles in eas.json)
+npx eas-cli build --platform ios --profile preview-simulator   # unsigned .app for a Simulator
+npx eas-cli build --platform ios --profile production          # App Store build
+npx eas-cli submit --platform ios --profile production         # upload to TestFlight
+# Pre-submission checklist: apps/mobile/docs/release-checklist.md
 
 # Supabase
 supabase db push     # Push migrations to remote

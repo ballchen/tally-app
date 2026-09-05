@@ -16,6 +16,38 @@ maestro test apps/mobile/.maestro/                 # when it is on PATH
 Flows expect a booted "iPhone 17 Pro" Simulator with a debug build installed
 (`pnpm --filter @tally/mobile ios`) and Metro running.
 
+`phase7-screens.yaml` and `phase7-dynamic-type.yaml` assert nothing — they only
+file screenshots into `docs/screens/`. They carry the `docs` tag, so a sweep of
+the whole directory should skip them:
+
+```bash
+maestro test --exclude-tags=docs apps/mobile/.maestro/
+```
+
+Screenshot paths are written relative to the Maestro output directory
+(`~/.maestro/tests/<run>/<flow>/takeScreenshot/`), so copy them into the repo
+after a run. Regenerating the reference captures, from `apps/mobile`:
+
+```bash
+xcrun simctl ui booted appearance light
+maestro test -e MODE=light .maestro/phase7-screens.yaml
+xcrun simctl ui booted appearance dark
+maestro test -e MODE=dark .maestro/phase7-screens.yaml
+xcrun simctl ui booted appearance light
+xcrun simctl ui booted content_size extra-extra-extra-large
+maestro test .maestro/phase7-dynamic-type.yaml
+xcrun simctl ui booted content_size medium
+```
+
+`phase7-screens.yaml` deliberately leaves `MODE` out of its `env` block: this
+Maestro build lets a flow's own `env` value win over `-e`, so a default there
+would pin every run to one appearance and the second pass would overwrite the
+first pass's files.
+
+`phase7-offline.yaml` drives the `__DEV__`-only "Simulate offline" button on the
+profile screen (`lib/online.ts`), because a Simulator cannot be taken off the
+network from the host. It leaves the app online again.
+
 ## Fixtures
 
 Every flow reads the data created by `apps/mobile/scripts/seed-dev.ts`, which
@@ -60,6 +92,20 @@ node --experimental-strip-types apps/mobile/scripts/temp-account.ts check
 The account is deliberately only a *member* of its fixture group: `groups.created_by`
 references `profiles(id)` with no ON DELETE action, so `delete-account` returns 500
 for a user who still owns a group.
+
+`scripts/verify-balances-parity.ts` is not a flow but belongs to the same
+fixtures: it signs in as account A, calls `get_my_group_balances`, recomputes
+the same numbers from the raw rows with `@tally/shared`'s `calculateNetBalances`,
+and fails on any drift. The shared package is authored for bundlers, so it needs
+the resolver shim:
+
+```bash
+SUPABASE_KEYS_JSON=/tmp/keys.json \
+TALLY_TEST_EMAIL=... TALLY_TEST_PASSWORD=... \
+  node --experimental-strip-types \
+    --import ./apps/mobile/scripts/register-ts-resolver.mjs \
+    apps/mobile/scripts/verify-balances-parity.ts
+```
 
 `phase6-profile-avatar.yaml` needs an image in the Simulator library
 (`xcrun simctl addmedia booted <some.png>`), and `phase6-signout.yaml` is bracketed

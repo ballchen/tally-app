@@ -1,0 +1,89 @@
+appId: com.ballchen.tally
+name: Phase 7 — the densest screens at the largest Dynamic Type size
+# Run from apps/mobile after enlarging the system text size:
+#   xcrun simctl ui booted content_size extra-extra-extra-large
+#   maestro test .maestro/phase7-dynamic-type.yaml
+#   xcrun simctl ui booted content_size medium
+# Tagged `docs` so a whole-directory sweep can skip it: it asserts nothing.
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts.
+tags:
+  - docs
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Welcome to Tally'
+    timeout: 20000
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- tapOn:
+    id: 'push-prompt-later'
+    optional: true
+
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 30000
+- takeScreenshot: docs/screens/xxxl-groups-list
+
+- scrollUntilVisible:
+    element:
+      text: '.*Kyoto Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Kyoto Trip.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 30000
+- takeScreenshot: docs/screens/xxxl-group-detail
+
+- tapOn:
+    id: 'add-expense-fab'
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-1'
+- tapOn:
+    id: 'calc-key-2'
+- tapOn:
+    id: 'calc-key-3'
+- tapOn:
+    id: 'calc-key-4'
+- takeScreenshot: docs/screens/xxxl-calculator
+- tapOn:
+    id: 'expense-cancel'
+
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'expense-card-.*'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'expense-card-.*'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-detail-amount'
+    timeout: 20000
+- takeScreenshot: docs/screens/xxxl-expense-detail

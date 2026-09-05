@@ -27,6 +27,7 @@ import {
   useT,
   type LocalePreference,
 } from '@/lib/i18n';
+import { setForcedOffline, useIsOnline } from '@/lib/online';
 import {
   getPushStatus,
   promptForPush,
@@ -113,6 +114,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const t = useT('Profile');
   const tPush = useT('Push');
+  const online = useIsOnline();
   const email = useAuthStore((s) => s.session?.user.email);
 
   const { data: profile, updateProfile } = useProfile();
@@ -376,11 +378,21 @@ export default function ProfileScreen() {
       </Section>
 
       {__DEV__ ? (
-        <Button
-          title="Component gallery"
-          variant="ghost"
-          onPress={() => router.push('/components')}
-        />
+        <>
+          <Button
+            title="Component gallery"
+            variant="ghost"
+            onPress={() => router.push('/components')}
+          />
+          {/* A Simulator cannot be taken off the network from the host, so the
+              offline path is exercised through this override. */}
+          <Button
+            testID="profile-simulate-offline"
+            title={online ? 'Simulate offline' : 'Go back online'}
+            variant="ghost"
+            onPress={() => setForcedOffline(online)}
+          />
+        </>
       ) : null}
     </Screen>
   );

@@ -39,11 +39,13 @@ export function DebtRow({
         <Avatar uri={to.avatarUrl} name={to.name} size={28} />
       </View>
 
+      {/* Two lines rather than one: at the largest Dynamic Type sizes a name
+          shares the row with the amount and would otherwise be cut off. */}
       <View style={{ flex: 1 }}>
-        <Text variant="headline" numberOfLines={1}>
+        <Text variant="headline" numberOfLines={2}>
           {from.name}
         </Text>
-        <Text variant="footnote" color="textSecondary" numberOfLines={1}>
+        <Text variant="footnote" color="textSecondary" numberOfLines={2}>
           {owesLabel} {to.name}
         </Text>
       </View>

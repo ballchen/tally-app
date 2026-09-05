@@ -64,6 +64,7 @@ export default function GroupScreen() {
   const tActivity = useT('ActivityLog');
   const tRealtime = useT('Realtime');
   const tCommon = useT('Common');
+  const tEditGroup = useT('EditGroup');
   const { id } = useLocalSearchParams<{ id: string }>();
   const userId = useAuthStore((s) => s.session?.user.id) ?? '';
 
@@ -322,6 +323,7 @@ export default function GroupScreen() {
             <HeaderButton
               testID="open-group-settings"
               title="•••"
+              accessibilityLabel={tEditGroup('title')}
               onPress={() => router.push(`/groups/${id}/settings`)}
             />
           </View>
@@ -411,11 +413,26 @@ export default function GroupScreen() {
           <MemberStrip members={members} inviteLabel={t('invite')} onInvite={shareInvite} />
         </View>
 
-        <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}>
-          <Text variant="subhead" color="textSecondary" style={{ flex: 1 }}>
+        {/* Wrapping rather than `flex: 1` on the label: at xxxL the amount alone
+            is wider than the card, which squeezed the label to one letter per line. */}
+        <Surface
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: theme.spacing.md,
+          }}
+        >
+          <Text variant="subhead" color="textSecondary">
             {t('yourBalance')}
           </Text>
-          <Text variant="amountL" color={balanceColor} testID="your-balance">
+          <Text
+            variant="amountL"
+            color={balanceColor}
+            testID="your-balance"
+            style={{ flexShrink: 1 }}
+          >
             {balanceLabel}
           </Text>
         </Surface>
@@ -485,6 +502,7 @@ export default function GroupScreen() {
           paidByLabel={t('paidBy', { name: item.expense.payer?.display_name ?? '' })}
           onPress={() => router.push(`/groups/${id}/expense/${item.expense.id}`)}
           onLongPress={() => openExpenseMenu(item.expense)}
+          longPressHint={t('expenseOptionsHint')}
         />
       ) : item.kind === 'repayment' ? (
         <ExpenseCard
@@ -501,6 +519,7 @@ export default function GroupScreen() {
           settledByLabel={t('settledBy')}
           totalLabel={t('total')}
           unknownName={tSettleUp('someone')}
+          detailsLabel={t('settlementDetails')}
           expanded={expandedSettlements.has(item.settlement.id)}
           onToggle={() => toggleSettlement(item.settlement.id)}
           undoLabel={isArchived ? null : t('undoAction')}
@@ -572,7 +591,7 @@ export default function GroupScreen() {
       {isArchived ? null : (
         <Fab
           testID="add-expense-fab"
-          accessibilityLabel={t('expense')}
+          accessibilityLabel={t('addExpense')}
           collapseScale={fabScale}
           onPress={() => router.push(`/groups/${id}/expense/new`)}
         />

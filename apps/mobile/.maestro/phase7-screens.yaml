@@ -1,0 +1,221 @@
+appId: com.ballchen.tally
+name: Phase 7 — dark-mode walkthrough, one screenshot per screen
+# Capture tool rather than an assertion flow: it walks every screen and files a
+# PNG under apps/mobile/docs/screens/. Run it once per appearance, from
+# apps/mobile, so the relative paths land in the repo:
+#
+#   xcrun simctl ui booted appearance light
+#   maestro test -e MODE=light .maestro/phase7-screens.yaml
+#   xcrun simctl ui booted appearance dark
+#   maestro test -e MODE=dark  .maestro/phase7-screens.yaml
+#
+# `MODE` is deliberately absent from `env`: this Maestro build lets a flow's own
+# `env` default win over `-e`, so declaring it would silently pin every run to
+# one value. Tagged `docs` so a whole-directory sweep skips it (it asserts
+# nothing, and would fail on the undeclared MODE).
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts.
+tags:
+  - docs
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: 'Welcome to Tally'
+    timeout: 20000
+- takeScreenshot: docs/screens/login-${MODE}
+
+- tapOn: 'Create Account'
+- extendedWaitUntil:
+    visible: 'Display Name'
+    timeout: 20000
+- takeScreenshot: docs/screens/register-${MODE}
+- tapOn: 'Sign In'
+
+- extendedWaitUntil:
+    visible: 'Welcome to Tally'
+    timeout: 20000
+- tapOn: '.*Forgot password.*'
+- extendedWaitUntil:
+    visible: 'Enter your email to receive a reset link'
+    timeout: 20000
+- takeScreenshot: docs/screens/forgot-password-${MODE}
+- tapOn: 'Back to Login'
+- extendedWaitUntil:
+    visible: 'Welcome to Tally'
+    timeout: 20000
+
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 30000
+# The keychain prompt can land before or after the list paints, so offer to
+# dismiss it on both sides.
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# Captured with the notification explainer card still showing.
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 30000
+- takeScreenshot: docs/screens/groups-list-${MODE}
+- tapOn:
+    id: 'push-prompt-later'
+    optional: true
+
+- tapOn:
+    id: 'new-group-fab'
+- extendedWaitUntil:
+    visible:
+      id: 'group-name'
+    timeout: 20000
+- takeScreenshot: docs/screens/new-group-${MODE}
+- tapOn:
+    id: 'sheet-close'
+
+- openLink: 'tally://join/phase3in'
+- tapOn:
+    text: 'Open'
+    optional: true
+- extendedWaitUntil:
+    visible: 'Invite Only'
+    timeout: 20000
+- takeScreenshot: docs/screens/join-${MODE}
+# The join screen is a root route with no header, so there is nothing to swipe
+# back to; restarting lands on the groups list.
+- launchApp
+
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: '.*Kyoto Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Kyoto Trip.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 30000
+- takeScreenshot: docs/screens/group-detail-${MODE}
+
+- tapOn:
+    id: 'open-group-settings'
+- extendedWaitUntil:
+    visible: 'Group Settings'
+    timeout: 20000
+- takeScreenshot: docs/screens/group-settings-${MODE}
+- tapOn:
+    id: 'sheet-close'
+
+- tapOn:
+    id: 'open-activity-log'
+- extendedWaitUntil:
+    visible:
+      id: 'activity-log-list'
+    timeout: 20000
+- takeScreenshot: docs/screens/activity-log-${MODE}
+- tapOn:
+    id: 'sheet-close'
+
+- tapOn:
+    id: 'settle-all'
+- extendedWaitUntil:
+    visible: 'Settlement Plan'
+    timeout: 20000
+- takeScreenshot: docs/screens/settle-${MODE}
+- tapOn:
+    id: 'sheet-close'
+
+- tapOn:
+    id: 'add-expense-fab'
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-9'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-0'
+- takeScreenshot: docs/screens/add-expense-amount-${MODE}
+- tapOn:
+    id: 'calculator-confirm'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- takeScreenshot: docs/screens/add-expense-details-${MODE}
+- tapOn:
+    id: 'expense-cancel'
+
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'expense-card-.*'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'expense-card-.*'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-detail-amount'
+    timeout: 20000
+- takeScreenshot: docs/screens/expense-detail-${MODE}
+
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          id: 'expense-detail-edit'
+      - extendedWaitUntil:
+          visible:
+            id: 'expense-description'
+          timeout: 10000
+- takeScreenshot: docs/screens/expense-edit-${MODE}
+- tapOn:
+    id: 'expense-cancel'
+- launchApp
+
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 30000
+- tapOn:
+    id: 'open-profile'
+- extendedWaitUntil:
+    visible:
+      id: 'profile-name'
+    timeout: 20000
+- takeScreenshot: docs/screens/profile-${MODE}
+
+- scroll
+- tapOn:
+    id: 'profile-delete'
+- extendedWaitUntil:
+    visible: 'Delete your account?'
+    timeout: 20000
+- takeScreenshot: docs/screens/delete-account-${MODE}
+- tapOn: 'Cancel'

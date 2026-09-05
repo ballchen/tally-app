@@ -31,6 +31,14 @@ export function GroupRow({ group, balance, actions, onPress }: GroupRowProps) {
   const theme = useTheme();
   const swipeable = useRef<Swipeable>(null);
 
+  const confirm = (action: SwipeAction) => {
+    swipeable.current?.close();
+    Alert.alert(group.name, action.confirm.message, [
+      { text: action.confirm.cancelLabel, style: 'cancel' },
+      { text: action.confirm.confirmLabel, onPress: action.onPress },
+    ]);
+  };
+
   const renderActions = () => (
     <View style={{ flexDirection: 'row' }}>
       {actions.map((action) => (
@@ -41,11 +49,7 @@ export function GroupRow({ group, balance, actions, onPress }: GroupRowProps) {
           testID={`swipe-${action.key}-${group.id}`}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            swipeable.current?.close();
-            Alert.alert(group.name, action.confirm.message, [
-              { text: action.confirm.cancelLabel, style: 'cancel' },
-              { text: action.confirm.confirmLabel, onPress: action.onPress },
-            ]);
+            confirm(action);
           }}
           style={{
             width: ACTION_WIDTH,
@@ -76,7 +80,15 @@ export function GroupRow({ group, balance, actions, onPress }: GroupRowProps) {
       overshootRight={false}
       renderRightActions={renderActions}
     >
-      <GroupCard group={group} balance={balance} onPress={onPress} />
+      <GroupCard
+        group={group}
+        balance={balance}
+        onPress={onPress}
+        swipeActions={actions.map((action) => ({
+          name: action.label,
+          run: () => confirm(action),
+        }))}
+      />
     </Swipeable>
   );
 }

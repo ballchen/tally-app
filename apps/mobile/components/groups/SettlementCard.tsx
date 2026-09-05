@@ -13,6 +13,7 @@ export type SettlementCardProps = {
   settledByLabel: string;
   totalLabel: string;
   unknownName: string;
+  detailsLabel: string;
   expanded: boolean;
   onToggle: () => void;
   /** Null while the group is archived, which forbids undoing a settlement. */
@@ -26,6 +27,7 @@ export function SettlementCard({
   settledByLabel,
   totalLabel,
   unknownName,
+  detailsLabel,
   expanded,
   onToggle,
   undoLabel,
@@ -46,6 +48,11 @@ export function SettlementCard({
     >
       <Pressable
         accessibilityRole="button"
+        // A hint, not a label: a label here would replace the card's own text
+        // ("Settled by …, NT$ …") instead of adding to it. The ▴/▾ glyph is the
+        // only visual cue for the state, so `expanded` carries it.
+        accessibilityHint={detailsLabel}
+        accessibilityState={{ expanded }}
         testID={`settlement-toggle-${settlement.id}`}
         onPress={onToggle}
         style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md }}

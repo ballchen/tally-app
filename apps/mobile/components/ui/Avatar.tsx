@@ -25,8 +25,12 @@ export function Avatar({ uri, name, size = 40 }: AvatarProps) {
 
   return (
     <View
+      // A nameless avatar has nothing to announce, so it stays out of the
+      // VoiceOver order instead of stopping focus on silence.
+      accessible={Boolean(name)}
       accessibilityRole="image"
       accessibilityLabel={name ?? undefined}
+      importantForAccessibility={name ? 'yes' : 'no-hide-descendants'}
       style={{
         width: size,
         height: size,

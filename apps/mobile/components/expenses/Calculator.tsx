@@ -31,6 +31,17 @@ const KEYPAD = [
 ] as const;
 
 const OPERATORS = new Set(['÷', '×', '−', '+']);
+
+// Digits speak for themselves; these glyphs (U+00F7, U+00D7, U+2212, U+232B)
+// are announced inconsistently or not at all, so VoiceOver gets a word.
+const SPOKEN_KEYS: Record<string, string | undefined> = {
+  '÷': 'divide',
+  '×': 'multiply',
+  '−': 'subtract',
+  '+': 'add',
+  '.': 'decimal',
+  '⌫': 'backspace',
+};
 const KEY_HEIGHT = 56;
 
 /** Regex-safe test ids: Maestro matches ids as regexes, where "+" and "." are syntax. */
@@ -99,6 +110,11 @@ export function Calculator({
   // not the last operand the user happened to be typing.
   const settled = useMemo(() => reduce(state, { kind: 'equals' }), [state]);
   const confirmable = !settled.error && settled.value > 0;
+
+  const spokenKey = (label: string): string | undefined => {
+    const key = SPOKEN_KEYS[label];
+    return key ? t(key) : undefined;
+  };
 
   const keyStyle = (label: string) => ({
     flex: 1,
@@ -198,9 +214,7 @@ export function Calculator({
       <View style={{ gap: theme.spacing.sm }}>
         {KEYPAD.map((row) => (
           <View key={row.join('')} style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
-            {row.map((label) =>
-              key(label, keyTestID(label), label === '⌫' ? t('backspace') : undefined),
-            )}
+            {row.map((label) => key(label, keyTestID(label), spokenKey(label)))}
           </View>
         ))}
         <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>

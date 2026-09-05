@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tally",
     "slug": "tally",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "tally",
@@ -10,26 +10,42 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.ballchen.tally",
+      "buildNumber": "1",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "associatedDomains": [
         "applinks:tally.app"
       ],
       "infoPlist": {
-        "NSCameraUsageDescription": "Tally uses the camera so you can take a photo for your profile picture or a group cover image.",
-        "NSPhotoLibraryUsageDescription": "Tally needs access to your photos so you can pick a profile picture or a group cover image."
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "plugins": [
       "expo-router",
       "expo-apple-authentication",
-      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Tally needs access to your photos so you can pick a profile picture or a group cover image.",
+          "cameraPermission": "Tally uses the camera so you can take a photo for your profile picture or a group cover image.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       "expo-localization",
       "expo-notifications",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/icon.png",
+          "image": "./assets/splash-icon.png",
           "imageWidth": 160,
           "resizeMode": "contain",
           "backgroundColor": "#F7F7FB",

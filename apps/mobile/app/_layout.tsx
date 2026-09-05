@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthGate } from '@/components/AuthGate';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { PushLinking } from '@/components/PushLinking';
 import { AppToast } from '@/components/ui/Toast';
 import { hydrateLocalePreference, useLocaleStore } from '@/lib/i18n';
@@ -67,6 +68,7 @@ export default function RootLayout() {
               <Stack.Screen name="auth/callback" />
               <Stack.Screen name="join/[code]" />
             </Stack>
+            <OfflineBanner />
             <AppToast />
           </QueryClientProvider>
         </SupabaseProvider>

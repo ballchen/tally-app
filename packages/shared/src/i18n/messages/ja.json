@@ -104,7 +104,10 @@
     "deleteExpenseFailed": "支出を削除できませんでした",
     "undo": "元に戻す",
     "undoAction": "精算を元に戻す",
-    "retry": "再試行"
+    "retry": "再試行",
+    "addExpense": "支出を追加",
+    "settlementDetails": "精算の内訳",
+    "expenseOptionsHint": "長押しで編集・削除"
   },
   "InviteMember": {
     "invite": "招待",
@@ -226,7 +229,12 @@
     "backspace": "削除",
     "equals": "イコール",
     "cancel": "キャンセル",
-    "rateUnavailable": "レートを取得できません"
+    "rateUnavailable": "レートを取得できません",
+    "divide": "割る",
+    "multiply": "掛ける",
+    "subtract": "引く",
+    "add": "足す",
+    "decimal": "小数点"
   },
   "AddExpense": {
     "loading": "読み込み中...",
@@ -286,7 +294,10 @@
   "Common": {
     "language": "言語",
     "done": "完了",
-    "back": "戻る"
+    "back": "戻る",
+    "offline": "オフラインです。保存済みのデータを表示しています",
+    "offlineTitle": "オフラインです。",
+    "offlineBody": "インターネットに接続してから保存してください。"
   },
   "ResetPassword": {
     "title": "パスワードをリセット",

@@ -16,6 +16,8 @@ export type ExpenseCardProps = {
   badgeLabel?: string;
   onPress: () => void;
   onLongPress?: () => void;
+  /** Only the glyph-free long press reveals edit/delete, so VoiceOver is told. */
+  longPressHint?: string;
 };
 
 export function ExpenseCard({
@@ -25,6 +27,7 @@ export function ExpenseCard({
   badgeLabel,
   onPress,
   onLongPress,
+  longPressHint,
 }: ExpenseCardProps) {
   const theme = useTheme();
   const splits = expense.expense_splits ?? [];
@@ -32,6 +35,7 @@ export function ExpenseCard({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityHint={onLongPress ? longPressHint : undefined}
       testID={`expense-card-${expense.id}`}
       onPress={onPress}
       onLongPress={onLongPress}

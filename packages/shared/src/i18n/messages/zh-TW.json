@@ -104,7 +104,10 @@
     "deleteExpenseFailed": "無法刪除支出",
     "undo": "復原",
     "undoAction": "復原結帳",
-    "retry": "重試"
+    "retry": "重試",
+    "addExpense": "新增支出",
+    "settlementDetails": "結帳明細",
+    "expenseOptionsHint": "長按可編輯或刪除"
   },
   "InviteMember": {
     "invite": "邀請",
@@ -226,7 +229,12 @@
     "backspace": "退格",
     "equals": "等於",
     "cancel": "取消",
-    "rateUnavailable": "匯率不可用"
+    "rateUnavailable": "匯率不可用",
+    "divide": "除",
+    "multiply": "乘",
+    "subtract": "減",
+    "add": "加",
+    "decimal": "小數點"
   },
   "AddExpense": {
     "loading": "載入中...",
@@ -286,7 +294,10 @@
   "Common": {
     "language": "語言",
     "done": "完成",
-    "back": "返回"
+    "back": "返回",
+    "offline": "離線中，顯示的是已快取的資料",
+    "offlineTitle": "目前離線。",
+    "offlineBody": "請連上網路後再儲存這項變更。"
   },
   "ResetPassword": {
     "title": "重設密碼",

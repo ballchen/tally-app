@@ -40,7 +40,33 @@ pnpm --filter @tally/mobile start              # Metro only, once the app is ins
 `apps/mobile/ios` is Continuous Native Generation output — `expo prebuild`
 recreates it, so it is not committed. UI checks live in `apps/mobile/.maestro`
 and run against a booted Simulator — see `apps/mobile/.maestro/README.md` for
-how to invoke Maestro and how to seed the fixtures the flows expect.
+how to invoke Maestro and how to seed the fixtures the flows expect. The flows
+tagged `docs` only take screenshots, so a whole-directory sweep skips them:
+`maestro test --exclude-tags=docs apps/mobile/.maestro/`.
+
+### Building the iOS app with EAS
+
+Profiles live in `apps/mobile/eas.json`; run the commands from `apps/mobile`.
+
+```bash
+npx eas-cli build --platform ios --profile preview-simulator   # .app for a Simulator, no signing
+npx eas-cli build --platform ios --profile preview             # internal distribution (needs Apple credentials)
+npx eas-cli build --platform ios --profile production          # App Store build
+npx eas-cli submit --platform ios --profile production         # upload to TestFlight
+```
+
+EAS never uploads `.env`, so `EXPO_PUBLIC_SUPABASE_URL` and
+`EXPO_PUBLIC_SUPABASE_ANON_KEY` are stored as EAS project variables
+(`npx eas-cli env:list`); without them a build launches to a blank screen.
+
+A Simulator build downloads as a `.tar.gz`; unpack it and
+`xcrun simctl install booted Tally.app`. `cli.appVersionSource` is `remote`,
+so EAS owns the build number once a build has run.
+
+Before submitting, work through `apps/mobile/docs/release-checklist.md` — it
+records what is already configured and what still needs an Apple Developer
+account. `apps/mobile/docs/screens/` holds the light/dark and
+largest-Dynamic-Type reference captures.
 
 ## Deploying
 

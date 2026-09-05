@@ -27,6 +27,7 @@ import { errorMessage } from '@/lib/errors';
 import { resolveExchangeRate } from '@/lib/expense-rate';
 import { useKeyboardOverlap } from '@/lib/keyboard';
 import { useT } from '@/lib/i18n';
+import { useIsOnline } from '@/lib/online';
 import { sortMembers } from '@/lib/members';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
@@ -50,6 +51,8 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
   const insets = useSafeAreaInsets();
   const keyboardOverlap = useKeyboardOverlap();
   const t = useT('AddExpense');
+  const tCommon = useT('Common');
+  const online = useIsOnline();
   const supabase = useSupabase();
   const userId = useAuthStore((s) => s.session?.user.id) ?? '';
 
@@ -119,6 +122,13 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
     Keyboard.dismiss();
     if (!form.isValid) return;
     setError(null);
+
+    // `offlineFirst` pauses a mutation instead of rejecting it, so without this
+    // the button would spin until the network came back with nothing on screen.
+    if (!online) {
+      setError(`${tCommon('offlineTitle')} ${tCommon('offlineBody')}`);
+      return;
+    }
 
     if (rate == null) {
       setError(`${t('ratesUnavailable')} ${t('ratesUnavailableDesc')}`);

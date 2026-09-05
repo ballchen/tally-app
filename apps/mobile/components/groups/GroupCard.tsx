@@ -16,6 +16,8 @@ export type GroupCardProps = {
   group: GroupListItem;
   balance: number | undefined;
   onPress: () => void;
+  /** VoiceOver cannot perform the row's swipe, so its actions come through here. */
+  swipeActions?: { name: string; run: () => void }[];
 };
 
 const THUMB = 56;
@@ -41,7 +43,7 @@ function useBalanceLabel(group: GroupListItem, balance: number | undefined) {
   return { text, color };
 }
 
-export function GroupCard({ group, balance, onPress }: GroupCardProps) {
+export function GroupCard({ group, balance, onPress, swipeActions = [] }: GroupCardProps) {
   const theme = useTheme();
   const t = useT('Groups');
   const [scale] = useState(() => new Animated.Value(1));
@@ -58,6 +60,10 @@ export function GroupCard({ group, balance, onPress }: GroupCardProps) {
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
         accessibilityRole="button"
+        accessibilityActions={swipeActions.map(({ name }) => ({ name }))}
+        onAccessibilityAction={({ nativeEvent }) =>
+          swipeActions.find((a) => a.name === nativeEvent.actionName)?.run()
+        }
         testID={`group-card-${group.id}`}
         onPressIn={() => {
           animate(0.98);

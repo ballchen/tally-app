@@ -104,7 +104,10 @@
     "deleteExpenseFailed": "Could not delete the expense",
     "undo": "Undo",
     "undoAction": "Undo settlement",
-    "retry": "Retry"
+    "retry": "Retry",
+    "addExpense": "Add expense",
+    "settlementDetails": "Settlement details",
+    "expenseOptionsHint": "Press and hold for edit and delete options"
   },
   "InviteMember": {
     "invite": "Invite",
@@ -226,7 +229,12 @@
     "backspace": "Backspace",
     "equals": "Equals",
     "cancel": "Cancel",
-    "rateUnavailable": "Rate unavailable"
+    "rateUnavailable": "Rate unavailable",
+    "divide": "Divide",
+    "multiply": "Multiply",
+    "subtract": "Subtract",
+    "add": "Add",
+    "decimal": "Decimal point"
   },
   "AddExpense": {
     "loading": "Loading...",
@@ -286,7 +294,10 @@
   "Common": {
     "language": "Language",
     "done": "Done",
-    "back": "Back"
+    "back": "Back",
+    "offline": "You're offline — showing saved data",
+    "offlineTitle": "You're offline.",
+    "offlineBody": "Reconnect to the internet to save this change."
   },
   "ResetPassword": {
     "title": "Reset Password",
