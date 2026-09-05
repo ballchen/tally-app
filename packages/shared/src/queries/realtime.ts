@@ -70,17 +70,16 @@ export function useRealtimeSync(
           filter: `group_id=eq.${groupId}`,
         },
         (payload) => {
+          // Always refetch: "own" only decides whether to announce. Another
+          // member can create an expense where this user is the payer, and the
+          // same account may be acting from another device.
+          debouncedInvalidate(["group", groupId])
+
           const row = payload.new as ExpenseRow | undefined
           const isOwnChange =
             row?.created_by === currentUserId || row?.payer_id === currentUserId
-          // The mutation that made this change already invalidated the same
-          // query on success; invalidating again here just re-fetches a
-          // moment later and can flip the timeline mid-tap in a UI test.
-          if (isOwnChange) return
-          debouncedInvalidate(["group", groupId])
-
           // Repayments are announced by the settlements channel.
-          if (row?.type === "repayment") return
+          if (isOwnChange || row?.type === "repayment") return
 
           if (payload.eventType === "INSERT") {
             onEvent?.({ type: "expense.added" })
@@ -104,14 +103,12 @@ export function useRealtimeSync(
           filter: `group_id=eq.${groupId}`,
         },
         (payload) => {
+          debouncedInvalidate(["group", groupId])
+
           const row = (payload.eventType === "DELETE" ? payload.old : payload.new) as
             | { created_by?: string }
             | undefined
-          // The mutation that made this change already invalidated the same
-          // query on success; invalidating again here just re-fetches a
-          // moment later and can flip the timeline mid-tap in a UI test.
           if (row?.created_by === currentUserId) return
-          debouncedInvalidate(["group", groupId])
 
           if (payload.eventType === "INSERT") {
             onEvent?.({ type: "settlement.recorded" })
