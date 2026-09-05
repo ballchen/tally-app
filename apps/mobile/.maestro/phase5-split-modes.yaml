@@ -72,6 +72,15 @@ env:
     enabled: false
 - takeScreenshot: e5-exact-remaining-red
 
+# get_group_members_batch has no ORDER BY, so USER_A's row isn't guaranteed
+# to already be on screen; an off-screen tap can land on the remaining bar
+# below it instead of the input.
+- scrollUntilVisible:
+    element:
+      id: 'split-input-${USER_A}'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
 - tapOn:
     id: 'split-input-${USER_A}'
 - inputText: '60'

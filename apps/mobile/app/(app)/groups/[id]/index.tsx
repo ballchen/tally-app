@@ -35,6 +35,7 @@ import { errorMessage } from '@/lib/errors';
 import { formatMoney } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { monthKey, formatMonthTitle } from '@/lib/date';
+import { sortMembers } from '@/lib/members';
 import { buildTimeline, toMonthSections, type TimelineItem, type TimelineSection } from '@/lib/timeline';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
@@ -78,7 +79,7 @@ export default function GroupScreen() {
   const [fabScale] = useState(() => new Animated.Value(1));
 
   const group = details.data?.group;
-  const members = useMemo(() => details.data?.members ?? [], [details.data?.members]);
+  const members = useMemo(() => sortMembers(details.data?.members ?? []), [details.data?.members]);
   const baseCurrency = group?.base_currency ?? 'TWD';
   const isArchived = Boolean(group?.archived_at);
 

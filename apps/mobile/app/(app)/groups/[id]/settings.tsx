@@ -29,6 +29,7 @@ import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { errorMessage, isUnsettledBalanceError } from '@/lib/errors';
 import { useT } from '@/lib/i18n';
+import { sortMembers } from '@/lib/members';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
 
@@ -71,7 +72,7 @@ export default function GroupSettingsScreen() {
   const [status, setStatus] = useState<{ tone: 'positive' | 'negative'; text: string } | null>(null);
 
   const group = details.data?.group;
-  const members = details.data?.members ?? [];
+  const members = sortMembers(details.data?.members ?? []);
   const isOwner = Boolean(group && userId && group.created_by === userId);
   const currencyLocked = (details.data?.expenses.length ?? 0) > 0;
   const isHidden = Boolean(members.find((m) => m.user_id === userId)?.hidden_at);

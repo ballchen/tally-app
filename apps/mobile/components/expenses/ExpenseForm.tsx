@@ -27,6 +27,7 @@ import { errorMessage } from '@/lib/errors';
 import { resolveExchangeRate } from '@/lib/expense-rate';
 import { useKeyboardOverlap } from '@/lib/keyboard';
 import { useT } from '@/lib/i18n';
+import { sortMembers } from '@/lib/members';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
 
@@ -53,7 +54,7 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
   const userId = useAuthStore((s) => s.session?.user.id) ?? '';
 
   const details = useGroupDetails(groupId);
-  const members = details.data?.members ?? [];
+  const members = sortMembers(details.data?.members ?? []);
   const baseCurrency = details.data?.group.base_currency ?? 'TWD';
 
   const expense = useExpense(expenseId);
