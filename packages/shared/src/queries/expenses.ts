@@ -11,6 +11,7 @@ import { logActivity } from "../lib/activity-log"
 import { safeGetUser } from "../lib/auth-helpers"
 import {
   buildOptimisticExpense,
+  insertExpenseByDate,
   type CreateExpenseParams,
   type GroupDetailsCache,
 } from "../lib/group-query-cache"
@@ -172,7 +173,7 @@ export function useAddExpense(): UseMutationResult<
 
         queryClient.setQueryData<GroupDetailsCache>(queryKey, {
           ...previous,
-          expenses: [optimisticExpense, ...previous.expenses],
+          expenses: insertExpenseByDate(previous.expenses, optimisticExpense),
         })
       }
 

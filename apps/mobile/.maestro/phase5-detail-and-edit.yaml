@@ -75,6 +75,19 @@ env:
     id: 'locked-rate'
     text: '.*1 JPY = 0\.2500 TWD.*'
 - takeScreenshot: e7-edit-shows-locked-rate
+# E7 — the amount step converts with the locked rate too, not today's.
+- tapOn:
+    id: 'expense-back-to-amount'
+- assertVisible:
+    id: 'calculator-converted'
+    text: '.*NT\$ 2,000.*1 JPY = 0\.2500 TWD.*'
+- takeScreenshot: e7-amount-step-locked-rate
+- tapOn:
+    id: 'calculator-confirm'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 10000
 - tapOn:
     id: 'expense-description'
 - eraseText

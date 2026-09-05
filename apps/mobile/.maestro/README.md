@@ -36,6 +36,18 @@ node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ed
 node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ex --purge Maestro
 ```
 
+`phase5-detail-and-edit.yaml` edits an expense's description, which must leave
+its locked rate and every `owed_amount_base` untouched. The UI cannot show that,
+so bracket the flow with `scripts/verify-rate-lock.ts`:
+
+```bash
+node --experimental-strip-types apps/mobile/scripts/verify-rate-lock.ts phase5ed \
+  --snapshot /tmp/phase5ed-before.json
+maestro test apps/mobile/.maestro/phase5-detail-and-edit.yaml
+node --experimental-strip-types apps/mobile/scripts/verify-rate-lock.ts phase5ed \
+  --compare /tmp/phase5ed-before.json
+```
+
 ## Not covered here
 
 `useRealtimeSync` needs a second writer, so D6 is checked by hand: park the app

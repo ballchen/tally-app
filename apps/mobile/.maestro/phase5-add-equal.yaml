@@ -63,6 +63,10 @@ env:
 - inputText: 'Maestro Equal'
 - tapOn: 'Done'
 
+# E4 — all three allocation rows fit above the action row without scrolling.
+- assertVisible: '.*Phase Four C.*NT\$ 300.*'
+- takeScreenshot: e4-three-rows-without-scrolling
+
 # E4 — three members split NT$ 900 evenly. A split row is a single
 # accessibility element, so its amount is matched inside the row's label.
 - scrollUntilVisible:

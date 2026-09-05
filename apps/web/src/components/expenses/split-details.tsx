@@ -44,9 +44,11 @@ interface SplitDetailsProps {
   handlePercentChange: (id: string, val: string) => void
 
   // Derived
-  splitAmountEqual: number
+  /** Each member's share, already rounded to the currency's smallest unit. */
+  splitAmounts: Record<string, number>
   remainingExact: number
   remainingPercent: number
+  isValid: boolean
   onEditAmount?: () => void
   lockedExchangeRate?: number
 }
@@ -65,9 +67,10 @@ export function SplitDetails({
   exactAmounts, handleAmountChange,
   percentAmounts, handlePercentChange,
 
-  splitAmountEqual,
+  splitAmounts,
   remainingExact,
   remainingPercent,
+  isValid,
   onEditAmount,
   lockedExchangeRate
 }: SplitDetailsProps) {
@@ -133,14 +136,16 @@ export function SplitDetails({
                 </span>
               </div>
             )}
+             {/* The remainder has to agree with the save button, or a form that
+                 cannot be saved reports itself as perfectly allocated. */}
              {splitMode === "EXACT" && (
-                <div className={cn("text-xs mt-1 font-medium", Math.abs(remainingExact) < 0.05 ? "text-green-500" : "text-destructive")}>
-                    {Math.abs(remainingExact) < 0.05 ? t("perfectlyAllocated") : t("remaining", { value: remainingExact.toFixed(2) })}
+                <div className={cn("text-xs mt-1 font-medium", isValid ? "text-green-500" : "text-destructive")}>
+                    {isValid ? t("perfectlyAllocated") : t("remaining", { value: remainingExact.toFixed(2) })}
                 </div>
              )}
              {splitMode === "PERCENT" && (
-                <div className={cn("text-xs mt-1 font-medium", Math.abs(remainingPercent) < 0.1 ? "text-green-500" : "text-destructive")}>
-                     {Math.abs(remainingPercent) < 0.1 ? t("totalHundred") : t("remaining", { value: `${remainingPercent.toFixed(1)}%` })}
+                <div className={cn("text-xs mt-1 font-medium", isValid ? "text-green-500" : "text-destructive")}>
+                     {isValid ? t("totalHundred") : t("remaining", { value: `${remainingPercent.toFixed(2)}%` })}
                 </div>
              )}
         </div>
@@ -229,7 +234,7 @@ export function SplitDetails({
                                 </div>
                                 
                                 {splitMode === "EQUAL" && isInvolved && (
-                                    <span className="text-sm font-semibold">{currency} {splitAmountEqual.toFixed(2)}</span>
+                                    <span className="text-sm font-semibold">{currency} {(splitAmounts[member.user_id] ?? 0).toFixed(2)}</span>
                                 )}
 
                                 {splitMode === "EXACT" && (

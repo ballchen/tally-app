@@ -196,7 +196,7 @@ export function AddExpenseDrawer({
     };
   }, [isOpen, isInputFocused]);
 
-  const form = useSplitForm(amount, members);
+  const form = useSplitForm(amount, members, selectedCurrency);
   const initializedRef = useRef<string | null>(null);
 
   // Initialize form when expense data is ready for editing
@@ -215,6 +215,7 @@ export function AddExpenseDrawer({
         setStep("details"); // Skip calculator for edit, go straight to details
         form.setValues({
           amount: expenseData.amount,
+          currency: expenseData.currency,
           description: expenseData.description || "",
           payerId: expenseData.payer_id,
           splits: expenseData.splits.map(

@@ -1,5 +1,4 @@
-import { AVAILABLE_CURRENCIES, findExchangeRate } from '@tally/shared/currency';
-import { useExchangeRates } from '@tally/shared/queries/exchange-rates';
+import { AVAILABLE_CURRENCIES } from '@tally/shared/currency';
 import * as Haptics from 'expo-haptics';
 import { useMemo, useState } from 'react';
 import { ActionSheetIOS, Pressable, View } from 'react-native';
@@ -15,6 +14,10 @@ export type CalculatorProps = {
   currency: string;
   baseCurrency: string;
   onCurrencyChange: (currency: string) => void;
+  /** Null means no rate is known, so no conversion can be shown. */
+  rate: number | null;
+  /** The rate came from the expense being edited rather than from today's table. */
+  rateLocked: boolean;
   initialValue?: number;
   confirmLabel: string;
   onConfirm: (amount: number) => void;
@@ -58,6 +61,8 @@ export function Calculator({
   currency,
   baseCurrency,
   onCurrencyChange,
+  rate,
+  rateLocked,
   initialValue,
   confirmLabel,
   onConfirm,
@@ -65,7 +70,6 @@ export function Calculator({
   const theme = useTheme();
   const t = useT('Calculator');
   const [state, setState] = useState<CalculatorState>(() => initialState(initialValue));
-  const rates = useExchangeRates();
 
   const press = (key: string) => {
     const token = tokenFor(key);
@@ -89,10 +93,6 @@ export function Calculator({
     );
   };
 
-  const rate = useMemo(
-    () => findExchangeRate(currency, baseCurrency, rates.data),
-    [currency, baseCurrency, rates.data],
-  );
   const crossCurrency = currency !== baseCurrency;
   const display = state.error ? t('error') : state.display;
   // Confirming an unfinished expression ("120 + 30") should use its result,
@@ -187,6 +187,7 @@ export function Calculator({
               testID="calculator-converted"
               style={{ textAlign: 'right' }}
             >
+              {rateLocked ? '🔒 ' : ''}
               {t('convertedTo', { amount: formatMoney(state.value * rate, baseCurrency) })} (
               {`1 ${currency} = ${rate.toFixed(4)} ${baseCurrency}`})
             </Text>

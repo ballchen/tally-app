@@ -1,7 +1,7 @@
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
 import type { GroupMember } from '@tally/shared/members';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 import {
   InputAccessoryView,
   Keyboard,
@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { memberDisplayName } from '@/components/groups/MemberStrip';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, formatMoneyExact } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { useTheme } from '@/theme/useTheme';
 
@@ -43,7 +43,8 @@ export type SplitDetailsProps = {
 
   involvedIds: string[];
   onToggleInvolved: (userId: string) => void;
-  splitAmountEqual: number;
+  /** Each member's share, already rounded to the currency's smallest unit. */
+  splitAmounts: Record<string, number>;
 
   exactAmounts: Record<string, number>;
   onExactChange: (userId: string, value: string) => void;
@@ -53,13 +54,17 @@ export type SplitDetailsProps = {
 
   remainingExact: number;
   remainingPercent: number;
+  allocationValid: boolean;
 };
 
 const MODES: SplitMode[] = ['EQUAL', 'EXACT', 'PERCENT'];
-const EXACT_EPSILON = 0.05;
-const PERCENT_EPSILON = 0.1;
-/** Keeps the last allocation row clear of the pinned remaining bar and save button. */
-const BOTTOM_BAR_CLEARANCE = 96;
+/** Leaves the focused row clear of the section heading once scrolled to. */
+const FOCUS_MARGIN = 24;
+
+/** Keeps a leftover tenth of a percent visible instead of rounding it away to 100.0%. */
+function formatPercent(value: number): string {
+  return Number.isInteger(value * 10) ? value.toFixed(1) : value.toFixed(2);
+}
 
 export function SplitDetails({
   amount,
@@ -76,13 +81,14 @@ export function SplitDetails({
   onSplitModeChange,
   involvedIds,
   onToggleInvolved,
-  splitAmountEqual,
+  splitAmounts,
   exactAmounts,
   onExactChange,
   percentAmounts,
   onPercentChange,
   remainingExact,
   remainingPercent,
+  allocationValid,
 }: SplitDetailsProps) {
   const theme = useTheme();
   const t = useT('SplitDetails');
@@ -94,19 +100,30 @@ export function SplitDetails({
   const nameOf = (member: GroupMember) =>
     member.user_id === currentUserId ? t('you') : memberDisplayName(member) || t('member');
 
-  const balanced =
-    splitMode === 'EXACT'
-      ? Math.abs(remainingExact) < EXACT_EPSILON
-      : Math.abs(remainingPercent) < PERCENT_EPSILON;
+  // The bar must agree with the save button, or an unsaveable form shows a
+  // remainder of zero.
+  const balanced = allocationValid;
 
   const remainingText =
     splitMode === 'EXACT'
       ? balanced
         ? t('perfectlyAllocated')
-        : t('remaining', { value: formatMoney(remainingExact, currency) })
+        : t('remaining', { value: formatMoneyExact(remainingExact, currency) })
       : balanced
         ? t('totalHundred')
-        : t('remaining', { value: `${remainingPercent.toFixed(1)}%` });
+        : t('remaining', { value: `${formatPercent(remainingPercent)}%` });
+
+  const scrollRef = useRef<ScrollView>(null);
+  const allocationsY = useRef(0);
+  const rowY = useRef<Record<string, number>>({});
+
+  // A focused allocation field otherwise stays behind the keyboard, and the
+  // user types into a row they cannot see.
+  const revealRow = (userId: string) => {
+    const y = rowY.current[userId];
+    if (y == null) return;
+    scrollRef.current?.scrollTo({ y: Math.max(allocationsY.current + y - FOCUS_MARGIN, 0) });
+  };
 
   const numericInput = (
     member: GroupMember,
@@ -124,6 +141,7 @@ export function SplitDetails({
         placeholderTextColor={theme.colors.textSecondary}
         value={value ? String(value) : ''}
         onChangeText={onChange}
+        onFocus={() => revealRow(member.user_id)}
         maxFontSizeMultiplier={theme.maxFontSizeMultiplier}
         style={{
           minWidth: 80,
@@ -147,9 +165,10 @@ export function SplitDetails({
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
-        contentContainerStyle={{ gap: theme.spacing.xl, paddingBottom: BOTTOM_BAR_CLEARANCE }}
+        contentContainerStyle={{ gap: theme.spacing.lg, paddingBottom: theme.spacing.lg }}
       >
         <View style={{ alignItems: 'center', gap: theme.spacing.xs }}>
           <Text variant="footnote" color="textSecondary">
@@ -252,7 +271,12 @@ export function SplitDetails({
           />
         </View>
 
-        <View style={{ gap: theme.spacing.sm }}>
+        <View
+          style={{ gap: theme.spacing.sm }}
+          onLayout={(event) => {
+            allocationsY.current = event.nativeEvent.layout.y;
+          }}
+        >
           <Text variant="subhead" color="textSecondary">
             {t('allocations')}
           </Text>
@@ -270,13 +294,16 @@ export function SplitDetails({
                 testID={`split-row-${member.user_id}`}
                 disabled={splitMode !== 'EQUAL'}
                 onPress={() => onToggleInvolved(member.user_id)}
+                onLayout={(event) => {
+                  rowY.current[member.user_id] = event.nativeEvent.layout.y;
+                }}
               >
                 <Surface
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: theme.spacing.md,
-                    paddingVertical: theme.spacing.md,
+                    paddingVertical: theme.spacing.sm,
                     opacity: dimmed ? 0.5 : 1,
                   }}
                 >
@@ -313,7 +340,7 @@ export function SplitDetails({
 
                   {splitMode === 'EQUAL' ? (
                     <Text variant="amountM" testID={`split-amount-${member.user_id}`}>
-                      {involved ? formatMoney(splitAmountEqual, currency) : '—'}
+                      {involved ? formatMoney(splitAmounts[member.user_id] ?? 0, currency) : '—'}
                     </Text>
                   ) : splitMode === 'EXACT' ? (
                     numericInput(

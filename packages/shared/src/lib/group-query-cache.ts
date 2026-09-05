@@ -37,6 +37,24 @@ type MemberProfile = {
   profiles: { display_name: string | null; avatar_url: string | null } | null
 }
 
+function timeOf(expense: Record<string, unknown>): number {
+  const parsed = Date.parse(String(expense.date ?? ""))
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+/**
+ * The timeline is ordered newest date first, so a backdated expense has to land
+ * where the server will put it — prepending makes the card jump on refetch.
+ */
+export function insertExpenseByDate(
+  expenses: Array<Record<string, unknown>>,
+  expense: Record<string, unknown>
+): Array<Record<string, unknown>> {
+  const at = expenses.findIndex((existing) => timeOf(existing) <= timeOf(expense))
+  if (at === -1) return [...expenses, expense]
+  return [...expenses.slice(0, at), expense, ...expenses.slice(at)]
+}
+
 export function buildOptimisticExpense(
   variables: CreateExpenseParams,
   user: { id: string; email?: string },

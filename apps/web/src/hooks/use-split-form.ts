@@ -6,7 +6,7 @@ type Member = {
   profiles: { display_name: string | null; avatar_url: string | null } | null
 }
 
-export function useSplitForm(amount: number, members: Member[]) {
+export function useSplitForm(amount: number, members: Member[], currency: string) {
   const { user } = useAuthStore()
-  return useSharedSplitForm(amount, members, user?.id)
+  return useSharedSplitForm(amount, members, user?.id, currency)
 }

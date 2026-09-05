@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { buildOptimisticExpense, type CreateExpenseParams } from "./group-query-cache"
+import {
+  buildOptimisticExpense,
+  insertExpenseByDate,
+  type CreateExpenseParams,
+} from "./group-query-cache"
 
 const USER = { id: "u1", email: "a@example.com" }
 const MEMBERS = [
@@ -38,5 +42,36 @@ describe("buildOptimisticExpense", () => {
   it("locks each split's base amount with the given rate", () => {
     const built = buildOptimisticExpense(params({ exchangeRate: 0.25 }), USER, MEMBERS, "tmp")
     expect(built.expense_splits.map((s) => s.owed_amount_base)).toEqual([12.5, 12.5])
+  })
+})
+
+describe("insertExpenseByDate", () => {
+  const timeline = [
+    { id: "c", date: "2026-09-03T00:00:00+00:00" },
+    { id: "b", date: "2026-08-20T00:00:00+00:00" },
+    { id: "a", date: "2026-07-01T00:00:00+00:00" },
+  ]
+
+  it("puts a new expense at the top", () => {
+    const built = insertExpenseByDate(timeline, { id: "x", date: "2026-09-04T00:00:00.000Z" })
+    expect(built.map((e) => e.id)).toEqual(["x", "c", "b", "a"])
+  })
+
+  it("puts a backdated expense in date order", () => {
+    const built = insertExpenseByDate(timeline, { id: "x", date: "2026-08-25T00:00:00.000Z" })
+    expect(built.map((e) => e.id)).toEqual(["c", "x", "b", "a"])
+  })
+
+  it("puts the oldest expense last", () => {
+    const built = insertExpenseByDate(timeline, { id: "x", date: "2020-01-01T00:00:00.000Z" })
+    expect(built.map((e) => e.id)).toEqual(["c", "b", "a", "x"])
+  })
+
+  it("compares instants, not the string form of the timestamp", () => {
+    const built = insertExpenseByDate([{ id: "z", date: "2026-09-03T00:00:00+08:00" }], {
+      id: "x",
+      date: "2026-09-02T20:00:00.000Z",
+    })
+    expect(built.map((e) => e.id)).toEqual(["x", "z"])
   })
 })

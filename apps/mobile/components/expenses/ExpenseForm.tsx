@@ -12,7 +12,7 @@ import { useSupabase } from '@tally/shared/supabase-context';
 import * as Haptics from 'expo-haptics';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Calculator } from './Calculator';
@@ -25,6 +25,7 @@ import { Text } from '@/components/ui/Text';
 import { showToast } from '@/components/ui/Toast';
 import { errorMessage } from '@/lib/errors';
 import { resolveExchangeRate } from '@/lib/expense-rate';
+import { useKeyboardOverlap } from '@/lib/keyboard';
 import { useT } from '@/lib/i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
@@ -46,6 +47,7 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const keyboardOverlap = useKeyboardOverlap();
   const t = useT('AddExpense');
   const supabase = useSupabase();
   const userId = useAuthStore((s) => s.session?.user.id) ?? '';
@@ -70,7 +72,8 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
   // form reports its own failures inline.
   const [error, setError] = useState<string | null>(null);
 
-  const form = useSplitForm(amount, members, userId);
+  const currency = pickedCurrency ?? baseCurrency;
+  const form = useSplitForm(amount, members, userId, currency);
 
   // Loading an expense into the form during render (rather than in an effect)
   // avoids a first paint showing an empty form over the real values.
@@ -83,13 +86,13 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
     setPickedDate(new Date(data.date));
     form.setValues({
       amount: Number(data.amount),
+      currency: data.currency,
       description: data.description ?? '',
       payerId: data.payer_id,
       splits: data.splits.map((s) => ({ userId: s.user_id, amount: Number(s.owed_amount) })),
     });
   }
 
-  const currency = pickedCurrency ?? baseCurrency;
   const date = pickedDate ?? atMidday(new Date());
 
   const locked = expense.data
@@ -106,6 +109,9 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
   };
 
   const save = () => {
+    // The keyboard can cover the button, so a tap may land while an allocation
+    // field still holds focus; dismissing first commits nothing but the intent.
+    Keyboard.dismiss();
     if (!form.isValid) return;
     setError(null);
 
@@ -261,6 +267,8 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
         <Calculator
           currency={currency}
           baseCurrency={baseCurrency}
+          rate={rate}
+          rateLocked={showsLock}
           initialValue={amount}
           confirmLabel={t('next')}
           onCurrencyChange={setPickedCurrency}
@@ -286,45 +294,58 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
             onSplitModeChange={(mode: SplitMode) => form.setSplitMode(mode)}
             involvedIds={form.involvedIds}
             onToggleInvolved={form.toggleInvolved}
-            splitAmountEqual={form.splitAmountEqual}
+            splitAmounts={form.splitAmounts}
             exactAmounts={form.exactAmounts}
             onExactChange={form.handleAmountChange}
             percentAmounts={form.percentAmounts}
             onPercentChange={form.handlePercentChange}
             remainingExact={form.remainingExact}
             remainingPercent={form.remainingPercent}
+            allocationValid={form.isValid}
           />
 
-          {error ? (
-            <Text variant="subhead" color="negative" testID="expense-error">
-              {error}
-            </Text>
-          ) : null}
+          {/* The keyboard must never cover the actions, or a tap on Save is
+              swallowed by the keyboard and the edit is silently lost. */}
+          <View
+            style={{
+              gap: theme.spacing.sm,
+              paddingBottom: Math.max(keyboardOverlap - insets.bottom - theme.spacing.lg, 0),
+            }}
+          >
+            {error ? (
+              <Text variant="subhead" color="negative" testID="expense-error">
+                {error}
+              </Text>
+            ) : null}
 
-          {showsLock && rate ? (
-            <Text variant="footnote" color="textSecondary" testID="locked-rate">
-              🔒 {t('lockedRate')} ·{' '}
-              {t('ratePreview', { from: currency, rate: rate.toFixed(4), to: baseCurrency })}
-            </Text>
-          ) : null}
+            {showsLock && rate ? (
+              <Text variant="footnote" color="textSecondary" testID="locked-rate">
+                🔒 {t('lockedRate')} ·{' '}
+                {t('ratePreview', { from: currency, rate: rate.toFixed(4), to: baseCurrency })}
+              </Text>
+            ) : null}
 
-          <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
-            <Button
-              testID="expense-back-to-amount"
-              variant="secondary"
-              size="lg"
-              title={t('amountStep')}
-              onPress={() => setStep('amount')}
-            />
-            <Button
-              testID="expense-save"
-              size="lg"
-              style={{ flex: 1 }}
-              loading={saving}
-              disabled={!form.isValid || saving}
-              title={form.isValid ? t('save') : t('checkAllocation')}
-              onPress={save}
-            />
+            <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+              <Button
+                testID="expense-back-to-amount"
+                variant="secondary"
+                size="lg"
+                title={t('amountStep')}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setStep('amount');
+                }}
+              />
+              <Button
+                testID="expense-save"
+                size="lg"
+                style={{ flex: 1 }}
+                loading={saving}
+                disabled={!form.isValid || saving}
+                title={form.isValid ? t('save') : t('checkAllocation')}
+                onPress={save}
+              />
+            </View>
           </View>
         </>
       )}

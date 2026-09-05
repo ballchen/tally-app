@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // next-pwa writes sw.js/workbox-*.js here during `build`, which lint races
+    // against when turbo runs the two tasks in parallel.
+    "public/**",
   ]),
 ]);
 

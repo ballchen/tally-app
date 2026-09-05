@@ -1,0 +1,104 @@
+appId: com.ballchen.tally
+name: Phase 5 — the keyboard never covers Amount or Save
+# Writes into `phase5ex` (Expense Lab) and removes what it wrote, so it re-runs.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Expense Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Expense Lab.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- tapOn:
+    id: 'add-expense-fab'
+
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-6'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calculator-confirm'
+
+# The description field autofocuses, so the keyboard is up from here on.
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- inputText: 'Maestro Keyboard'
+
+# A single tap on Amount switches steps, even with the keyboard covering the
+# space the button used to sit in.
+- tapOn:
+    id: 'expense-back-to-amount'
+- assertVisible:
+    id: 'calculator-display'
+- takeScreenshot: k1-amount-first-tap
+- tapOn:
+    id: 'calculator-confirm'
+
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- tapOn:
+    id: 'expense-description'
+- inputText: ' v2'
+# Saving straight from the open keyboard, with no Done tap first.
+- assertVisible:
+    id: 'expense-save'
+    enabled: true
+- takeScreenshot: k2-save-visible-over-keyboard
+- tapOn:
+    id: 'expense-save'
+- extendedWaitUntil:
+    visible: '.*Maestro Keyboard v2.*NT\$ 600.*'
+    timeout: 20000
+- takeScreenshot: k3-saved-from-keyboard
+
+# Restore the fixture.
+- repeat:
+    while:
+      visible: '.*Maestro Keyboard.*'
+    commands:
+      - longPressOn: '.*Maestro Keyboard.*'
+      - tapOn: 'Delete'
+      - assertVisible: 'Delete expense?'
+      - tapOn: 'Delete'
+      - extendedWaitUntil:
+          notVisible: 'Delete expense?'
+          timeout: 20000
+- assertNotVisible: '.*Maestro Keyboard.*'
