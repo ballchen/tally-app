@@ -15,8 +15,18 @@ export type PushStatus = 'granted' | 'denied' | 'undetermined';
  */
 export type PushRegistration = 'registered' | 'needsPrompt' | 'denied' | 'unconfigured';
 
-const TOKEN_KEY = 'push-expo-token';
-const PROMPT_DISMISSED_KEY = 'push-prompt-dismissed';
+const TOKEN_KEY_PREFIX = 'push-expo-token';
+const PROMPT_DISMISSED_KEY_PREFIX = 'push-prompt-dismissed';
+
+// Unscoped keys would leak a previous account's dismissal/token state to
+// whoever signs in next on the same device.
+function tokenKey(userId: string): string {
+  return `${TOKEN_KEY_PREFIX}:${userId}`;
+}
+
+function promptDismissedKey(userId: string): string {
+  return `${PROMPT_DISMISSED_KEY_PREFIX}:${userId}`;
+}
 
 export function setupPushHandler(): void {
   Notifications.setNotificationHandler({
@@ -64,7 +74,7 @@ async function storeToken(token: string): Promise<void> {
       { user_id: data.user.id, expo_token: token, platform: 'ios' },
       { onConflict: 'expo_token' },
     );
-  await AsyncStorage.setItem(TOKEN_KEY, token);
+  await AsyncStorage.setItem(tokenKey(data.user.id), token);
 }
 
 /** Registers the device without ever showing the system prompt. */
@@ -89,11 +99,15 @@ export async function promptForPush(): Promise<PushRegistration> {
 
 /** Must run before sign-out, while the session can still satisfy the RLS policy. */
 export async function unregisterPush(): Promise<void> {
-  const token = await AsyncStorage.getItem(TOKEN_KEY);
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) return;
+
+  const key = tokenKey(data.user.id);
+  const token = await AsyncStorage.getItem(key);
   if (!token) return;
 
   await supabase.from('device_tokens').delete().eq('expo_token', token);
-  await AsyncStorage.removeItem(TOKEN_KEY);
+  await AsyncStorage.removeItem(key);
 }
 
 /** The path push-send puts in `data.url`, e.g. `/groups/<id>`. */
@@ -108,35 +122,39 @@ export type PushPrompt = {
   dismiss: () => Promise<void>;
 };
 
-/** Drives the pre-permission explainer card: shown once, before the system prompt. */
-export function usePushPrompt(enabled: boolean): PushPrompt {
+/**
+ * Drives the pre-permission explainer card: shown once per account, before
+ * the system prompt. `userId` is undefined until the session resolves, which
+ * `enabled` already gates.
+ */
+export function usePushPrompt(enabled: boolean, userId?: string | null): PushPrompt {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !userId) return;
     let active = true;
     (async () => {
       const [status, dismissed] = await Promise.all([
         getPushStatus(),
-        AsyncStorage.getItem(PROMPT_DISMISSED_KEY),
+        AsyncStorage.getItem(promptDismissedKey(userId)),
       ]);
       if (active) setVisible(status === 'undetermined' && !dismissed);
     })();
     return () => {
       active = false;
     };
-  }, [enabled]);
+  }, [enabled, userId]);
 
   const enable = useCallback(async () => {
     setVisible(false);
-    await AsyncStorage.setItem(PROMPT_DISMISSED_KEY, '1');
+    if (userId) await AsyncStorage.setItem(promptDismissedKey(userId), '1');
     await promptForPush();
-  }, []);
+  }, [userId]);
 
   const dismiss = useCallback(async () => {
     setVisible(false);
-    await AsyncStorage.setItem(PROMPT_DISMISSED_KEY, '1');
-  }, []);
+    if (userId) await AsyncStorage.setItem(promptDismissedKey(userId), '1');
+  }, [userId]);
 
   return { visible, enable, dismiss };
 }

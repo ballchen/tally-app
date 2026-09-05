@@ -12,6 +12,21 @@ Deno.serve(async (req) => {
 
   const admin = adminClient()
 
+  // Storage isn't covered by the tombstone RPC's SQL cascade, and an orphaned
+  // avatar file has no other owner to clean it up. Best-effort: a failure here
+  // must never block the account deletion itself.
+  const { data: avatarFiles, error: avatarListError } = await admin.storage
+    .from("avatars")
+    .list(user.id)
+  if (avatarListError) {
+    console.error("avatars list failed", avatarListError)
+  } else if (avatarFiles && avatarFiles.length > 0) {
+    const { error: avatarRemoveError } = await admin.storage
+      .from("avatars")
+      .remove(avatarFiles.map((file) => `${user.id}/${file.name}`))
+    if (avatarRemoveError) console.error("avatars remove failed", avatarRemoveError)
+  }
+
   const { error: tombstoneError } = await admin.rpc("tombstone_profile", { p_user_id: user.id })
   if (tombstoneError) {
     console.error("tombstone_profile failed", tombstoneError)

@@ -93,7 +93,11 @@ export function ExpenseForm({ groupId, expenseId }: ExpenseFormProps) {
     });
   }
 
-  const date = pickedDate ?? atMidday(new Date());
+  // Unpicked means "today, right now": the real timestamp, not noon. A fixed
+  // noon default sorted a same-day expense below same-day fixtures created
+  // later in the day, hiding the freshly-saved card off the bottom of the
+  // timeline without a scroll.
+  const date = pickedDate ?? new Date();
 
   const locked = expense.data
     ? { currency: expense.data.currency, rate: Number(expense.data.exchange_rate) }

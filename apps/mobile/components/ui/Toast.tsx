@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ToastMessage, {
   type ToastConfig,
   type ToastConfigParams,
@@ -102,6 +103,19 @@ export function showToast({ type = 'info', title, message, action, durationMs }:
     visibilityTime: durationMs,
   };
   ToastMessage.show(params);
+}
+
+/** Approximate height of the transparent nav bar rendered by group/detail screens. */
+const HEADER_HEIGHT = 56;
+
+/**
+ * A fixed `topOffset` on `ToastMessage` sat inside the header's tap target,
+ * swallowing taps on `group-back` while a toast was showing. Anchoring to the
+ * safe area keeps the card clear of the header on every device.
+ */
+export function AppToast() {
+  const insets = useSafeAreaInsets();
+  return <ToastMessage config={toastConfig} topOffset={insets.top + HEADER_HEIGHT} />;
 }
 
 export { ToastMessage };

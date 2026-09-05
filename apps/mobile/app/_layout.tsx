@@ -9,7 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthGate } from '@/components/AuthGate';
 import { PushLinking } from '@/components/PushLinking';
-import { ToastMessage, toastConfig } from '@/components/ui/Toast';
+import { AppToast } from '@/components/ui/Toast';
 import { hydrateLocalePreference, useLocaleStore } from '@/lib/i18n';
 import { setupPushHandler } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
@@ -67,7 +67,7 @@ export default function RootLayout() {
               <Stack.Screen name="auth/callback" />
               <Stack.Screen name="join/[code]" />
             </Stack>
-            <ToastMessage config={toastConfig} topOffset={64} />
+            <AppToast />
           </QueryClientProvider>
         </SupabaseProvider>
       </SafeAreaProvider>

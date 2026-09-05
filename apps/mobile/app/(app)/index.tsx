@@ -47,7 +47,7 @@ export default function GroupsScreen() {
   const tPush = useT('Push');
   const userId = useAuthStore((s) => s.session?.user.id);
   const profile = useProfile();
-  const pushPrompt = usePushPrompt(Boolean(userId));
+  const pushPrompt = usePushPrompt(Boolean(userId), userId);
 
   const [filterIndex, setFilterIndex] = useState(0);
   const filter = FILTERS[filterIndex];
