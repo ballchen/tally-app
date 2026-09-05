@@ -13,12 +13,15 @@ import { FlatList, Pressable, RefreshControl, View } from 'react-native';
 
 import { GroupRow, type SwipeAction } from '@/components/groups/GroupRow';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { Fab } from '@/components/ui/Fab';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Surface } from '@/components/ui/Surface';
 import { Text } from '@/components/ui/Text';
 import { showToast } from '@/components/ui/Toast';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n';
+import { usePushPrompt } from '@/lib/push';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
 
@@ -41,8 +44,10 @@ export default function GroupsScreen() {
   const t = useT('Groups');
   const tEdit = useT('EditGroup');
   const tCreate = useT('CreateGroup');
+  const tPush = useT('Push');
   const userId = useAuthStore((s) => s.session?.user.id);
   const profile = useProfile();
+  const pushPrompt = usePushPrompt(Boolean(userId));
 
   const [filterIndex, setFilterIndex] = useState(0);
   const filter = FILTERS[filterIndex];
@@ -122,7 +127,29 @@ export default function GroupsScreen() {
 
   const header = useMemo(
     () => (
-      <View style={{ paddingBottom: theme.spacing.lg }}>
+      <View style={{ paddingBottom: theme.spacing.lg, gap: theme.spacing.lg }}>
+        {pushPrompt.visible ? (
+          <Surface testID="push-prompt" style={{ gap: theme.spacing.sm }}>
+            <Text variant="headline">{tPush('promptTitle')}</Text>
+            <Text variant="subhead" color="textSecondary">
+              {tPush('promptBody')}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+              <Button
+                testID="push-prompt-enable"
+                title={tPush('enable')}
+                style={{ flex: 1 }}
+                onPress={pushPrompt.enable}
+              />
+              <Button
+                testID="push-prompt-later"
+                variant="ghost"
+                title={tPush('later')}
+                onPress={pushPrompt.dismiss}
+              />
+            </View>
+          </Surface>
+        ) : null}
         <SegmentedControl
           testID="groups-filter"
           values={[t('active'), t('archived'), t('hidden')]}
@@ -132,7 +159,7 @@ export default function GroupsScreen() {
         />
       </View>
     ),
-    [filterIndex, t, theme],
+    [filterIndex, t, tPush, theme, pushPrompt],
   );
 
   const empty = groups.isLoading ? (
@@ -157,7 +184,9 @@ export default function GroupsScreen() {
           headerRight: () => (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t('openProfile')}
+              accessibilityLabel={[t('openProfile'), profile.data?.display_name]
+                .filter(Boolean)
+                .join(', ')}
               testID="open-profile"
               hitSlop={12}
               onPress={() => router.push('/profile')}

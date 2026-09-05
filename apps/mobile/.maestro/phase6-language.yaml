@@ -1,0 +1,84 @@
+appId: com.ballchen.tally
+name: Phase 6 — switch to Japanese without a restart, then back to system
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+- tapOn:
+    id: 'push-prompt-later'
+    optional: true
+- assertVisible: 'Active'
+
+- tapOn:
+    id: 'open-profile'
+- tapOn:
+    id: 'profile-language'
+- tapOn: '日本語'
+- assertVisible: '設定'
+- assertVisible: '.*既定の通貨.*'
+- assertVisible: '.*言語.*'
+- takeScreenshot: f5-profile-ja
+- scroll
+- assertVisible: 'アカウントを削除'
+- takeScreenshot: f5-profile-ja-danger
+- swipe:
+    direction: DOWN
+
+# iOS labels the back button with the previous screen's title.
+- tapOn: 'Tally'
+# The list re-renders in Japanese without relaunching the app.
+- extendedWaitUntil:
+    visible: 'アクティブ'
+    timeout: 15000
+- assertVisible: 'アーカイブ'
+- assertVisible: '非表示'
+# No untranslated `Namespace.key` placeholders leaked into the UI.
+- assertNotVisible: '[A-Za-z]+\.[A-Za-z]+'
+- takeScreenshot: f5-home-ja
+
+- tapOn: '.*Japan Trip.*'
+- extendedWaitUntil:
+    visible: 'あなたの残高'
+    timeout: 20000
+- assertNotVisible: '[A-Za-z]+\.[A-Za-z]+'
+- takeScreenshot: f5-group-ja
+- tapOn:
+    id: 'group-back'
+- extendedWaitUntil:
+    visible: 'アクティブ'
+    timeout: 20000
+
+# Restore "follow system" so the rest of the suite runs in English.
+- tapOn:
+    id: 'open-profile'
+- tapOn:
+    id: 'profile-language'
+- tapOn: 'システムに従う'
+- assertVisible: 'Settings'
+# iOS labels the back button with the previous screen's title.
+- tapOn: 'Tally'
+- extendedWaitUntil:
+    visible: 'Active'
+    timeout: 15000

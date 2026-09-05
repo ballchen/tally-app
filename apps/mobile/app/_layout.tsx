@@ -8,12 +8,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthGate } from '@/components/AuthGate';
+import { PushLinking } from '@/components/PushLinking';
 import { ToastMessage, toastConfig } from '@/components/ui/Toast';
+import { hydrateLocalePreference, useLocaleStore } from '@/lib/i18n';
+import { setupPushHandler } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/theme/useTheme';
 
 SplashScreen.preventAutoHideAsync();
+setupPushHandler();
 
 function createQueryClient() {
   return new QueryClient({
@@ -27,6 +31,11 @@ export default function RootLayout() {
   const theme = useTheme();
   const setSession = useAuthStore((s) => s.setSession);
   const initialized = useAuthStore((s) => s.initialized);
+  const localeHydrated = useLocaleStore((s) => s.hydrated);
+
+  useEffect(() => {
+    hydrateLocalePreference();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -35,8 +44,8 @@ export default function RootLayout() {
   }, [setSession]);
 
   useEffect(() => {
-    if (initialized) SplashScreen.hideAsync();
-  }, [initialized]);
+    if (initialized && localeHydrated) SplashScreen.hideAsync();
+  }, [initialized, localeHydrated]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -45,6 +54,7 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <StatusBar style="auto" />
             <AuthGate />
+            <PushLinking />
             <Stack
               screenOptions={{
                 headerShown: false,

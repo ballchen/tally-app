@@ -5,7 +5,7 @@ import { useTheme } from '@/theme/useTheme';
 
 export default function AppLayout() {
   const theme = useTheme();
-  const tGroups = useT('Groups');
+  const tProfile = useT('Profile');
 
   // A form sheet's content container collapses to zero height unless told to fill the sheet.
   const sheetOptions = {
@@ -25,7 +25,7 @@ export default function AppLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Tally', headerLargeTitle: true }} />
-      <Stack.Screen name="profile" options={{ title: tGroups('openProfile') }} />
+      <Stack.Screen name="profile" options={{ title: tProfile('title') }} />
       <Stack.Screen name="groups/new" options={sheetOptions} />
       <Stack.Screen name="groups/[id]/index" options={{ title: '' }} />
       <Stack.Screen

@@ -1,0 +1,65 @@
+appId: com.ballchen.tally
+name: Phase 6 — pick, crop and upload a profile photo
+# Needs at least one image in the Simulator library:
+#   xcrun simctl addmedia booted <some.png>
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+- tapOn:
+    id: 'push-prompt-later'
+    optional: true
+
+- tapOn:
+    id: 'open-profile'
+- assertVisible: 'Settings'
+- tapOn:
+    id: 'profile-change-photo'
+# The photo library sheet is a system UI; allow full access if iOS asks.
+- tapOn:
+    text: 'Allow Access to All Photos'
+    optional: true
+- extendedWaitUntil:
+    visible: 'Photos'
+    timeout: 20000
+- takeScreenshot: f4-picker
+- tapOn:
+    point: '25%,35%'
+- extendedWaitUntil:
+    visible: 'Choose'
+    timeout: 20000
+- takeScreenshot: f4-crop
+- tapOn: 'Choose'
+- extendedWaitUntil:
+    visible: 'Profile photo updated'
+    timeout: 40000
+- takeScreenshot: f4-uploaded
+# The toast sits over the navigation bar, so let it clear before tapping back.
+- extendedWaitUntil:
+    notVisible: 'Profile photo updated'
+    timeout: 15000
+# iOS labels the back button with the previous screen's title.
+- tapOn: 'Tally'
+- extendedWaitUntil:
+    visible: '.*Japan Trip.*'
+    timeout: 20000
+- takeScreenshot: f4-home-avatar

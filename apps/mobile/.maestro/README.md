@@ -48,11 +48,41 @@ node --experimental-strip-types apps/mobile/scripts/verify-rate-lock.ts phase5ed
   --compare /tmp/phase5ed-before.json
 ```
 
+`phase6-delete-account.yaml` consumes a throwaway account, so bracket it with the
+fixture script, which also asserts the rows are gone:
+
+```bash
+node --experimental-strip-types apps/mobile/scripts/temp-account.ts create
+maestro test apps/mobile/.maestro/phase6-delete-account.yaml
+node --experimental-strip-types apps/mobile/scripts/temp-account.ts check
+```
+
+The account is deliberately only a *member* of its fixture group: `groups.created_by`
+references `profiles(id)` with no ON DELETE action, so `delete-account` returns 500
+for a user who still owns a group.
+
+`phase6-profile-avatar.yaml` needs an image in the Simulator library
+(`xcrun simctl addmedia booted <some.png>`), and `phase6-signout.yaml` is bracketed
+with `scripts/push-tokens.ts` to watch the `device_tokens` row appear and vanish.
+
 ## Not covered here
 
 `useRealtimeSync` needs a second writer, so D6 is checked by hand: park the app
 on a group, insert an expense with the service role, and confirm the toast and
 the new card appear within two seconds.
+
+F1's "permission denied" half cannot be produced from a flow: Maestro's XCUITest
+runner accepts the system permission alert on its own, so tapping "Turn on" always
+grants. It is checked by hand by turning Tally's notifications off in iOS Settings
+and reopening the settings screen, which must then read "Not allowed" and offer
+"Open Settings". For the same reason `phase6-push-prompt.yaml` proves the alert was
+raised by the status flipping from "Not asked yet" to "Enabled" rather than by
+asserting on the alert itself.
+
+F3 (a real push arriving on a device) is blocked: a Simulator cannot obtain an APNs
+token, the project has no EAS `projectId` yet, and the `push-send` function has no
+VAPID secrets configured. Debug builds substitute a fake `ExponentPushToken[sim-…]`
+so the `device_tokens` plumbing is still exercised.
 
 E2's negative half — a missing exchange rate must block the save — cannot be
 provoked from the UI, because every currency the picker offers has a rate. It is

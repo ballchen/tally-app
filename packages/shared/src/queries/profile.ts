@@ -21,6 +21,7 @@ export type ProfileUpdate = {
   display_name?: string
   gender?: string
   avatar_url?: string
+  default_currency?: string
 }
 
 export function useUploadAvatar(): UseMutationResult<string, Error, File> {
@@ -103,4 +104,39 @@ export function useProfile(): UseProfileResult {
     updateProfile,
     uploadAvatar,
   }
+}
+
+/**
+ * React Native's fetch cannot build a `File`, so the mobile picker uploads the
+ * decoded bytes with an explicit content type instead of a multipart body.
+ */
+export function useUploadAvatarBinary(): UseMutationResult<
+  string,
+  Error,
+  { body: ArrayBuffer; extension: string; contentType: string }
+> {
+  const supabase = useSupabase()
+
+  return useMutation({
+    mutationFn: async ({ body, extension, contentType }) => {
+      const { user, error: authError } = await safeGetUser(supabase)
+      if (authError) throw authError
+      if (!user) throw new Error("No user")
+
+      const filePath = `${user.id}/${Date.now()}.${extension}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, body, { cacheControl: "0", upsert: true, contentType })
+
+      if (uploadError) throw uploadError
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(filePath)
+
+      // Cache-busting query keeps a replaced avatar from showing the stale image.
+      return `${publicUrl}?t=${Date.now()}`
+    },
+  })
 }
