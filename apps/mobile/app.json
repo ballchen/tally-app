@@ -41,6 +41,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0336dfed-4141-412f-a0fc-0251970da8ea"
+      }
+    },
+    "owner": "ballchen"
   }
 }
