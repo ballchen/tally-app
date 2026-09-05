@@ -217,7 +217,16 @@
     "someone": "誰か"
   },
   "Calculator": {
-    "ok": "OK"
+    "ok": "OK",
+    "currency": "通貨",
+    "error": "Error",
+    "convertedTo": "≈ {amount}",
+    "selectCurrency": "通貨を選択",
+    "clear": "クリア",
+    "backspace": "削除",
+    "equals": "イコール",
+    "cancel": "キャンセル",
+    "rateUnavailable": "レートを取得できません"
   },
   "AddExpense": {
     "loading": "読み込み中...",
@@ -241,7 +250,15 @@
     "pushTitle": "新しい経費が追加されました",
     "pushBody": "{name} が追加: {description} ({amount})",
     "ratesUnavailable": "為替レートを取得できません",
-    "ratesUnavailableDesc": "現在この通貨を換算できません。後でもう一度試すか、グループ通貨を使用してください。"
+    "ratesUnavailableDesc": "現在この通貨を換算できません。後でもう一度試すか、グループ通貨を使用してください。",
+    "amountStep": "金額",
+    "detailsStep": "詳細",
+    "next": "次へ",
+    "save": "保存",
+    "dateLabel": "日付",
+    "lockedRate": "固定レート",
+    "ratePreview": "1 {from} = {rate} {to}",
+    "deleteExpense": "支出を削除"
   },
   "ActivityLog": {
     "title": "アクティビティログ",
@@ -304,7 +321,8 @@
     "whoPaid": "支払った人",
     "allocations": "配分",
     "you": "あなた",
-    "member": "メンバー"
+    "member": "メンバー",
+    "splitMode": "分担"
   },
   "JoinGroup": {
     "title": "グループに参加",
@@ -343,5 +361,16 @@
     "expenseDeleted": "経費が削除されました！",
     "settlementRecorded": "精算が記録されました",
     "settlementUndone": "精算が取り消されました"
+  },
+  "ExpenseDetail": {
+    "title": "支出",
+    "participants": "参加者",
+    "paidBy": "支払者",
+    "date": "日付",
+    "addedBy": "{name} が {date} に作成",
+    "edit": "編集",
+    "convertedTotal": "≈ {amount}",
+    "lockedRate": "固定レート 1 {from} = {rate} {to}",
+    "notFound": "支出が見つかりません"
   }
 }

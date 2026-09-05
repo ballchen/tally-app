@@ -217,7 +217,16 @@
     "someone": "有人"
   },
   "Calculator": {
-    "ok": "OK"
+    "ok": "OK",
+    "currency": "幣別",
+    "error": "Error",
+    "convertedTo": "≈ {amount}",
+    "selectCurrency": "選擇幣別",
+    "clear": "清除",
+    "backspace": "退格",
+    "equals": "等於",
+    "cancel": "取消",
+    "rateUnavailable": "匯率不可用"
   },
   "AddExpense": {
     "loading": "載入中...",
@@ -241,7 +250,15 @@
     "pushTitle": "新增費用",
     "pushBody": "{name} 新增了：{description} ({amount})",
     "ratesUnavailable": "無法取得匯率",
-    "ratesUnavailableDesc": "目前無法換算此幣別，請稍後再試或改用群組幣別。"
+    "ratesUnavailableDesc": "目前無法換算此幣別，請稍後再試或改用群組幣別。",
+    "amountStep": "金額",
+    "detailsStep": "明細",
+    "next": "下一步",
+    "save": "儲存",
+    "dateLabel": "日期",
+    "lockedRate": "鎖定匯率",
+    "ratePreview": "1 {from} = {rate} {to}",
+    "deleteExpense": "刪除支出"
   },
   "ActivityLog": {
     "title": "活動記錄",
@@ -304,7 +321,8 @@
     "whoPaid": "誰付的？",
     "allocations": "分攤",
     "you": "你",
-    "member": "成員"
+    "member": "成員",
+    "splitMode": "分攤"
   },
   "JoinGroup": {
     "title": "加入群組",
@@ -343,5 +361,16 @@
     "expenseDeleted": "有一筆費用被刪除！",
     "settlementRecorded": "新增了一筆結清紀錄",
     "settlementUndone": "有一筆結清被復原"
+  },
+  "ExpenseDetail": {
+    "title": "支出",
+    "participants": "參與者",
+    "paidBy": "付款人",
+    "date": "日期",
+    "addedBy": "{name} 於 {date} 建立",
+    "edit": "編輯",
+    "convertedTotal": "≈ {amount}",
+    "lockedRate": "鎖定匯率 1 {from} = {rate} {to}",
+    "notFound": "找不到這筆支出"
   }
 }

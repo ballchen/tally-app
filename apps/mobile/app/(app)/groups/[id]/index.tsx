@@ -255,7 +255,7 @@ export default function GroupScreen() {
           cancelButtonIndex: 2,
         },
         (index) => {
-          if (index === 0) router.push(`/groups/${id}/expense/${expense.id}`);
+          if (index === 0) router.push(`/groups/${id}/expense/${expense.id}/edit`);
           if (index === 1) confirmDeleteExpense(expense);
         },
       );
@@ -559,8 +559,10 @@ export default function GroupScreen() {
         )}
         renderItem={renderItem}
         onEndReachedThreshold={0.4}
+        // Only ever grows: clamping to the current length would shrink the
+        // window on a short timeline and then hide the next expense added.
         onEndReached={() =>
-          setVisibleCount((count) => Math.min(count + TIMELINE_PAGE_SIZE, timeline.length))
+          setVisibleCount((count) => (count >= timeline.length ? count : count + TIMELINE_PAGE_SIZE))
         }
         refreshControl={
           <RefreshControl refreshing={details.isRefetching} onRefresh={() => details.refetch()} />

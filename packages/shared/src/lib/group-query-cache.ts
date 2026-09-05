@@ -5,6 +5,8 @@ export type CreateExpenseParams = {
   currency: string
   description: string
   exchangeRate: number
+  /** ISO timestamp; omitted lets the database default to now(). */
+  date?: string
   split: {
     userId: string
     amount: number
@@ -56,7 +58,7 @@ export function buildOptimisticExpense(
     description: variables.description,
     exchange_rate: variables.exchangeRate,
     created_by: user.id,
-    date: new Date().toISOString(),
+    date: variables.date ?? new Date().toISOString(),
     type: "expense",
     deleted_at: null,
     payer: payerProfile,

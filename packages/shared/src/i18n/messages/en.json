@@ -217,7 +217,16 @@
     "someone": "Someone"
   },
   "Calculator": {
-    "ok": "OK"
+    "ok": "OK",
+    "currency": "Currency",
+    "error": "Error",
+    "convertedTo": "≈ {amount}",
+    "selectCurrency": "Select currency",
+    "clear": "Clear",
+    "backspace": "Backspace",
+    "equals": "Equals",
+    "cancel": "Cancel",
+    "rateUnavailable": "Rate unavailable"
   },
   "AddExpense": {
     "loading": "Loading...",
@@ -241,7 +250,15 @@
     "pushTitle": "New Expense Added",
     "pushBody": "{name} added: {description} ({amount})",
     "ratesUnavailable": "Exchange rates unavailable",
-    "ratesUnavailableDesc": "Can't convert this currency right now. Try again later or use the group currency."
+    "ratesUnavailableDesc": "Can't convert this currency right now. Try again later or use the group currency.",
+    "amountStep": "Amount",
+    "detailsStep": "Details",
+    "next": "Next",
+    "save": "Save",
+    "dateLabel": "Date",
+    "lockedRate": "Locked rate",
+    "ratePreview": "1 {from} = {rate} {to}",
+    "deleteExpense": "Delete expense"
   },
   "ActivityLog": {
     "title": "Activity Log",
@@ -304,7 +321,8 @@
     "whoPaid": "Who paid?",
     "allocations": "Allocations",
     "you": "You",
-    "member": "Member"
+    "member": "Member",
+    "splitMode": "Split"
   },
   "JoinGroup": {
     "title": "Join Group",
@@ -343,5 +361,16 @@
     "expenseDeleted": "An expense was deleted!",
     "settlementRecorded": "A settlement was recorded",
     "settlementUndone": "A settlement was undone"
+  },
+  "ExpenseDetail": {
+    "title": "Expense",
+    "participants": "Participants",
+    "paidBy": "Paid by",
+    "date": "Date",
+    "addedBy": "Added by {name} on {date}",
+    "edit": "Edit",
+    "convertedTotal": "≈ {amount}",
+    "lockedRate": "Locked rate 1 {from} = {rate} {to}",
+    "notFound": "Expense not found"
   }
 }

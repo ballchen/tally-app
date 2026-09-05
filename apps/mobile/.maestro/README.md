@@ -26,11 +26,29 @@ npx supabase projects api-keys --project-ref <ref> -o json > /tmp/keys.json
 SUPABASE_KEYS_JSON=/tmp/keys.json node --experimental-strip-types apps/mobile/scripts/seed-dev.ts
 ```
 
-Flows that write (settle, undo, hide) restore what they changed, so the suite is
-re-runnable without a reseed.
+Flows that write (settle, undo, hide, add expense) restore what they changed, so
+the suite is re-runnable without a reseed. `scripts/expense-probe.ts` prints a
+group's expenses with their splits, or purges the rows a flow left behind after
+a mid-run failure:
+
+```bash
+node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ed
+node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ex --purge Maestro
+```
 
 ## Not covered here
 
 `useRealtimeSync` needs a second writer, so D6 is checked by hand: park the app
 on a group, insert an expense with the service role, and confirm the toast and
 the new card appear within two seconds.
+
+E2's negative half — a missing exchange rate must block the save — cannot be
+provoked from the UI, because every currency the picker offers has a rate. It is
+covered by `lib/expense-rate.test.ts` for the rule itself, and checked by hand by
+making the `rates` query throw, running the probe flow, and confirming no row was
+written:
+
+```bash
+maestro test <job dir>/e2-probe.yaml
+node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ex
+```

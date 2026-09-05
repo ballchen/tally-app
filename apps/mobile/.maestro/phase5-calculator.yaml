@@ -1,0 +1,137 @@
+appId: com.ballchen.tally
+name: Phase 5 — calculator precedence, divide by zero, decimal cap, clear and backspace
+# Read-only: never leaves the amount step, so nothing is written.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Expense Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Expense Lab.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- tapOn:
+    id: 'add-expense-fab'
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+
+# E1 — × binds tighter than +, so 1200 + 350 × 2 is 1900, not 3100.
+- tapOn:
+    id: 'calc-key-1'
+- tapOn:
+    id: 'calc-key-2'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-plus'
+- tapOn:
+    id: 'calc-key-3'
+- tapOn:
+    id: 'calc-key-5'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-times'
+- tapOn:
+    id: 'calc-key-2'
+- assertVisible:
+    id: 'calculator-expression'
+    text: '1200 \+ 350 × 2'
+- tapOn:
+    id: 'calc-key-equals'
+- assertVisible:
+    id: 'calculator-display'
+    text: '1900'
+- takeScreenshot: e1-precedence-1900
+
+# E1 — divide by zero shows Error instead of crashing, and a digit recovers.
+- tapOn:
+    id: 'calc-key-clear'
+- assertVisible:
+    id: 'calculator-display'
+    text: '0'
+- tapOn:
+    id: 'calc-key-5'
+- tapOn:
+    id: 'calc-key-divide'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-equals'
+- assertVisible:
+    id: 'calculator-display'
+    text: 'Error'
+- takeScreenshot: e1-divide-by-zero
+- tapOn:
+    id: 'calc-key-7'
+- assertVisible:
+    id: 'calculator-display'
+    text: '7'
+
+# E1 — at most two decimals, and backspace deletes one character at a time.
+- tapOn:
+    id: 'calc-key-clear'
+- tapOn:
+    id: 'calc-key-1'
+- tapOn:
+    id: 'calc-key-dot'
+- tapOn:
+    id: 'calc-key-2'
+- tapOn:
+    id: 'calc-key-3'
+- tapOn:
+    id: 'calc-key-4'
+- assertVisible:
+    id: 'calculator-display'
+    text: '1.23'
+- takeScreenshot: e1-two-decimals
+- tapOn:
+    id: 'calc-key-backspace'
+- assertVisible:
+    id: 'calculator-display'
+    text: '1.2'
+- tapOn:
+    id: 'calc-key-backspace'
+- assertVisible:
+    id: 'calculator-display'
+    text: '1.'
+- tapOn:
+    id: 'calc-key-clear'
+- assertVisible:
+    id: 'calculator-display'
+    text: '0'
+- takeScreenshot: e1-cleared
+
+- tapOn:
+    id: 'expense-cancel'

@@ -115,6 +115,7 @@ export function useAddExpense(): UseMutationResult<
       currency,
       description,
       exchangeRate,
+      date,
       split,
     }) => {
       const { user, error: authError } = await safeGetUser(supabase)
@@ -130,6 +131,7 @@ export function useAddExpense(): UseMutationResult<
           currency,
           description,
           exchange_rate: exchangeRate,
+          ...(date ? { date } : {}),
           created_by: user.id,
         })
         .select()
@@ -209,6 +211,8 @@ export type UpdateExpenseParams = {
   currency: string
   description: string
   exchangeRate: number
+  /** ISO timestamp; omitted (or null) keeps the stored date. */
+  date?: string
   split: {
     userId: string
     amount: number
@@ -239,6 +243,7 @@ export function useUpdateExpense(): UseMutationResult<
       currency,
       description,
       exchangeRate,
+      date,
       split,
     }: UpdateExpenseParams) => {
       const { data: oldExpense } = await supabase
@@ -254,6 +259,7 @@ export function useUpdateExpense(): UseMutationResult<
         p_currency: currency,
         p_description: description,
         p_exchange_rate: exchangeRate,
+        p_date: date ?? null,
         p_splits: split.map((s) => ({
           user_id: s.userId,
           amount: s.amount,

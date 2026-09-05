@@ -121,6 +121,12 @@ type Seed = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** The 15th of the previous month, so it always lands under its own timeline header. */
+function lastMonth(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 4, 0, 0)).toISOString();
+}
+
 /** 60 expenses three days apart, so the timeline spans six month sections. */
 function paginationExpenses(): SeedExpense[] {
   return Array.from({ length: 60 }, (_, index) => ({
@@ -188,6 +194,33 @@ const SEEDS: Seed[] = [
     owner: 'a',
     members: ['a', 'b'],
     expenses: paginationExpenses(),
+  },
+  // Phase 5 fixtures.
+  {
+    code: 'phase5ex',
+    name: 'Expense Lab',
+    owner: 'a',
+    members: ['a', 'b', 'c'],
+    expenses: [{ description: 'Welcome drinks', payer: 'a', amount: 300, splits: ['a', 'b', 'c'] }],
+  },
+  {
+    code: 'phase5ed',
+    name: 'Edit Lab',
+    owner: 'a',
+    members: ['a', 'b'],
+    // E7: a last-month JPY expense whose rate is deliberately far from today's,
+    // so re-saving it with a fresh rate would visibly change owed_amount_base.
+    expenses: [
+      {
+        description: 'Old Tokyo dinner',
+        payer: 'a',
+        amount: 8000,
+        currency: 'JPY',
+        exchangeRate: 0.25,
+        splits: ['a', 'b'],
+        date: lastMonth(),
+      },
+    ],
   },
   {
     code: 'phase4ar',

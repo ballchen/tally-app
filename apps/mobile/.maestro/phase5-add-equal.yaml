@@ -1,0 +1,126 @@
+appId: com.ballchen.tally
+name: Phase 5 — add an equally split expense, then delete it again
+# Writes into `phase5ex` (Expense Lab) and removes what it wrote, so it re-runs.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+  USER_A: 237af5ca-f35f-46c6-8f48-6647ddd77f72
+  USER_B: cdd03085-4c5d-4399-8b17-665ba4d50f9c
+  USER_C: 1a794b7a-83e7-4c76-a770-fcf32dd26e43
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Expense Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Expense Lab.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- tapOn:
+    id: 'add-expense-fab'
+
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-9'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calculator-confirm'
+
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- inputText: 'Maestro Equal'
+- tapOn: 'Done'
+
+# E4 — three members split NT$ 900 evenly. A split row is a single
+# accessibility element, so its amount is matched inside the row's label.
+- scrollUntilVisible:
+    element:
+      id: 'split-row-${USER_C}'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- assertVisible: '.*Phase Four C.*NT\$ 300.*'
+- assertVisible: '.*You.*NT\$ 300.*'
+- takeScreenshot: e4-equal-three-ways
+
+# E4 — dropping one participant reallocates the rest.
+- tapOn:
+    id: 'split-row-${USER_C}'
+- assertVisible: '.*You.*NT\$ 450.*'
+- assertNotVisible: '.*Phase Four C.*NT\$ 300.*'
+- takeScreenshot: e4-equal-two-ways
+
+# E4 — with nobody selected there is nothing to save.
+- tapOn:
+    id: 'split-row-${USER_A}'
+- tapOn:
+    id: 'split-row-${USER_B}'
+- assertVisible:
+    id: 'expense-save'
+    enabled: false
+- takeScreenshot: e4-nobody-selected-save-disabled
+- tapOn:
+    id: 'split-row-${USER_A}'
+- tapOn:
+    id: 'split-row-${USER_B}'
+- tapOn:
+    id: 'split-row-${USER_C}'
+- assertVisible: '.*Phase Four C.*NT\$ 300.*'
+- assertVisible:
+    id: 'expense-save'
+    enabled: true
+
+# E9 — the card appears in the timeline as soon as the modal closes.
+- tapOn:
+    id: 'expense-save'
+- extendedWaitUntil:
+    visible: '.*Maestro Equal.*NT\$ 900.*'
+    timeout: 20000
+- takeScreenshot: e9-optimistic-card
+
+# Restore the fixture: long-press the card and delete it.
+# Repeat so a card left behind by an earlier failed run is cleaned up too.
+- repeat:
+    while:
+      visible: '.*Maestro Equal.*'
+    commands:
+      - longPressOn: '.*Maestro Equal.*'
+      - tapOn: 'Delete'
+      - assertVisible: 'Delete expense?'
+      - tapOn: 'Delete'
+      - extendedWaitUntil:
+          notVisible: 'Delete expense?'
+          timeout: 20000
+- assertNotVisible: '.*Maestro Equal.*'
