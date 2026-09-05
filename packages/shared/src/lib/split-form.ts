@@ -153,7 +153,8 @@ export function useSplitForm(
   const isValid = () => {
     if (splitMode === "EQUAL") return involvedIds.length > 0
     if (splitMode === "EXACT") return Math.abs(remainingExact) < minorUnit(currency) / 2
-    if (splitMode === "PERCENT") return Math.abs(remainingPercent) < 0.01
+    // 33.33 × 3 = 99.99 must be accepted; computeSplits gives the remainder to the last participant.
+    if (splitMode === "PERCENT") return Math.abs(remainingPercent) < 0.1
     return false
   }
 
