@@ -1,6 +1,6 @@
 appId: com.ballchen.tally
 name: Phase 4 — settle all, expand the settlement card, then undo it
-# Settles every pairing in Kyoto Trip and undoes the settlement again, so the
+# Settles every pairing in `phase4sa` (Settle All Trip) and undoes it again, so the
 # fixture is left exactly as seed-dev.ts created it.
 env:
   EMAIL: phase2-test@example.com
@@ -21,6 +21,13 @@ env:
 - tapOn: 'Done'
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
@@ -28,10 +35,10 @@ env:
 # The list has no deterministic order, so the card can be below the fold.
 - scrollUntilVisible:
     element:
-      text: '.*Kyoto Trip.*'
+      text: '.*Settle All Trip.*'
     direction: DOWN
     timeout: 30000
-- tapOn: '.*Kyoto Trip.*'
+- tapOn: '.*Settle All Trip.*'
 - extendedWaitUntil:
     visible: 'NT\$ 11,688'
     timeout: 20000
@@ -60,18 +67,26 @@ env:
 - assertVisible: '.*Settled by Phase Three A.*'
 - takeScreenshot: d4-settlement-card
 
+# Recording the settlement rewrites the balances section above the timeline, so
+# the card is still moving for a moment afterwards; letting the toast expire
+# first both settles the layout and leaves only the card's trash matching Undo.
+- extendedWaitUntil:
+    notVisible: 'Settlement recorded!'
+    timeout: 20000
+
 # The card expands into one row per repayment.
+- scrollUntilVisible:
+    element:
+      text: '.*Settled by Phase Three A.*'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
 - tapOn: '.*Settled by Phase Three A.*'
 - extendedWaitUntil:
     visible: 'Phase Four C → Phase Three B'
     timeout: 20000
 - assertVisible: 'Phase Three A → Phase Three B'
 - takeScreenshot: d4-expanded-repayments
-
-# Let the toast's own undo action expire so only the card's trash matches.
-- extendedWaitUntil:
-    notVisible: 'Settlement recorded!'
-    timeout: 20000
 
 # D5 — undo now lives at the bottom of the expanded card and asks for confirmation.
 - tapOn:

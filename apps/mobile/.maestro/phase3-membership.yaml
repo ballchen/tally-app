@@ -23,12 +23,16 @@ env:
 - tapOn: 'Done'
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*'
-    timeout: 20000
 
 # C6 — a non-owner cannot edit the group, and gets a leave button instead.
 - scrollUntilVisible:
@@ -84,9 +88,6 @@ env:
     timeout: 20000
 
 # C7 — a settled group can be left, and the card disappears.
-- extendedWaitUntil:
-    visible: '.*Leave Test.*'
-    timeout: 20000
 - scrollUntilVisible:
     element:
       text: '.*Leave Test.*'
@@ -147,12 +148,16 @@ env:
 - tapOn: 'Done'
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
-- extendedWaitUntil:
-    visible: '.*Remove Test.*'
-    timeout: 20000
 - scrollUntilVisible:
     element:
       text: '.*Remove Test.*'
@@ -198,6 +203,13 @@ env:
 - tapOn: 'Done'
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true

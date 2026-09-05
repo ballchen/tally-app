@@ -65,16 +65,34 @@ env:
     timeout: 30000
 # The keychain prompt can land before or after the list paints, so offer to
 # dismiss it on both sides.
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
+    optional: true
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
     optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
 
 # Captured with the notification explainer card still showing.
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*'
+# The groups query has no ORDER BY, so a card's place on the list moves
+# between runs; it is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
     timeout: 30000
 - takeScreenshot: docs/screens/groups-list-${MODE}
 - tapOn:
@@ -103,8 +121,12 @@ env:
 # back to; restarting lands on the groups list.
 - launchApp
 
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*'
+# The groups query has no ORDER BY, so a card's place on the list moves
+# between runs; it is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
     timeout: 30000
 - scrollUntilVisible:
     element:
@@ -200,8 +222,12 @@ env:
     id: 'expense-cancel'
 - launchApp
 
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*'
+# The groups query has no ORDER BY, so a card's place on the list moves
+# between runs; it is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
     timeout: 30000
 - tapOn:
     id: 'open-profile'

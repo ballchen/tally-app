@@ -1,6 +1,6 @@
 appId: com.ballchen.tally
 name: Phase 4 — record payment, confirm, then undo from the toast
-# Records A → B in Kyoto Trip and undoes it again, so the fixture is left untouched.
+# Records A → B in `phase4su` (Settle Undo Trip) and undoes it again, so the fixture is left untouched.
 env:
   EMAIL: phase2-test@example.com
   PASSWORD: Phase2Test!2026
@@ -22,6 +22,13 @@ env:
 - tapOn: 'Done'
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
@@ -29,10 +36,10 @@ env:
 # The list has no deterministic order, so the card can be below the fold.
 - scrollUntilVisible:
     element:
-      text: '.*Kyoto Trip.*'
+      text: '.*Settle Undo Trip.*'
     direction: DOWN
     timeout: 30000
-- tapOn: '.*Kyoto Trip.*'
+- tapOn: '.*Settle Undo Trip.*'
 - extendedWaitUntil:
     visible: 'NT\$ 11,688'
     timeout: 20000

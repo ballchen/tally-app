@@ -17,11 +17,25 @@ env:
 - eraseText
 - inputText: ${PASSWORD}
 - tapOn: 'Done'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
@@ -58,6 +72,13 @@ env:
 - assertNotVisible: '[A-Za-z]+\.[A-Za-z]+'
 - takeScreenshot: f5-home-ja
 
+# The groups query has no ORDER BY, so a card's place on the list moves
+# between runs; it is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
 - tapOn: '.*Japan Trip.*'
 - extendedWaitUntil:
     visible: 'あなたの残高'
@@ -66,8 +87,12 @@ env:
 - takeScreenshot: f5-group-ja
 - tapOn:
     id: 'group-back'
-- extendedWaitUntil:
-    visible: 'アクティブ'
+# Scrolling to a card leaves the list where it stopped, and the filter tabs
+# sit in its header.
+- scrollUntilVisible:
+    element:
+      text: 'アクティブ'
+    direction: UP
     timeout: 20000
 
 # Restore "follow system" so the rest of the suite runs in English.
@@ -79,6 +104,8 @@ env:
 - assertVisible: 'Settings'
 # iOS labels the back button with the previous screen's title.
 - tapOn: 'Tally'
-- extendedWaitUntil:
-    visible: 'Active'
+- scrollUntilVisible:
+    element:
+      text: 'Active'
+    direction: UP
     timeout: 15000

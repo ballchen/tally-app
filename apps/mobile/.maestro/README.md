@@ -4,25 +4,48 @@ One file per acceptance item, named after the phase it belongs to.
 
 ## Running
 
-Maestro is not a repo dependency; it is installed per machine and is often not
-on `PATH`. Use whichever resolves:
+Run the suite through `apps/mobile/scripts/e2e.sh`, never by pointing Maestro at
+this directory by hand:
 
 ```bash
-maestro test apps/mobile/.maestro/                 # when it is on PATH
-~/.maestro/bin/maestro test apps/mobile/.maestro/  # default installer location
-/tmp/maestro-dist/maestro/bin/maestro test apps/mobile/.maestro/  # this workstation
+npx supabase projects api-keys --project-ref <ref> -o json > /tmp/keys.json
+SUPABASE_KEYS_JSON=/tmp/keys.json apps/mobile/scripts/e2e.sh
+SUPABASE_KEYS_JSON=/tmp/keys.json apps/mobile/scripts/e2e.sh .maestro/phase5-add-equal.yaml
 ```
 
-Flows expect a booted "iPhone 17 Pro" Simulator with a debug build installed
+The script boots the Simulator, puts the state a flow cannot reach back to its
+baseline (appearance, Dynamic Type size, device language), reseeds the fixtures,
+creates the delete-account fixture, runs `maestro test --exclude-tags=docs`, and
+checks the fixture was consumed. `MAESTRO=`, `DEVICE=` and `SKIP_SEED=1`
+override its defaults. It expects a debug build already installed
 (`pnpm --filter @tally/mobile ios`) and Metro running.
 
-`phase7-screens.yaml` and `phase7-dynamic-type.yaml` assert nothing — they only
-file screenshots into `docs/screens/`. They carry the `docs` tag, so a sweep of
-the whole directory should skip them:
+Three properties of the environment shape how the flows are written, and each of
+them has produced a "passes alone, fails in the suite" before:
 
-```bash
-maestro test --exclude-tags=docs apps/mobile/.maestro/
-```
+- **Order is not filename order.** Maestro plans the run in its own order (see
+  the `Created execution plan` line in `~/.maestro/tests/<run>/maestro.log`), so
+  no flow may depend on another having run, or not having run, before it. Every
+  flow that writes therefore owns a group nobody else touches (`phase4sa`,
+  `phase4su`, `phase4al`, `phase5eq`, `phase5kb`, `phase5dt`), because Maestro
+  has no `finally` and a failed flow leaves its row behind — one settlement or
+  one expense left over has broken every other flow reading that group.
+- **There is no scroll position to inherit.** The groups query has no
+  `ORDER BY`, so Postgres may return the cards in any order, and the timeline
+  pages 30 rows at a time; a card is only in the iOS hierarchy once it is on
+  screen. Reach every card with `scrollUntilVisible`, and gate on the screen
+  (`groups-list`, `add-expense-fab`) rather than on a card that happens to fit
+  above the fold. The filter tabs live in the list header, so a scrolled list
+  takes them off screen too.
+- **The keychain dialog is not synchronous with the login.** iOS can raise
+  "Save Password?" a beat after the app has already navigated on, so a bare
+  optional tap on "Not Now" races it and the dialog is left covering the
+  screen. Every login waits for `.*Save Password.*` (optionally) first.
+
+`phase7-screens.yaml` and `phase7-dynamic-type.yaml` assert nothing — they only
+file screenshots into `docs/screens/`. They carry the `docs` tag, which is why
+the script excludes it. They also change appearance and content size without
+putting them back, which is what `e2e.sh` resets at the start of the next run.
 
 Screenshot paths are written relative to the Maestro output directory
 (`~/.maestro/tests/<run>/<flow>/takeScreenshot/`), so copy them into the repo
@@ -59,13 +82,17 @@ SUPABASE_KEYS_JSON=/tmp/keys.json node --experimental-strip-types apps/mobile/sc
 ```
 
 Flows that write (settle, undo, hide, add expense) restore what they changed, so
-the suite is re-runnable without a reseed. `scripts/expense-probe.ts` prints a
-group's expenses with their splits, or purges the rows a flow left behind after
-a mid-run failure:
+the suite is re-runnable without a reseed — but only on the happy path, so every
+writing flow gets a group of its own: `phase4sa`, `phase4su` and `phase4al` are
+copies of Kyoto Trip for the settling flows, and `phase5eq`, `phase5kb` and
+`phase5dt` take the expense-saving flows off `phase5ex`. `phase4kt` and
+`phase5ex` are left to the read-only ones.
+`scripts/expense-probe.ts` prints a group's expenses with their splits, or
+purges the rows a flow left behind after a mid-run failure:
 
 ```bash
 node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ed
-node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5ex --purge Maestro
+node --experimental-strip-types apps/mobile/scripts/expense-probe.ts phase5eq --purge Maestro
 ```
 
 `phase5-detail-and-edit.yaml` edits an expense's description, which must leave

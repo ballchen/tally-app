@@ -25,6 +25,13 @@ env:
 - tapOn: 'Done'
 - tapOn:
     id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
 - tapOn:
     text: 'Not Now'
     optional: true
@@ -33,8 +40,12 @@ env:
     optional: true
 
 # Warm the cache for both the list and one group's detail.
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*'
+# The groups query has no ORDER BY, so a card's place on the list moves
+# between runs; it is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
     timeout: 30000
 - tapOn: '.*Japan Trip.*'
 - extendedWaitUntil:
@@ -44,8 +55,10 @@ env:
 - tapOn:
     id: 'group-back'
 
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*'
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
     timeout: 30000
 - tapOn:
     id: 'open-profile'
@@ -59,7 +72,12 @@ env:
     visible:
       id: 'offline-banner'
     timeout: 20000
-- assertVisible: '.*Japan Trip.*'
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
 - takeScreenshot: docs/screens/offline-groups-list
 
 # G4 — a cached group detail is still readable offline.
@@ -115,7 +133,10 @@ env:
       id: 'offline-banner'
     timeout: 20000
 - tapOn: 'Tally'
-- extendedWaitUntil:
-    visible: '.*Japan Trip.*You are owed NT\$ 300.*'
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*You are owed NT\$ 300.*'
+    direction: DOWN
     timeout: 30000
+    centerElement: true
 - takeScreenshot: docs/screens/offline-recovered

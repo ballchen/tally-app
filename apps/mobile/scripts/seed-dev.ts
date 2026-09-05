@@ -127,6 +127,41 @@ function lastMonth(): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 4, 0, 0)).toISOString();
 }
 
+/**
+ * Nets out to C owes B NT$ 12,608 and A owes B NT$ 11,688, with one completed
+ * settlement already on the timeline. Each settling flow gets a copy of its
+ * own: a settlement a failed flow leaves behind zeroes those numbers out for
+ * every other flow reading the same group, and Maestro shuffles the order.
+ */
+function threeCurrencyTrip(code: string, name: string): Seed {
+  return {
+    code,
+    name,
+    owner: 'a',
+    members: ['a', 'b', 'c'],
+    expenses: [
+      {
+        description: 'Sushi omakase',
+        payer: 'a',
+        amount: 12000,
+        currency: 'JPY',
+        exchangeRate: 0.21,
+        splits: ['a', 'b', 'c'],
+      },
+      {
+        description: 'Hotel booking',
+        payer: 'b',
+        amount: 1234.5,
+        currency: 'USD',
+        exchangeRate: 32,
+        splits: ['a', 'b', 'c'],
+      },
+      { description: 'Airport bus', payer: 'c', amount: 600, splits: ['a', 'b', 'c'] },
+    ],
+    settlement: { from: 'c', to: 'b', amount: 1000 },
+  };
+}
+
 /** 60 expenses three days apart, so the timeline spans six month sections. */
 function paginationExpenses(): SeedExpense[] {
   return Array.from({ length: 60 }, (_, index) => ({
@@ -155,32 +190,10 @@ const SEEDS: Seed[] = [
   { code: 'phase3in', name: 'Invite Only', owner: 'b', members: ['b'] },
 
   // Phase 4 fixtures.
-  {
-    code: 'phase4kt',
-    name: 'Kyoto Trip',
-    owner: 'a',
-    members: ['a', 'b', 'c'],
-    expenses: [
-      {
-        description: 'Sushi omakase',
-        payer: 'a',
-        amount: 12000,
-        currency: 'JPY',
-        exchangeRate: 0.21,
-        splits: ['a', 'b', 'c'],
-      },
-      {
-        description: 'Hotel booking',
-        payer: 'b',
-        amount: 1234.5,
-        currency: 'USD',
-        exchangeRate: 32,
-        splits: ['a', 'b', 'c'],
-      },
-      { description: 'Airport bus', payer: 'c', amount: 600, splits: ['a', 'b', 'c'] },
-    ],
-    settlement: { from: 'c', to: 'b', amount: 1000 },
-  },
+  threeCurrencyTrip('phase4kt', 'Kyoto Trip'),
+  threeCurrencyTrip('phase4sa', 'Settle All Trip'),
+  threeCurrencyTrip('phase4su', 'Settle Undo Trip'),
+  threeCurrencyTrip('phase4al', 'Activity Log Trip'),
   {
     code: 'phase4dt',
     name: 'Debt Test',
@@ -196,11 +209,35 @@ const SEEDS: Seed[] = [
     expenses: paginationExpenses(),
   },
   // Phase 5 fixtures.
+  // `phase5ex` is for read-only flows only. Every flow that saves an expense
+  // gets a group of its own: Maestro shuffles flow order and has no `finally`,
+  // so a row a failed flow leaves behind must not be able to reach another one.
   {
     code: 'phase5ex',
     name: 'Expense Lab',
     owner: 'a',
     members: ['a', 'b', 'c'],
+    expenses: [{ description: 'Welcome drinks', payer: 'a', amount: 300, splits: ['a', 'b', 'c'] }],
+  },
+  {
+    code: 'phase5eq',
+    name: 'Equal Lab',
+    owner: 'a',
+    members: ['a', 'b', 'c'],
+  },
+  {
+    code: 'phase5kb',
+    name: 'Keyboard Lab',
+    owner: 'a',
+    members: ['a', 'b', 'c'],
+  },
+  {
+    code: 'phase5dt',
+    name: 'Date Lab',
+    owner: 'a',
+    members: ['a', 'b', 'c'],
+    // A current-month expense, so a backdated save lands under a second month
+    // header instead of being the only row in the timeline.
     expenses: [{ description: 'Welcome drinks', payer: 'a', amount: 300, splits: ['a', 'b', 'c'] }],
   },
   {
