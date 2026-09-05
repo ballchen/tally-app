@@ -80,11 +80,9 @@ env:
 - extendedWaitUntil:
     visible: 'Active'
     timeout: 20000
-- extendedWaitUntil:
-    visible: '.*Leave Test.*'
-    timeout: 20000
 
-# Leave Test has no expenses, so the currency is editable.
+# Leave Test has no expenses, so the currency is editable. Its card may be
+# below the fold (list is ordered newest first), so scroll rather than wait.
 - scrollUntilVisible:
     element:
       text: '.*Leave Test.*'
