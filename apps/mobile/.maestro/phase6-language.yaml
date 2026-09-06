@@ -39,7 +39,8 @@ env:
 - tapOn:
     text: 'Not Now'
     optional: true
-- assertVisible: 'Tally'
+- assertVisible:
+    id: 'groups-list'
 - tapOn:
     id: 'push-prompt-later'
     optional: true

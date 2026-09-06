@@ -32,7 +32,8 @@ env:
     optional: true
 
 - extendedWaitUntil:
-    visible: 'Tally'
+    visible:
+      id: 'groups-list'
     timeout: 20000
 - tapOn: 'Archived'
 # The list has no deterministic order, so the card can be below the fold.

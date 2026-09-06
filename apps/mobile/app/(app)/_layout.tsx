@@ -24,8 +24,19 @@ export default function AppLayout() {
         contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Tally', headerLargeTitle: true }} />
-      <Stack.Screen name="profile" options={{ title: tProfile('title') }} />
+      {/* The list carries no title of its own, but the screens it pushes label
+          their back button with it, so the title stays and only its rendering
+          is dropped. */}
+      <Stack.Screen
+        name="index"
+        options={{ title: 'Tally', headerLargeTitle: false, headerTitle: '' }}
+      />
+      {/* iOS labels a back button with the previous screen's title, which the
+          untitled list no longer supplies. */}
+      <Stack.Screen
+        name="profile"
+        options={{ title: tProfile('title'), headerBackTitle: 'Tally' }}
+      />
       <Stack.Screen name="groups/new" options={sheetOptions} />
       <Stack.Screen name="groups/[id]/index" options={{ title: '' }} />
       <Stack.Screen

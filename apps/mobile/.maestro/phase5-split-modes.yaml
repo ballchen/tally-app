@@ -35,7 +35,8 @@ env:
     optional: true
 
 - extendedWaitUntil:
-    visible: 'Tally'
+    visible:
+      id: 'groups-list'
     timeout: 20000
 - scrollUntilVisible:
     element:

@@ -40,5 +40,6 @@ env:
 - tapOn:
     text: 'Not Now'
     optional: true
-- assertVisible: 'Tally'
+- assertVisible:
+    id: 'groups-list'
 - takeScreenshot: b3-signed-in

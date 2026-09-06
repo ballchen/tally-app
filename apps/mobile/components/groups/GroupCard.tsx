@@ -121,7 +121,7 @@ export function GroupCard({ group, balance, onPress, swipeActions = [] }: GroupC
             </Text>
           </View>
           {balanceLabel ? (
-            <Text variant="amountM" color={balanceLabel.color}>
+            <Text variant="subhead" color={balanceLabel.color}>
               {balanceLabel.text}
             </Text>
           ) : null}

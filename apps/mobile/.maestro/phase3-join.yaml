@@ -31,7 +31,8 @@ env:
 - tapOn:
     text: 'Not Now'
     optional: true
-- assertVisible: 'Tally'
+- assertVisible:
+    id: 'groups-list'
 
 # Valid code that B is not a member of yet.
 - openLink: 'tally://join/phase3jn'
@@ -88,7 +89,8 @@ env:
 - assertVisible: 'Group not found or invalid link.'
 - takeScreenshot: c5-invalid
 - tapOn: 'Go Home'
-- assertVisible: 'Tally'
+- assertVisible:
+    id: 'groups-list'
 
 # Leave the group joined above so the fixtures are unchanged. The invite link is
 # a deterministic way back into it now that the list has many cards.
