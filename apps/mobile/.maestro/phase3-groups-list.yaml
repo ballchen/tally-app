@@ -32,7 +32,8 @@ env:
     text: 'Not Now'
     optional: true
 
-- assertVisible: 'Tally'
+- assertVisible:
+    id: 'groups-list'
 # The groups query has no ORDER BY, so Postgres is free to return the rows in
 # any order and a card's position on the list changes between runs; every card
 # is scrolled to rather than expected above the fold.

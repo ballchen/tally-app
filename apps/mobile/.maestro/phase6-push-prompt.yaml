@@ -35,7 +35,8 @@ env:
 - tapOn:
     text: 'Not Now'
     optional: true
-- assertVisible: 'Tally'
+- assertVisible:
+    id: 'groups-list'
 
 - runFlow:
     when:

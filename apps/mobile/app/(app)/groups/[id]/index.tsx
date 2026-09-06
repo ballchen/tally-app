@@ -317,7 +317,8 @@ export default function GroupScreen() {
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
             <HeaderButton
               testID="open-activity-log"
-              title={tActivity('viewHistory')}
+              symbol="clock.arrow.circlepath"
+              accessibilityLabel={tActivity('viewHistory')}
               onPress={() => router.push(`/groups/${id}/activity`)}
             />
             <HeaderButton

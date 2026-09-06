@@ -127,7 +127,9 @@ export default function GroupsScreen() {
 
   const header = useMemo(
     () => (
-      <View style={{ paddingBottom: theme.spacing.lg, gap: theme.spacing.lg }}>
+      <View
+        style={{ paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.lg, gap: theme.spacing.xl }}
+      >
         {pushPrompt.visible ? (
           <Surface testID="push-prompt" style={{ gap: theme.spacing.sm }}>
             <Text variant="headline">{tPush('promptTitle')}</Text>

@@ -61,7 +61,8 @@ env:
 - tapOn:
     id: 'login-submit'
 - extendedWaitUntil:
-    visible: 'Tally'
+    visible:
+      id: 'groups-list'
     timeout: 30000
 # The keychain prompt can land before or after the list paints, so offer to
 # dismiss it on both sides.
