@@ -1,0 +1,284 @@
+"use client"
+
+import { useRef } from "react"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Checkbox } from "@/components/ui/checkbox"
+// import { ScrollArea } from "@/components/ui/scroll-area" // Removed for better touch handling in Drawer
+import { cn } from "@/lib/utils"
+import { User, ArrowRightLeft, Lock } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useExchangeRates } from "@/hooks/use-exchange-rates"
+import { getExchangeRate, getCurrencySymbol } from "@tally/shared/currency"
+
+interface Member {
+  user_id: string
+  profiles: { display_name: string | null; avatar_url: string | null } | null
+}
+
+interface SplitDetailsProps {
+  amount: number
+  currency: string
+  baseCurrency: string
+  members: Member[]
+  currentUser: { id: string } | null
+
+  // State from hook
+  splitMode: "EQUAL" | "EXACT" | "PERCENT"
+  setSplitMode: (mode: "EQUAL" | "EXACT" | "PERCENT") => void
+
+  description: string
+  setDescription: (val: string) => void
+
+  payerId: string
+  setPayerId: (val: string) => void
+
+  involvedIds: string[]
+  toggleInvolved: (id: string) => void
+
+  exactAmounts: Record<string, number>
+  handleAmountChange: (id: string, val: string) => void
+
+  percentAmounts: Record<string, number>
+  handlePercentChange: (id: string, val: string) => void
+
+  // Derived
+  /** Each member's share, already rounded to the currency's smallest unit. */
+  splitAmounts: Record<string, number>
+  remainingExact: number
+  remainingPercent: number
+  isValid: boolean
+  onEditAmount?: () => void
+  lockedExchangeRate?: number
+}
+
+export function SplitDetails({
+  amount,
+  currency,
+  baseCurrency,
+  members,
+  currentUser,
+
+  splitMode, setSplitMode,
+  description, setDescription,
+  payerId, setPayerId,
+  involvedIds, toggleInvolved,
+  exactAmounts, handleAmountChange,
+  percentAmounts, handlePercentChange,
+
+  splitAmounts,
+  remainingExact,
+  remainingPercent,
+  isValid,
+  onEditAmount,
+  lockedExchangeRate
+}: SplitDetailsProps) {
+  const descriptionInputRef = useRef<HTMLInputElement>(null);
+  const { data: exchangeRates } = useExchangeRates();
+  const t = useTranslations("SplitDetails");
+
+  // Calculate exchange rate if currencies differ
+  const showExchangeRate = currency !== baseCurrency;
+  const exchangeRate = showExchangeRate
+    ? getExchangeRate(currency, baseCurrency, exchangeRates)
+    : null;
+  const convertedAmount = exchangeRate ? amount * exchangeRate : null;
+
+  const handleInputFocus = (element: HTMLElement | null) => {
+    if (!element) return;
+
+    // Small delay to wait for keyboard to appear
+    setTimeout(() => {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+    }, 300);
+  };
+
+  const handleInputBlur = () => {
+    // Force a recheck after blur to ensure drawer resizes properly
+    // This helps when user taps the keyboard "Done" button
+    setTimeout(() => {
+      // Trigger a resize event to force drawer height recalculation
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-background rounded-xl">
+      <div className="p-4 bg-muted/20 border-b space-y-4">
+         <div className="text-center">
+            <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">{t("totalBill")}</div>
+            <div
+                className={cn("text-4xl font-bold mt-1 text-primary animate-in zoom-in-50 duration-300", onEditAmount && "cursor-pointer hover:opacity-80 transition-opacity")}
+                onClick={onEditAmount}
+            >
+                {getCurrencySymbol(currency)} {amount.toFixed(2)}
+            </div>
+            {showExchangeRate && lockedExchangeRate && (
+              <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+                <Lock className="h-3 w-3" />
+                <span>≈ {getCurrencySymbol(baseCurrency)} {(amount * lockedExchangeRate).toFixed(2)}</span>
+                <span className="text-[10px]">(1 {currency} = {lockedExchangeRate.toFixed(4)} {baseCurrency})</span>
+              </div>
+            )}
+            {showExchangeRate && !lockedExchangeRate && exchangeRate && convertedAmount && (
+              <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+                <ArrowRightLeft className="h-3 w-3" />
+                <span>
+                  ≈ {getCurrencySymbol(baseCurrency)} {convertedAmount.toFixed(2)}
+                </span>
+                <span className="text-[10px]">
+                  (1 {currency} = {exchangeRate.toFixed(4)} {baseCurrency})
+                </span>
+              </div>
+            )}
+             {/* The remainder has to agree with the save button, or a form that
+                 cannot be saved reports itself as perfectly allocated. */}
+             {splitMode === "EXACT" && (
+                <div className={cn("text-xs mt-1 font-medium", isValid ? "text-green-500" : "text-destructive")}>
+                    {isValid ? t("perfectlyAllocated") : t("remaining", { value: remainingExact.toFixed(2) })}
+                </div>
+             )}
+             {splitMode === "PERCENT" && (
+                <div className={cn("text-xs mt-1 font-medium", isValid ? "text-green-500" : "text-destructive")}>
+                     {isValid ? t("totalHundred") : t("remaining", { value: `${remainingPercent.toFixed(2)}%` })}
+                </div>
+             )}
+        </div>
+
+        <Tabs value={splitMode} onValueChange={(v: string) => setSplitMode(v as "EQUAL" | "EXACT" | "PERCENT")} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="EQUAL">{t("equal")}</TabsTrigger>
+                <TabsTrigger value="EXACT">{t("exact")}</TabsTrigger>
+                <TabsTrigger value="PERCENT">{t("percent")}</TabsTrigger>
+            </TabsList>
+        </Tabs>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="space-y-6">
+            <div className="space-y-2">
+                <Input
+                    ref={descriptionInputRef}
+                    placeholder={t("descriptionPlaceholder")}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onFocus={() => handleInputFocus(descriptionInputRef.current)}
+                    onBlur={handleInputBlur}
+                    className="h-12 text-lg bg-muted/50 border-transparent focus:border-primary transition-all text-center"
+                    // Removed autoFocus to prevent keyboard jumping on mobile
+                />
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground ml-1">{t("whoPaid")}</label>
+                <div className="flex gap-2 overflow-x-auto p-2 scrollbar-none">
+                    {members.map(member => {
+                        const isPayer = member.user_id === payerId
+                        return (
+                             <button
+                                key={member.user_id}
+                                onClick={() => setPayerId(member.user_id)}
+                                className={cn(
+                                    "flex flex-col items-center gap-2 min-w-[4.5rem] p-2 rounded-xl transition-all border",
+                                    isPayer 
+                                        ? "bg-primary/10 border-primary shadow-sm scale-105" 
+                                        : "bg-card border-border hover:border-primary/50 opacity-70 hover:opacity-100"
+                                )}
+                             >
+                                <Avatar className={cn("h-10 w-10 border-2", isPayer ? "border-primary" : "border-transparent")}>
+                                    <AvatarImage src={member.profiles?.avatar_url || undefined} />
+                                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                                </Avatar>
+                                <span className={cn("text-xs font-medium truncate w-full text-center", isPayer ? "text-primary" : "text-muted-foreground")}>
+                                    {member.user_id === currentUser?.id ? t("you") : member.profiles?.display_name || t("member")}
+                                </span>
+                             </button>
+                        )
+                    })}
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-muted-foreground ml-1">{t("allocations")}</label>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2">
+                     {members.map(member => {
+                        const isInvolved = involvedIds.includes(member.user_id)
+                        return (
+                            <div 
+                                key={member.user_id}
+                                className={cn(
+                                    "flex items-center justify-between p-3 rounded-xl border transition-all",
+                                    (splitMode === "EQUAL" && isInvolved) || (splitMode !== "EQUAL") ? "bg-card border-border shadow-sm" : "bg-muted/10 border-transparent opacity-60"
+                                )}
+                                onClick={() => splitMode === "EQUAL" && toggleInvolved(member.user_id)}
+                            >
+                                <div className="flex items-center gap-3">
+                                    {splitMode === "EQUAL" && (
+                                        <Checkbox checked={isInvolved} className="data-[state=checked]:bg-primary" />
+                                    )}
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={member.profiles?.avatar_url || undefined} />
+                                        <AvatarFallback>U</AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium truncate max-w-[8rem]">
+                                        {member.user_id === currentUser?.id ? t("you") : member.profiles?.display_name || t("member")}
+                                    </span>
+                                </div>
+                                
+                                {splitMode === "EQUAL" && isInvolved && (
+                                    <span className="text-sm font-semibold">{currency} {(splitAmounts[member.user_id] ?? 0).toFixed(2)}</span>
+                                )}
+
+                                {splitMode === "EXACT" && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">{currency}</span>
+                                        <Input
+                                            type="number"
+                                            inputMode="decimal"
+                                            min="0"
+                                            className="w-24 h-9 text-right font-mono"
+                                            placeholder="0.00"
+                                            value={exactAmounts[member.user_id] || ""}
+                                            onChange={(e) => handleAmountChange(member.user_id, e.target.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onFocus={(e) => handleInputFocus(e.currentTarget)}
+                                            onBlur={handleInputBlur}
+                                        />
+                                    </div>
+                                )}
+
+                                {splitMode === "PERCENT" && (
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            inputMode="decimal"
+                                            min="0"
+                                            className="w-20 h-9 text-right font-mono"
+                                            placeholder="0"
+                                            value={percentAmounts[member.user_id] || ""}
+                                            onChange={(e) => handlePercentChange(member.user_id, e.target.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onFocus={(e) => handleInputFocus(e.currentTarget)}
+                                            onBlur={handleInputBlur}
+                                        />
+                                        <span className="text-xs text-muted-foreground">%</span>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                     })}
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  )
+}

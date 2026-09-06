@@ -1,0 +1,178 @@
+appId: com.ballchen.tally
+name: Phase 5 — the date defaults to today and a past date files under its own month
+# Writes into `phase5dt` (Date Lab), a group no other flow touches.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+# The picker renders locale-formatted dates, so the expected strings are derived
+# at run time rather than pinned to the day the flow was written.
+- evalScript: |
+    ${
+      var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var now = new Date();
+      output.today = M[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+      var lm = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+      output.lastMonth15 = M[lm.getMonth()] + ' 15, ' + lm.getFullYear();
+      output.lastMonthKey = lm.getFullYear() + '-' + ('0' + (lm.getMonth() + 1)).slice(-2);
+      var FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      output.lastMonthName = FULL[lm.getMonth()];
+    }
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Date Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Date Lab.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- tapOn:
+    id: 'add-expense-fab'
+
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-2'
+- tapOn:
+    id: 'calc-key-4'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calculator-confirm'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- inputText: 'Maestro Backdated'
+- tapOn: 'Done'
+
+# E3 — the picker opens on today. The native picker does not forward testID,
+# so it is matched by the date it renders.
+- assertVisible: '${output.today}'
+- takeScreenshot: e3-date-defaults-to-today
+
+# E3 — step back one month in the popover calendar and pick the 15th.
+- tapOn: '${output.today}'
+- tapOn: 'Previous Month'
+- tapOn: '.*, ${output.lastMonthName} 15'
+# The popover has no visible close control; tapping the modal header closes it.
+- tapOn:
+    point: '50%,9%'
+- assertVisible: '${output.lastMonth15}'
+- takeScreenshot: e3-date-backdated
+
+- tapOn:
+    id: 'expense-save'
+
+# E3 — the card lands under the previous month's timeline header, not this one.
+# Waiting on the modal closing rather than on a seeded card keeps the gate
+# independent of how many rows happen to fit above the fold.
+- extendedWaitUntil:
+    notVisible:
+      id: 'expense-save'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'timeline-month-${output.lastMonthKey}'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- assertVisible:
+    id: 'timeline-month-${output.lastMonthKey}'
+- takeScreenshot: e3-timeline-month-section
+
+# The card is the last row, where the dev warning banner can clip it, so the
+# stored date is read from the detail page instead of the card's own label.
+- scrollUntilVisible:
+    element:
+      text: '.*Maestro Backdated.*'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn: '.*Maestro Backdated.*'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-detail-date'
+    timeout: 20000
+- assertVisible:
+    id: 'expense-detail-amount'
+    text: 'NT\$ 240'
+- assertVisible:
+    id: 'expense-detail-date'
+    text: '${output.lastMonth15}'
+- takeScreenshot: e3-detail-shows-backdate
+# iOS labels the back button with the previous screen's title.
+- tapOn: 'Date Lab'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+# `repeat while visible` only reaches a card that is already on screen, so the
+# backdated row has to be scrolled into view before the loop is entered.
+- scrollUntilVisible:
+    element:
+      text: '.*Maestro Backdated.*'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+
+# Repeat so a card left behind by an earlier failed run is cleaned up too.
+- repeat:
+    while:
+      visible: '.*Maestro Backdated.*'
+    commands:
+      # A card clipped by the bottom of the screen sits inside iOS's home
+      # indicator gesture region, where the long press is swallowed and the
+      # action sheet never opens; centring it keeps the press on the card.
+      - scrollUntilVisible:
+          element:
+            text: '.*Maestro Backdated.*'
+          direction: DOWN
+          timeout: 20000
+          centerElement: true
+      - longPressOn: '.*Maestro Backdated.*'
+      - extendedWaitUntil:
+          visible: 'Expense options'
+          timeout: 20000
+      - tapOn: 'Delete'
+      - extendedWaitUntil:
+          visible: 'Delete expense?'
+          timeout: 20000
+      - tapOn: 'Delete'
+      - extendedWaitUntil:
+          notVisible: 'Delete expense?'
+          timeout: 20000
+- assertNotVisible: '.*Maestro Backdated.*'

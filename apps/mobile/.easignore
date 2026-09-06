@@ -1,0 +1,15 @@
+# EAS uploads the whole workspace root; keep the tarball to source only.
+node_modules
+**/node_modules
+apps/web/.next
+apps/web/out
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/.expo
+apps/mobile/docs/screens
+.turbo
+**/.turbo
+coverage
+backups
+supabase/.branches
+supabase/.temp

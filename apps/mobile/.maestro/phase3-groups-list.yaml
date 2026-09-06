@@ -1,0 +1,176 @@
+appId: com.ballchen.tally
+name: Phase 3 — groups list filters and balance summary
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts.
+# Cards are single accessibility elements, so their text is matched with `.*...*`.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- assertVisible: 'Tally'
+# The groups query has no ORDER BY, so Postgres is free to return the rows in
+# any order and a card's position on the list changes between runs; every card
+# is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*You are owed NT\$ 300.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- scrollUntilVisible:
+    element:
+      text: '.*Weekend Brunch.*All settled.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- assertNotVisible: '.*Old Ski Trip.*'
+- assertNotVisible: '.*Secret Santa.*'
+- takeScreenshot: c1-active
+
+# The filter tabs sit in the list header, so a scrolled-down list takes them
+# off screen with the cards.
+- scrollUntilVisible:
+    element:
+      text: 'Archived'
+    direction: UP
+    timeout: 20000
+- tapOn: 'Archived'
+- scrollUntilVisible:
+    element:
+      text: '.*Old Ski Trip.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- assertNotVisible: '.*Japan Trip.*'
+- takeScreenshot: c1-archived
+
+# The filter tabs sit in the list header, so a scrolled-down list takes them
+# off screen with the cards.
+- scrollUntilVisible:
+    element:
+      text: 'Hidden'
+    direction: UP
+    timeout: 20000
+- tapOn: 'Hidden'
+- scrollUntilVisible:
+    element:
+      text: '.*Secret Santa.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- assertNotVisible: '.*Japan Trip.*'
+- takeScreenshot: c1-hidden
+
+# The filter tabs sit in the list header, so a scrolled-down list takes them
+# off screen with the cards.
+- scrollUntilVisible:
+    element:
+      text: 'Active'
+    direction: UP
+    timeout: 20000
+- tapOn: 'Active'
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- scrollUntilVisible:
+    element:
+      text: 'Active'
+    direction: UP
+    timeout: 20000
+- swipe:
+    from:
+      id: 'groups-list'
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- takeScreenshot: c3-refreshed
+
+# Swipe actions hide a group and put it back (Weekend Brunch is owned by B, so
+# only the hide action is offered here).
+- scrollUntilVisible:
+    element:
+      text: '.*Weekend Brunch.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- swipe:
+    from:
+      text: '.*Weekend Brunch.*'
+    direction: LEFT
+- tapOn: 'Hide Group'
+- assertVisible: 'Hide this group from your list (personal)'
+- tapOn: 'Yes, hide'
+- extendedWaitUntil:
+    notVisible: '.*Weekend Brunch.*'
+    timeout: 20000
+- takeScreenshot: c1-swipe-hidden
+# The filter tabs sit in the list header, so a scrolled-down list takes them
+# off screen with the cards.
+- scrollUntilVisible:
+    element:
+      text: 'Hidden'
+    direction: UP
+    timeout: 20000
+- tapOn: 'Hidden'
+- scrollUntilVisible:
+    element:
+      text: '.*Weekend Brunch.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- swipe:
+    from:
+      text: '.*Weekend Brunch.*'
+    direction: LEFT
+- tapOn: 'Unhide Group'
+- assertVisible: 'Show this group in your active list'
+- tapOn: 'Yes, unhide'
+- extendedWaitUntil:
+    notVisible: '.*Weekend Brunch.*'
+    timeout: 20000
+# The filter tabs sit in the list header, so a scrolled-down list takes them
+# off screen with the cards.
+- scrollUntilVisible:
+    element:
+      text: 'Active'
+    direction: UP
+    timeout: 20000
+- tapOn: 'Active'
+- scrollUntilVisible:
+    element:
+      text: '.*Weekend Brunch.*'
+    direction: DOWN
+    timeout: 30000
+    centerElement: true

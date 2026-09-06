@@ -1,0 +1,90 @@
+appId: com.ballchen.tally
+name: Phase 6 — push explainer card, system prompt, and settings status
+# The card only appears while the notification permission is still undetermined,
+# and iOS only resets that on reinstall:
+#   xcrun simctl uninstall booted com.ballchen.tally
+#   pnpm --filter @tally/mobile ios
+# On a already-granted device the card block is skipped and only the settings
+# status is asserted, so the flow stays re-runnable.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+
+- runFlow:
+    when:
+      visible:
+        id: 'push-prompt'
+    commands:
+      - assertVisible: 'Turn on notifications'
+      - assertVisible: 'Get a heads-up when someone adds an expense, pays you back, or joins a group.'
+      - takeScreenshot: f1-prompt-card
+      # "Not now" must dismiss without ever reaching the system prompt.
+      - tapOn:
+          id: 'push-prompt-later'
+      - assertNotVisible:
+          id: 'push-prompt'
+      - assertNotVisible: 'Would Like to Send You Notifications'
+      - launchApp
+      - scrollUntilVisible:
+          element:
+            text: '.*Japan Trip.*'
+          direction: DOWN
+          timeout: 20000
+      # The prompt card is the list's header, so its absence only means
+      # something once the list is back at the top.
+      - scrollUntilVisible:
+          element:
+            text: 'Active'
+          direction: UP
+          timeout: 20000
+      - assertNotVisible:
+          id: 'push-prompt'
+      - takeScreenshot: f1-prompt-dismissed
+      - tapOn:
+          id: 'open-profile'
+      - assertVisible:
+          id: 'profile-push-status'
+          text: 'Not asked yet'
+      - takeScreenshot: f1-status-undetermined
+      # Maestro's XCUITest runner accepts the system permission alert on our behalf,
+      # so the status flipping to "Enabled" is what proves the alert was raised here
+      # and nowhere earlier.
+      - tapOn:
+          id: 'profile-push-action'
+
+- tapOn:
+    id: 'open-profile'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'profile-push-status'
+      text: 'Enabled'
+    timeout: 15000
+- takeScreenshot: f2-status-granted

@@ -1,0 +1,158 @@
+appId: com.ballchen.tally
+name: Phase 5 — exact and percent modes gate the save on a zero remainder
+# Read-only: cancels out of the modal, so `phase5ex` is left untouched.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+  USER_A: 237af5ca-f35f-46c6-8f48-6647ddd77f72
+  USER_B: cdd03085-4c5d-4399-8b17-665ba4d50f9c
+  USER_C: 1a794b7a-83e7-4c76-a770-fcf32dd26e43
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Expense Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Expense Lab.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- tapOn:
+    id: 'add-expense-fab'
+
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-1'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calculator-confirm'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- inputText: 'Maestro Modes'
+- tapOn: 'Done'
+
+# E5 — Exact starts with nothing allocated, so the whole amount is remaining.
+- tapOn: 'Exact'
+- assertVisible:
+    id: 'split-remaining'
+    text: 'Remaining: NT\$ 100'
+- assertVisible:
+    id: 'expense-save'
+    enabled: false
+- takeScreenshot: e5-exact-remaining-red
+
+# get_group_members_batch has no ORDER BY, so USER_A's row isn't guaranteed
+# to already be on screen; an off-screen tap can land on the remaining bar
+# below it instead of the input.
+- scrollUntilVisible:
+    element:
+      id: 'split-input-${USER_A}'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: 'split-input-${USER_A}'
+- inputText: '60'
+- assertVisible:
+    id: 'split-remaining'
+    text: 'Remaining: NT\$ 40'
+- assertVisible:
+    id: 'expense-save'
+    enabled: false
+
+- scrollUntilVisible:
+    element:
+      id: 'split-input-${USER_B}'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: 'split-input-${USER_B}'
+- inputText: '40'
+- assertVisible:
+    id: 'split-remaining'
+    text: 'Perfectly allocated'
+- assertVisible:
+    id: 'expense-save'
+    enabled: true
+- takeScreenshot: e5-exact-balanced-green
+
+# E6 — Percent only unlocks the save at exactly 100%.
+- tapOn: 'Percent'
+- assertVisible:
+    id: 'split-remaining'
+    text: 'Remaining: 100.0%'
+- assertVisible:
+    id: 'expense-save'
+    enabled: false
+- tapOn:
+    id: 'split-input-${USER_A}'
+- inputText: '50'
+- assertVisible:
+    id: 'split-remaining'
+    text: 'Remaining: 50.0%'
+- assertVisible:
+    id: 'expense-save'
+    enabled: false
+- takeScreenshot: e6-percent-incomplete
+- scrollUntilVisible:
+    element:
+      id: 'split-input-${USER_B}'
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: 'split-input-${USER_B}'
+- inputText: '50'
+- assertVisible:
+    id: 'split-remaining'
+    text: 'Total 100%'
+- assertVisible:
+    id: 'expense-save'
+    enabled: true
+- takeScreenshot: e6-percent-hundred
+
+- tapOn:
+    id: 'expense-cancel'
+- extendedWaitUntil:
+    notVisible:
+      id: 'split-remaining'
+    timeout: 20000

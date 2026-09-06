@@ -1,0 +1,54 @@
+appId: com.ballchen.tally
+name: Phase 6 — sign out returns to login (and drops this device's push token)
+# Maestro's `clearState` reinstalls the app on iOS, which also resets the
+# notification permission, so the flow grants it again and re-registers the token
+# before signing out. Bracket with scripts/push-tokens.ts to watch the row go.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+- tapOn:
+    id: 'push-prompt-enable'
+    optional: true
+
+- tapOn:
+    id: 'open-profile'
+- assertVisible: 'Settings'
+- extendedWaitUntil:
+    visible:
+      id: 'profile-push-status'
+      text: 'Enabled'
+    timeout: 15000
+- takeScreenshot: f-profile-settings
+- tapOn:
+    id: 'profile-signout'
+- extendedWaitUntil:
+    visible: 'Welcome to Tally'
+    timeout: 20000
+- takeScreenshot: f2-signed-out

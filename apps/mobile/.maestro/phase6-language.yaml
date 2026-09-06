@@ -1,0 +1,111 @@
+appId: com.ballchen.tally
+name: Phase 6 — switch to Japanese without a restart, then back to system
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Tally'
+- tapOn:
+    id: 'push-prompt-later'
+    optional: true
+- assertVisible: 'Active'
+
+- tapOn:
+    id: 'open-profile'
+- tapOn:
+    id: 'profile-language'
+- tapOn: '日本語'
+- assertVisible: '設定'
+- assertVisible: '.*既定の通貨.*'
+- assertVisible: '.*言語.*'
+- takeScreenshot: f5-profile-ja
+- scroll
+- assertVisible: 'アカウントを削除'
+- takeScreenshot: f5-profile-ja-danger
+- swipe:
+    direction: DOWN
+
+# iOS labels the back button with the previous screen's title.
+- tapOn: 'Tally'
+# The list re-renders in Japanese without relaunching the app.
+- extendedWaitUntil:
+    visible: 'アクティブ'
+    timeout: 15000
+- assertVisible: 'アーカイブ'
+- assertVisible: '非表示'
+# No untranslated `Namespace.key` placeholders leaked into the UI.
+- assertNotVisible: '[A-Za-z]+\.[A-Za-z]+'
+- takeScreenshot: f5-home-ja
+
+# The groups query has no ORDER BY, so a card's place on the list moves
+# between runs; it is scrolled to rather than expected above the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Japan Trip.*'
+- extendedWaitUntil:
+    visible: 'あなたの残高'
+    timeout: 20000
+- assertNotVisible: '[A-Za-z]+\.[A-Za-z]+'
+- takeScreenshot: f5-group-ja
+- tapOn:
+    id: 'group-back'
+# Scrolling to a card leaves the list where it stopped, and the filter tabs
+# sit in its header.
+- scrollUntilVisible:
+    element:
+      text: 'アクティブ'
+    direction: UP
+    timeout: 20000
+
+# Restore "follow system" so the rest of the suite runs in English.
+- tapOn:
+    id: 'open-profile'
+- tapOn:
+    id: 'profile-language'
+- tapOn: 'システムに従う'
+- assertVisible: 'Settings'
+# iOS labels the back button with the previous screen's title.
+- tapOn: 'Tally'
+- scrollUntilVisible:
+    element:
+      text: 'Active'
+    direction: UP
+    timeout: 15000

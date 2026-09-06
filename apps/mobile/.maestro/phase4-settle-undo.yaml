@@ -1,0 +1,68 @@
+appId: com.ballchen.tally
+name: Phase 4 — record payment, confirm, then undo from the toast
+# Records A → B in `phase4su` (Settle Undo Trip) and undoes it again, so the fixture is left untouched.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+  USER_A: 237af5ca-f35f-46c6-8f48-6647ddd77f72
+  USER_B: cdd03085-4c5d-4399-8b17-665ba4d50f9c
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# The list has no deterministic order, so the card can be below the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Settle Undo Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Settle Undo Trip.*'
+- extendedWaitUntil:
+    visible: 'NT\$ 11,688'
+    timeout: 20000
+
+# D3 — the confirmation names both parties and the amount.
+- tapOn:
+    id: 'settle-${USER_A}-${USER_B}'
+- assertVisible: 'Record payment?'
+- assertVisible: '.*Phase Three A paid Phase Three B NT\$ 11,688.*'
+- takeScreenshot: d3-confirm-record-payment
+- tapOn: 'Record payment'
+
+# The undo lives in the toast for five seconds, so the screenshot (which also
+# shows the pairing gone from the list) and the tap have to be quick.
+- extendedWaitUntil:
+    visible: 'Settlement recorded!'
+    timeout: 20000
+- takeScreenshot: d3-toast-with-undo
+- tapOn:
+    id: 'toast-action'
+- extendedWaitUntil:
+    visible: 'NT\$ 11,688'
+    timeout: 20000
+- assertVisible:
+    id: 'settle-${USER_A}-${USER_B}'
+- takeScreenshot: d3-after-undo

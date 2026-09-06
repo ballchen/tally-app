@@ -1,0 +1,101 @@
+appId: com.ballchen.tally
+name: Phase 3 — group settings as the owner (currency locks once expenses exist)
+# Requires the fixtures from apps/mobile/scripts/seed-dev.ts.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# Japan Trip has an expense, so the base currency is locked for the owner too.
+- scrollUntilVisible:
+    element:
+      text: '.*Japan Trip.*'
+    direction: DOWN
+    timeout: 30000
+
+- tapOn: '.*Japan Trip.*'
+- tapOn:
+    id: 'open-group-settings'
+- extendedWaitUntil:
+    visible:
+      id: 'group-name-input'
+    timeout: 20000
+- assertVisible:
+    id: 'group-name-input'
+    enabled: true
+- assertVisible:
+    id: 'group-currency-field'
+    enabled: false
+- assertVisible: 'Base currency is locked because this group already has expenses'
+- assertVisible:
+    id: 'pick-cover'
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: 'regenerate-invite'
+- assertVisible:
+    id: 'regenerate-invite'
+    enabled: true
+# The owner cannot leave; they archive or delete instead.
+- assertNotVisible:
+    id: 'leave-group'
+- takeScreenshot: c6-owner-currency-locked
+- scrollUntilVisible:
+    element:
+      id: 'toggle-archive'
+- assertVisible:
+    id: 'toggle-archive'
+    enabled: true
+- takeScreenshot: c6-owner-danger-zone
+- tapOn:
+    id: 'sheet-close'
+# The navigation back button is labelled with the previous screen's title.
+# Relaunching is the reliable way back to the list: the stack resets to the root.
+- launchApp
+- extendedWaitUntil:
+    visible: 'Active'
+    timeout: 20000
+
+# Leave Test has no expenses, so the currency is editable. Its card may be
+# below the fold (list is ordered newest first), so scroll rather than wait.
+- scrollUntilVisible:
+    element:
+      text: '.*Leave Test.*'
+    direction: DOWN
+    timeout: 30000
+
+- tapOn: '.*Leave Test.*'
+- tapOn:
+    id: 'open-group-settings'
+- extendedWaitUntil:
+    visible:
+      id: 'group-currency-field'
+      enabled: true
+    timeout: 20000
+- assertNotVisible: 'Base currency is locked because this group already has expenses'
+- takeScreenshot: c6-owner-currency-editable

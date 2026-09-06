@@ -1,0 +1,135 @@
+appId: com.ballchen.tally
+name: Phase 5 — expense detail totals, and editing a description keeps the locked rate
+# Uses `phase5ed` (Edit Lab): one last-month JPY 8,000 expense locked at 0.25.
+# The flow renames it and renames it back, so the fixture is left as it was.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+  USER_A: 237af5ca-f35f-46c6-8f48-6647ddd77f72
+  USER_B: cdd03085-4c5d-4399-8b17-665ba4d50f9c
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Edit Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Edit Lab.*'
+- extendedWaitUntil:
+    visible: '.*Old Tokyo dinner.*'
+    timeout: 20000
+
+# E8 — the detail page lists each participant's share, and they add up.
+- tapOn: '.*Old Tokyo dinner.*'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-detail-amount'
+    timeout: 20000
+- assertVisible:
+    id: 'expense-detail-amount'
+    text: '¥ 8,000'
+- assertVisible:
+    id: 'expense-detail-split-${USER_A}'
+    text: '¥ 4,000'
+- assertVisible:
+    id: 'expense-detail-split-${USER_B}'
+    text: '¥ 4,000'
+# The rate captured at creation is shown, not today's.
+- assertVisible:
+    id: 'expense-detail-converted'
+    text: '.*NT\$ 2,000.*1 JPY = 0\.2500 TWD.*'
+- takeScreenshot: e8-expense-detail
+
+# E7 — change only the description.
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          id: 'expense-detail-edit'
+      - extendedWaitUntil:
+          visible:
+            id: 'expense-description'
+          timeout: 10000
+- assertVisible:
+    id: 'locked-rate'
+    text: '.*1 JPY = 0\.2500 TWD.*'
+- takeScreenshot: e7-edit-shows-locked-rate
+# E7 — the amount step converts with the locked rate too, not today's.
+- tapOn:
+    id: 'expense-back-to-amount'
+- assertVisible:
+    id: 'calculator-converted'
+    text: '.*NT\$ 2,000.*1 JPY = 0\.2500 TWD.*'
+- takeScreenshot: e7-amount-step-locked-rate
+- tapOn:
+    id: 'calculator-confirm'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 10000
+- tapOn:
+    id: 'expense-description'
+- eraseText
+- inputText: 'Old Tokyo dinner v2'
+- tapOn: 'Done'
+- tapOn:
+    id: 'expense-save'
+- extendedWaitUntil:
+    visible: '.*Old Tokyo dinner v2.*'
+    timeout: 20000
+- takeScreenshot: e7-after-rename
+
+# Restore the fixture's description.
+- tapOn: '.*Old Tokyo dinner v2.*'
+- extendedWaitUntil:
+    visible:
+      id: 'expense-detail-edit'
+    timeout: 20000
+# The modal's dismiss animation can swallow the next push, so retry the tap.
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          id: 'expense-detail-edit'
+      - extendedWaitUntil:
+          visible:
+            id: 'expense-description'
+          timeout: 10000
+- tapOn:
+    id: 'expense-description'
+- eraseText
+- inputText: 'Old Tokyo dinner'
+- tapOn: 'Done'
+- tapOn:
+    id: 'expense-save'
+- extendedWaitUntil:
+    notVisible: '.*Old Tokyo dinner v2.*'
+    timeout: 20000

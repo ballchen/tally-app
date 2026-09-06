@@ -1,0 +1,85 @@
+appId: com.ballchen.tally
+name: Phase 4 — activity log sheet
+# Records and undoes one payment so the log has entries, then reads them back.
+# Writes into `phase4al` (Activity Log Trip), a group no other flow touches.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+  USER_A: 237af5ca-f35f-46c6-8f48-6647ddd77f72
+  USER_B: cdd03085-4c5d-4399-8b17-665ba4d50f9c
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# The list has no deterministic order, so the card can be below the fold.
+- scrollUntilVisible:
+    element:
+      text: '.*Activity Log Trip.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Activity Log Trip.*'
+- extendedWaitUntil:
+    visible: 'NT\$ 11,688'
+    timeout: 20000
+
+- tapOn:
+    id: 'settle-${USER_A}-${USER_B}'
+- tapOn: 'Record payment'
+- extendedWaitUntil:
+    visible: '.*Settled by Phase Three A.*'
+    timeout: 20000
+# Let the toast's own undo action expire, then expand the card for its own undo button.
+- extendedWaitUntil:
+    notVisible: 'Settlement recorded!'
+    timeout: 20000
+- tapOn: '.*Settled by Phase Three A.*'
+- tapOn:
+    id: 'undo-settlement-.*'
+- tapOn: 'Confirm Undo'
+- extendedWaitUntil:
+    visible: 'NT\$ 11,688'
+    timeout: 20000
+
+# The undo toast covers the navigation bar until it hides.
+- extendedWaitUntil:
+    notVisible: 'Settlement undone'
+    timeout: 20000
+
+# D9 — the sheet only exists once it is opened, so its query starts here.
+- waitForAnimationToEnd:
+    timeout: 5000
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          id: 'open-activity-log'
+      - extendedWaitUntil:
+          visible: 'Activity Log'
+          timeout: 10000
+- assertVisible: 'TODAY'
+- assertVisible: '.*Phase Three A settled debts.*'
+- assertVisible: '.*Phase Three A undid a settlement.*'
+- takeScreenshot: d9-activity-log-sheet

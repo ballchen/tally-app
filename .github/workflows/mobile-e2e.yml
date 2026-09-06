@@ -1,0 +1,95 @@
+name: Mobile E2E (iOS Simulator)
+
+# Skeleton: this has never run green on GitHub-hosted runners. It needs the
+# secrets listed under `env` plus a seeded Supabase project, and the fixtures
+# the flows read are created by scripts/seed-dev.ts with a service-role key.
+# See apps/mobile/.maestro/README.md.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/shared/**'
+      - '.github/workflows/mobile-e2e.yml'
+
+jobs:
+  maestro:
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TALLY_TEST_EMAIL: ${{ secrets.TALLY_TEST_EMAIL }}
+      TALLY_TEST_PASSWORD: ${{ secrets.TALLY_TEST_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Unit tests, lint and typecheck
+        run: pnpm turbo run lint typecheck test
+
+      - name: Boot the Simulator
+        run: |
+          xcrun simctl boot "iPhone 17 Pro" || true
+          xcrun simctl bootstatus "iPhone 17 Pro" -b
+
+      - name: Prebuild and build for the Simulator
+        working-directory: apps/mobile
+        run: |
+          npx expo prebuild --platform ios --clean
+          xcodebuild \
+            -workspace ios/Tally.xcworkspace \
+            -scheme Tally \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Install the app
+        working-directory: apps/mobile
+        run: |
+          xcrun simctl install booted \
+            ios/build/Build/Products/Debug-iphonesimulator/Tally.app
+
+      - name: Seed fixtures
+        run: |
+          node --experimental-strip-types apps/mobile/scripts/seed-dev.ts
+
+      - name: Start Metro
+        working-directory: apps/mobile
+        run: |
+          npx expo start --dev-client --port 8081 &
+          npx wait-on http://127.0.0.1:8081/status
+
+      - name: Install Maestro
+        run: |
+          curl -Ls https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run the flows
+        working-directory: apps/mobile
+        run: maestro test .maestro/
+
+      - name: Balance parity (RPC vs shared)
+        run: |
+          node --experimental-strip-types \
+            --import ./apps/mobile/scripts/register-ts-resolver.mjs \
+            apps/mobile/scripts/verify-balances-parity.ts
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: maestro-output
+          path: |
+            ~/.maestro/tests
+            apps/mobile/docs/screens

@@ -1,0 +1,125 @@
+appId: com.ballchen.tally
+name: Phase 5 — the keyboard never covers Amount or Save
+# Writes into `phase5kb` (Keyboard Lab), a group no other flow touches.
+env:
+  EMAIL: phase2-test@example.com
+  PASSWORD: Phase2Test!2026
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Tally'
+- tapOn:
+    id: 'login-email'
+- eraseText
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-password'
+- eraseText
+- inputText: ${PASSWORD}
+- tapOn: 'Done'
+- tapOn:
+    id: 'login-submit'
+# iOS offers to store the password in the keychain. The dialog can land a
+# beat after the app has already navigated on, so an unguarded optional tap
+# races it and leaves it covering the screen; wait for it before dismissing.
+- extendedWaitUntil:
+    visible: '.*Save Password.*'
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+- extendedWaitUntil:
+    visible: 'Tally'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: '.*Keyboard Lab.*'
+    direction: DOWN
+    timeout: 30000
+- tapOn: '.*Keyboard Lab.*'
+- extendedWaitUntil:
+    visible:
+      id: 'add-expense-fab'
+    timeout: 20000
+- tapOn:
+    id: 'add-expense-fab'
+
+- extendedWaitUntil:
+    visible:
+      id: 'calculator-display'
+    timeout: 20000
+- tapOn:
+    id: 'calc-key-6'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calc-key-0'
+- tapOn:
+    id: 'calculator-confirm'
+
+# The description field autofocuses, so the keyboard is up from here on.
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- inputText: 'Maestro Keyboard'
+
+# A single tap on Amount switches steps, even with the keyboard covering the
+# space the button used to sit in.
+- tapOn:
+    id: 'expense-back-to-amount'
+- assertVisible:
+    id: 'calculator-display'
+- takeScreenshot: k1-amount-first-tap
+- tapOn:
+    id: 'calculator-confirm'
+
+- extendedWaitUntil:
+    visible:
+      id: 'expense-description'
+    timeout: 20000
+- tapOn:
+    id: 'expense-description'
+- inputText: ' v2'
+# Saving straight from the open keyboard, with no Done tap first.
+- assertVisible:
+    id: 'expense-save'
+    enabled: true
+- takeScreenshot: k2-save-visible-over-keyboard
+- tapOn:
+    id: 'expense-save'
+- extendedWaitUntil:
+    visible: '.*Maestro Keyboard v2.*NT\$ 600.*'
+    timeout: 20000
+- takeScreenshot: k3-saved-from-keyboard
+
+# Restore the fixture.
+- repeat:
+    while:
+      visible: '.*Maestro Keyboard.*'
+    commands:
+      # A card clipped by the bottom of the screen sits inside iOS's home
+      # indicator gesture region, where the long press is swallowed and the
+      # action sheet never opens; centring it keeps the press on the card.
+      - scrollUntilVisible:
+          element:
+            text: '.*Maestro Keyboard.*'
+          direction: DOWN
+          timeout: 20000
+          centerElement: true
+      - longPressOn: '.*Maestro Keyboard.*'
+      - extendedWaitUntil:
+          visible: 'Expense options'
+          timeout: 20000
+      - tapOn: 'Delete'
+      - extendedWaitUntil:
+          visible: 'Delete expense?'
+          timeout: 20000
+      - tapOn: 'Delete'
+      - extendedWaitUntil:
+          notVisible: 'Delete expense?'
+          timeout: 20000
+- assertNotVisible: '.*Maestro Keyboard.*'
