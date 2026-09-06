@@ -79,7 +79,13 @@ cd "$APP_DIR"
 status=0
 "$MAESTRO" test --exclude-tags=docs "$TARGET" || status=$?
 
-if [ "${SKIP_SEED:-0}" != "1" ]; then
+# Only the delete-account flow consumes the temp account, so the check is
+# meaningful for the full suite or that flow; anything else would fail it.
+case "$TARGET" in
+  */|*phase6-delete-account.yaml) RUNS_DELETE_FLOW=1 ;;
+  *) RUNS_DELETE_FLOW=0 ;;
+esac
+if [ "${SKIP_SEED:-0}" != "1" ] && [ "$RUNS_DELETE_FLOW" = "1" ]; then
   echo "==> checking the delete-account fixture was consumed"
   node --experimental-strip-types "$APP_DIR/scripts/temp-account.ts" check || status=$?
 fi
