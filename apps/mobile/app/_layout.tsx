@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -41,7 +42,18 @@ export default function RootLayout() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-    return () => data.subscription.unsubscribe();
+    // A launch the user never saw (iOS prewarm, push wake) can find storage unreadable
+    // and start signed out; retry once they actually bring the app forward.
+    const appState = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || useAuthStore.getState().session) return;
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) setSession(session);
+      });
+    });
+    return () => {
+      data.subscription.unsubscribe();
+      appState.remove();
+    };
   }, [setSession]);
 
   useEffect(() => {
